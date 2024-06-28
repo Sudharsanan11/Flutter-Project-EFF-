@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 
@@ -13,9 +12,8 @@ class ApiService {
   final String apiSecret = "87d8de62bc1b513";
 
   Future<Map<String, dynamic>> getresources(String resource) async {
-    final url = "http://192.168.1.18:8003";
     final response = await http.get(
-      Uri.parse(url+resource),
+      Uri.parse(baseurl+resource),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'token $apikey:$apiSecret',

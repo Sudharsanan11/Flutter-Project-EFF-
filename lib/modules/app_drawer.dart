@@ -14,7 +14,7 @@ class _AppDrawerState extends State<AppDrawer> {
     final List<Item> items = [
       // Item(name: "Home", icon: Icons.home),
       Item(name: "LR History", icon: Icons.history),
-      Item(name: "Assignment List", icon: Icons.list)
+      Item(name: "Assignment List", icon: Icons.list),
     ];
     return Drawer(
       child: ListView.builder(
