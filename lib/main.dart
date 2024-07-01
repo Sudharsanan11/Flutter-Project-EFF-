@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 // import 'package:eff_logistics/modules/assigned_order.dart';
 import "package:erpnext_logistics_mobile/modules/app_drawer.dart";
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
-import "package:http/http.dart" as http;
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
 
