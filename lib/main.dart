@@ -34,7 +34,7 @@ class _EFFState extends State<EFF> {
       final response = await apiService.getresources('/api/resource/Employee');
       print(response);
       setState(() {
-        value = response['data'].toString();
+        value = response.toString();
       });
     }
   catch(e) {
