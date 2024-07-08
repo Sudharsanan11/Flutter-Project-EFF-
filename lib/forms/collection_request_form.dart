@@ -25,16 +25,16 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
         child: Column(
           children: [
             const SizedBox(height: 10,),
-            Textfield(
+            FieldText(
               controller: consignor,
-              hintText: "Consignor",
               obscureText: false,
+              labelText: "Consignor",
               keyboardType: TextInputType.text
             ),
             const SizedBox(height: 10.0,),
-            Textfield(
+            FieldText(
               controller: consignor,
-              hintText: "Consignor",
+              labelText: "Consignor",
               obscureText: false,
               keyboardType: TextInputType.text
             ),
