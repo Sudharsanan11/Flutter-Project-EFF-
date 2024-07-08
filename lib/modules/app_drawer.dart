@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:erpnext_logistics_mobile/modules/doc_view.dart";
+import "package:erpnext_logistics_mobile/modules/doc_list.dart";
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -15,8 +15,11 @@ class _AppDrawerState extends State<AppDrawer> {
       // Item(name: "Home", icon: Icons.home),
       Item(name: "LR History", icon: Icons.history),
       Item(name: "Assignment List", icon: Icons.list),
+      Item(name: "GDM", icon: Icons.local_shipping),
+      Item(name: "Create LR", icon: Icons.receipt_long)
     ];
     return Drawer(
+      backgroundColor: Colors.white,
       child: ListView.builder(
         itemCount: items.length,
         itemBuilder: (context, index) {
@@ -30,7 +33,6 @@ class _AppDrawerState extends State<AppDrawer> {
           );
         }
       ),
-      backgroundColor: Colors.white,
     );
   }
 }
