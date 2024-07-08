@@ -85,13 +85,13 @@ class LoginPage extends StatelessWidget {
                 const SizedBox(height: 50),
                 LoginText(
                   controller: usernameController,
-                  hintText: 'Username',
+                  labelText: 'Username',
                   obscureText: false,
                 ),
                 const SizedBox(height: 50),
                 LoginText(
                   controller: passwordController,
-                  hintText: 'Password',
+                  labelText: 'Password',
                   obscureText: true,
                 ),
                 const SizedBox(height: 50),
@@ -109,6 +109,7 @@ class LoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 50),
                 MyButton(
+                  name: 'Sign In',
                   onTap: () => signUserIn(context),
                 ),
                 const SizedBox(height: 50),
