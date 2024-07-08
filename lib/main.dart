@@ -7,6 +7,7 @@ import "package:erpnext_logistics_mobile/modules/app_drawer.dart";
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
+import 'api_endpoints.dart';
 
 Future<void> main() async{
   // await dotenv.load(fileName: '.env');
@@ -30,7 +31,7 @@ class _EFFState extends State<EFF> {
     print("apicall");
     print(apiService);
     try {
-      final response = await apiService.getresources('/api/resource/Employee');
+      final response = await apiService.getresources(ApiEndpoints.authEndpoints.employee);
       print(response);
       setState(() {
         value = response.toString();
@@ -67,8 +68,3 @@ class _EFFState extends State<EFF> {
   }
 
 }
-
-
-// void apicall() {
-//   print("apicall");
-// }

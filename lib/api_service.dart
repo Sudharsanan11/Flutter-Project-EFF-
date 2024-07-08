@@ -1,23 +1,20 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'api_endpoints.dart';
 
 
 class ApiService {
-  // final String baseurl = dotenv.env['API_BASE_URL']!;
-  // final String apikey = dotenv.env['API_KEY']!;
-  // final String apisecret = dotenv.env['API_SECRET']!;
-  final String baseurl = "http://192.168.1.6:8003";
-  final String apikey = "942e5fd49c7af84";
-  final String apiSecret = "87d8de62bc1b513";
 
-  Future<List<String>> getresources(String resource) async {
-    final url = "http://192.168.1.6:8003";
+  Future<List<Map<String, String>>> getresources(String resource) async {
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    String api = manager.getString("api")!;
+    String secret = manager.getString("secret")!;
     final response = await http.get(
-      Uri.parse(baseurl+resource),
+      Uri.parse(ApiEndpoints.baseUrl+resource),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'token $apikey:$apiSecret',
+        'Authorization': 'token $api:$secret',
       },
     );
     if(response.statusCode == 200) {
@@ -25,7 +22,12 @@ class ApiService {
       List<dynamic> data = jsonResponse['data'];
       print("dynamic");
       print(data);
-      return data.map((item) => item['name'].toString()).toList();
+      List<String> keys = data.first.keys.toList();
+      print(keys[0]);
+      return data.map((item) => {
+        'key1' : item[keys[0]].toString(),
+        'key2' : item[keys[1]].toString(),
+      }).toList();
     }
     else {
       throw Exception('Failed to load resources');
