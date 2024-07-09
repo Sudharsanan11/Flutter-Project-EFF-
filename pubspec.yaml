@@ -44,6 +44,7 @@ dependencies:
   flutter_barcode_scanner: ^2.0.0
   flutter_form_builder: ^9.3.0
   form_builder_validators: ^10.0.1
+  dotted_border: ^2.1.0
 
 dev_dependencies:
   flutter_test:
