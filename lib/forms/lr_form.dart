@@ -73,31 +73,34 @@ class _LrFormState extends State<LrForm> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      LoginText(
+                      FieldText(
                         controller: itemName,
                         labelText: 'Item Name',
-                        obscureText: false,
+                        obscureText: false, keyboardType: TextInputType.name,
                       ),
                       const SizedBox(height: 15),
-                      LoginText(
+                      FieldText(
                         controller: itemWeight,
                         labelText: 'Weight',
                         obscureText: false,
+                        keyboardType: TextInputType.name
                       ),
                       const SizedBox(height: 15),
-                      LoginText(
+                      FieldText(
                         controller: itemVolume,
                         labelText: 'Volume',
                         obscureText: false,
+                        keyboardType: TextInputType.name
                       ),
                       const SizedBox(height: 15),
                       GestureDetector(
                         onTap: () => const BarcodeScanner(),
                         child: AbsorbPointer(
-                          child: LoginText(
+                          child: FieldText(
                             controller: itemBarcode,
                             labelText: 'Barcode',
                             obscureText: false,
+                            keyboardType: TextInputType.name
                           ),
                         ),
                       ),
@@ -162,40 +165,44 @@ class _LrFormState extends State<LrForm> {
                     },
                   ),
                   const SizedBox(height: 25),
-                  LoginText(
+                  FieldText(
                     controller: consignor,
                     labelText: 'Consignor Name',
                     obscureText: false,
+                    keyboardType: TextInputType.name,
                   ),
                   const SizedBox(height: 25),
-                  LoginText(
+                  FieldText(
                     controller: consignee,
                     labelText: 'Consignee Name',
+                    keyboardType: TextInputType.name,
                     obscureText: false,
                   ),
                   const SizedBox(height: 25),
-                  LoginText(
-                    controller: destination,
-                    labelText: 'Destination',
-                    obscureText: false,
-                  ),
+                  FieldText(
+                      controller: destination,
+                      labelText: 'Destination',
+                      keyboardType: TextInputType.name,
+                      obscureText: false),
                   const SizedBox(height: 25),
                   Row(
                     children: [
                       Flexible(
                         flex: 1,
-                        child: LoginText(
+                        child: FieldText(
                           controller: boxMismatchFromOrder,
                           labelText: 'Box Mismatch from order',
+                          keyboardType: TextInputType.name,
                           obscureText: false,
                         ),
                       ),
                       const SizedBox(width: 1),
                       Flexible(
                         flex: 1,
-                        child: LoginText(
+                        child: FieldText(
                           controller: boxMismatchOnRescan,
                           labelText: 'Box mismatch on rescan',
+                          keyboardType: TextInputType.name,
                           obscureText: false,
                         ),
                       ),
@@ -206,41 +213,41 @@ class _LrFormState extends State<LrForm> {
                     children: [
                       Flexible(
                         flex: 1,
-                        child: LoginText(
-                          controller: boxCount,
-                          labelText: 'Box Count',
-                          obscureText: false,
-                        ),
+                        child: FieldText(
+                            controller: boxCount,
+                            labelText: 'Box Count',
+                            keyboardType: TextInputType.number,
+                            obscureText: false),
                       ),
                       Flexible(
                         flex: 1,
-                        child: LoginText(
-                          controller: boxDelivered,
-                          labelText: 'Box Delivered',
-                          obscureText: false,
-                        ),
+                        child: FieldText(
+                            controller: boxDelivered,
+                            labelText: 'Box Delivered',
+                            keyboardType: TextInputType.number,
+                            obscureText: false),
                       ),
                     ],
                   ),
                   const SizedBox(height: 25),
-                  LoginText(
-                    controller: freight,
-                    labelText: 'Freight',
-                    obscureText: false,
-                  ),
+                  FieldText(
+                      controller: freight,
+                      labelText: 'Freight',
+                      keyboardType: TextInputType.number,
+                      obscureText: false),
                   const SizedBox(height: 25),
-                  LoginText(
-                    controller: lrCharge,
-                    labelText: 'LR Charge',
-                    obscureText: false,
-                  ),
+                  FieldText(
+                      controller: lrCharge,
+                      labelText: 'LR Charge',
+                      keyboardType: TextInputType.number,
+                      obscureText: false),
                   const SizedBox(height: 25),
-                  LoginText(
-                    controller: totalFreight,
-                    labelText: 'Total Freight',
-                    obscureText: false,
-                    readOnly: true,
-                  ),
+                  FieldText(
+                      controller: totalFreight,
+                      labelText: 'Total Freight',
+                      keyboardType: TextInputType.number,
+                      obscureText: false,
+                      readOnly: true),
                   const SizedBox(height: 25),
                   GestureDetector(
                     onTap: () => _showItemForm(context),

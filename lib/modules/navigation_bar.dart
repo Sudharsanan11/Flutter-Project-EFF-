@@ -1,3 +1,4 @@
+import 'package:erpnext_logistics_mobile/modules/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/main.dart';
 
@@ -10,6 +11,7 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   int index = 0;
+
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
@@ -17,12 +19,12 @@ class _BottomNavigationState extends State<BottomNavigation> {
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          // backgroundColor: Colors.blue,
-          label: "Home"
+          backgroundColor: Colors.white,
+          label: "Home",
           ),
         BottomNavigationBarItem(
         icon: Icon(Icons.person),
-        // backgroundColor: Colors.blue,
+        backgroundColor: Colors.white,
         label: "Profile",
         )
       ],
@@ -37,7 +39,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         }
         else if(currentIndex == 1) {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context)=> EFF()));
+          MaterialPageRoute(builder: (context)=> Profile()));
         }
       },);
   }

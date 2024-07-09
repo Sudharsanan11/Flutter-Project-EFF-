@@ -39,9 +39,11 @@ class LoginPage extends StatelessWidget {
         print('Login successful: $responseData');
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('session_token', responseData['token']);
+        prefs.setString('api', responseData['message']['api_key']);
+        prefs.setString('secret', responseData['message']['api_secret']);
 
-        print('Session token: ${responseData['token']}');
+        print('Session token: ${prefs.getString('api')}');
+        print('Session token: ${prefs.getString('secret')}');
 
         Navigator.pushReplacement(
           context,
@@ -83,16 +85,18 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 50),
-                LoginText(
+                FieldText(
                   controller: usernameController,
                   labelText: 'Username',
                   obscureText: false,
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 50),
-                LoginText(
+                FieldText(
                   controller: passwordController,
                   labelText: 'Password',
                   obscureText: true,
+                  keyboardType: TextInputType.text,
                 ),
                 const SizedBox(height: 50),
                 Padding(
