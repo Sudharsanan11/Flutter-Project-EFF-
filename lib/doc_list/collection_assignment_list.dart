@@ -1,5 +1,6 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/forms/collection_assignment_form.dart';
 import 'package:erpnext_logistics_mobile/forms/collection_request_form.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/form_view.dart';
@@ -95,7 +96,7 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
         child: const Icon(Icons.add),
         onPressed: () {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => CollectionRequestForm()));
+          MaterialPageRoute(builder: (context) => CollectionAssignmentForm()));
         },
       ),
       bottomNavigationBar: const BottomNavigation(),

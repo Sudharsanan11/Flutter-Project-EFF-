@@ -10,7 +10,8 @@ class BottomNavigation extends StatefulWidget {
 }
 
 class _BottomNavigationState extends State<BottomNavigation> {
-  int index = 0;
+  int index;
+  _BottomNavigationState({this.index = 0});
 
   @override
   Widget build(BuildContext context) {
