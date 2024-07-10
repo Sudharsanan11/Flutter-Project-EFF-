@@ -1,5 +1,6 @@
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
+import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
 import 'package:erpnext_logistics_mobile/fields/dotted_input.dart';
 import 'package:flutter/material.dart';
@@ -140,6 +141,7 @@ class _LrFormState extends State<LrForm> {
       appBar: AppBar(
         title: const Text('LR Form'),
       ),
+      drawer: const AppDrawer(),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
