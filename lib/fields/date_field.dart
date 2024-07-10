@@ -1,30 +1,23 @@
 import 'package:flutter/material.dart';
 
-class FieldText extends StatelessWidget {
+
+class DateField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
-  final bool obscureText;
-  final bool readOnly;
-  final keyboardType;
-
-  const FieldText({
-    super.key,
-    required this.controller,
-    required this.labelText,
-    this.obscureText = false,
-    this.readOnly = false,
-    required this.keyboardType
-  });
+  
+  DateField({super.key,
+  required this.controller,
+  required this.labelText,});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 25.0,
+        vertical: 3.0
+      ),
       child: TextField(
         controller: controller,
-        obscureText: obscureText,
-        readOnly: readOnly,
-        keyboardType: keyboardType,
         decoration: InputDecoration(
           enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
