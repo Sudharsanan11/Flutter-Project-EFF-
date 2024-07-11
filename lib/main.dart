@@ -1,6 +1,4 @@
 import 'dart:async';
-// import 'dart:convert';
-
 import 'package:erpnext_logistics_mobile/forms/lr_form.dart';
 import 'package:flutter/material.dart';
 // import 'package:eff_logistics/modules/assigned_order.dart';
@@ -14,7 +12,7 @@ import 'api_endpoints.dart';
 Future<void> main() async{
   // await dotenv.load(fileName: '.env');
 runApp(  const MaterialApp(
-  home: GdmForm(),
+  home: LrForm(),
 ));
 } 
   

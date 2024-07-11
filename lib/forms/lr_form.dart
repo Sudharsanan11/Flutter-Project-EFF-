@@ -37,10 +37,8 @@ class _LrFormState extends State<LrForm> {
 
   void submitData() {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
-      // Form is valid, proceed with submission logic
       print(_formKey.currentState?.value);
     } else {
-      // Form is invalid, display validation errors
       print("Validation failed");
     }
   }

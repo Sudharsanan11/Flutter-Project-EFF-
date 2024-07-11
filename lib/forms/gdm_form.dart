@@ -1,12 +1,13 @@
+import 'package:erpnext_logistics_mobile/fields/button.dart';
+import 'package:erpnext_logistics_mobile/fields/dotted_input.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
-import 'package:erpnext_logistics_mobile/fields/dropdown_multiselect.dart';
+import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
-import 'package:multi_dropdown/enum/app_enums.dart';
 
 class GdmForm extends StatefulWidget {
   const GdmForm({super.key});
@@ -17,7 +18,12 @@ class GdmForm extends StatefulWidget {
 
 String? selectedDriver;
 String? selectedStaff;
-List<Map<String, String>> items = [];
+List<String> selectedLoadingStaffs = [];
+List<String> selectedLr = [];
+final List<String> loadingStaffItems = ['Revi', 'Bhavan', 'Sudar'];
+final List<String> selectLR = ['1', '2', '3'];
+
+void submitData() {}
 
 class _GdmFormState extends State<GdmForm> {
   final _formKey = GlobalKey<FormBuilderState>();
@@ -28,6 +34,65 @@ class _GdmFormState extends State<GdmForm> {
   final TextEditingController deliveryStaff = TextEditingController();
   final TextEditingController loadingStaffs = TextEditingController();
   final TextEditingController vehicleRegisterNo = TextEditingController();
+  final TextEditingController lrSelected = TextEditingController();
+
+  void _showLoadingStaffs(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Loading Staffs'),
+          content: MultiSelect(
+            items: loadingStaffItems,
+            selectedItems: selectedLoadingStaffs,
+            onSelectedItemsListChanged: (List<String> newSelectedItems) {
+              setState(() {
+                selectedLoadingStaffs = newSelectedItems;
+                loadingStaffs.text = selectedLoadingStaffs.join(', ');
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLR(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select LR'),
+          content: MultiSelect(
+            items: selectLR,
+            selectedItems: selectedLr,
+            onSelectedItemsListChanged: (List<String> newSelectedItems) {
+              setState(() {
+                selectedLr = newSelectedItems;
+                lrSelected.text = selectedLr.join(', ');
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,11 +208,59 @@ class _GdmFormState extends State<GdmForm> {
                     },
                   ),
                   const SizedBox(height: 15.0),
-                  const NetworkMultiSelectDropdown(
-                    url: '',
-                    method: RequestMethod.get,
-                    headers: {},
-                  )
+                  GestureDetector(
+                    onTap: () => _showLoadingStaffs(context),
+                    child: AbsorbPointer(
+                      child: FieldText(
+                        controller: loadingStaffs,
+                        labelText: "Loading Staffs",
+                        obscureText: false,
+                        keyboardType: TextInputType.name,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15.0),
+                  FieldText(
+                      controller: vehicleRegisterNo,
+                      labelText: 'Vehicle Registration Number',
+                      keyboardType: TextInputType.name),
+                  const SizedBox(
+                    height: 15.0,
+                  ),
+                  GestureDetector(
+                    onTap: () => _showLR(context),
+                    child: const AbsorbPointer(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 25.0, vertical: 3.0),
+                        child: DottedInput(
+                          labelText: 'LR',
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'LR',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Icon(
+                                Icons.add,
+                                color: Colors.grey,
+                                size: 30,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 15.0,
+                  ),
+                  const MyButton(onTap: submitData, name: "Submit")
                 ],
               ),
             ),
