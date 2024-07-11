@@ -37,62 +37,138 @@ class _GdmFormState extends State<GdmForm> {
   final TextEditingController lrSelected = TextEditingController();
 
   void _showLoadingStaffs(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Loading Staffs'),
-          content: MultiSelect(
-            items: loadingStaffItems,
-            selectedItems: selectedLoadingStaffs,
-            onSelectedItemsListChanged: (List<String> newSelectedItems) {
-              setState(() {
-                selectedLoadingStaffs = newSelectedItems;
-                loadingStaffs.text = selectedLoadingStaffs.join(', ');
-              });
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
+  TextEditingController searchController = TextEditingController();
+  List<String> filteredItems = loadingStaffItems;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select Loading Staffs'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          filteredItems = loadingStaffItems;
+                        });
+                      },
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      filteredItems = loadingStaffItems
+                          .where((item) => item
+                              .toLowerCase()
+                              .contains(value.toLowerCase()))
+                          .toList();
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+                MultiSelect(
+                  items: filteredItems,
+                  selectedItems: selectedLoadingStaffs,
+                  onSelectedItemsListChanged: (List<String> newSelectedItems) {
+                    setState(() {
+                      selectedLoadingStaffs = newSelectedItems;
+                      loadingStaffs.text = selectedLoadingStaffs.join(', ');
+                    });
+                  },
+                ),
+              ],
             ),
-          ],
-        );
-      },
-    );
-  }
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   void _showLR(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select LR'),
-          content: MultiSelect(
-            items: selectLR,
-            selectedItems: selectedLr,
-            onSelectedItemsListChanged: (List<String> newSelectedItems) {
-              setState(() {
-                selectedLr = newSelectedItems;
-                lrSelected.text = selectedLr.join(', ');
-              });
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
+  TextEditingController searchController = TextEditingController();
+  List<String> filteredItems = selectLR;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select LR'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          filteredItems = selectLR;
+                        });
+                      },
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      filteredItems = selectLR
+                          .where((item) => item
+                              .toLowerCase()
+                              .contains(value.toLowerCase()))
+                          .toList();
+                    });
+                  },
+                ),
+                SizedBox(height: 10),
+                MultiSelect(
+                  items: filteredItems,
+                  selectedItems: selectedLr,
+                  onSelectedItemsListChanged: (List<String> newSelectedItems) {
+                    setState(() {
+                      selectedLr = newSelectedItems;
+                      lrSelected.text = selectedLr.join(', ');
+                    });
+                  },
+                ),
+              ],
             ),
-          ],
-        );
-      },
-    );
-  }
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
