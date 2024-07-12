@@ -3,23 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
 class BarcodeScanner extends StatefulWidget {
-  const BarcodeScanner({super.key});
+  final Function(String) onScanResult;
+
+  const BarcodeScanner({super.key, required this.onScanResult});
 
   @override
   _BarcodeScannerState createState() => _BarcodeScannerState();
 }
 
 class _BarcodeScannerState extends State<BarcodeScanner> {
-  String _scanResult = "";
-
   Future<void> scanCode() async {
     String barcodeScannerRes;
     try {
       barcodeScannerRes = await FlutterBarcodeScanner.scanBarcode(
-        '#ff6666', 
-        'Cancel', 
-        true, 
-        ScanMode.BARCODE
+        '#ff6666',
+        'Cancel',
+        true,
+        ScanMode.BARCODE,
       );
     } on PlatformException {
       barcodeScannerRes = "Failed to scan";
@@ -27,9 +27,14 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
 
     if (!mounted) return;
 
-    setState(() {
-      _scanResult = barcodeScannerRes;
-    });
+    widget.onScanResult(barcodeScannerRes);
+    Navigator.of(context).pop(); // Close the scanner screen
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    scanCode(); // Start scanning as soon as the widget is initialized
   }
 
   @override
@@ -38,18 +43,8 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
       appBar: AppBar(
         title: const Text('Barcode Scanner'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('Scan result: $_scanResult'),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: scanCode,
-              child: const Text('Scan Barcode'),
-            ),
-          ],
-        ),
+      body: const Center(
+        child: CircularProgressIndicator(), // Show a loading indicator while scanning
       ),
     );
   }

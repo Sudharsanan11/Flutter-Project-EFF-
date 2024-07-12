@@ -4,6 +4,7 @@ import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
 import 'package:erpnext_logistics_mobile/fields/dotted_input.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 
@@ -43,6 +44,21 @@ class _LrFormState extends State<LrForm> {
     }
   }
 
+  void _openBarcodeScanner() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BarcodeScanner(
+          onScanResult: (scanResult) {
+            setState(() {
+              itemBarcode.text = scanResult;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   void addItem() {
     setState(() {
       items.add({
@@ -75,31 +91,29 @@ class _LrFormState extends State<LrForm> {
                       FieldText(
                         controller: itemName,
                         labelText: 'Item Name',
-                        obscureText: false, keyboardType: TextInputType.name,
+                        obscureText: false,
+                        keyboardType: TextInputType.name,
                       ),
                       const SizedBox(height: 15),
                       FieldText(
-                        controller: itemWeight,
-                        labelText: 'Weight',
-                        obscureText: false,
-                        keyboardType: TextInputType.name
-                      ),
+                          controller: itemWeight,
+                          labelText: 'Weight',
+                          obscureText: false,
+                          keyboardType: TextInputType.name),
                       const SizedBox(height: 15),
                       FieldText(
-                        controller: itemVolume,
-                        labelText: 'Volume',
-                        obscureText: false,
-                        keyboardType: TextInputType.name
-                      ),
+                          controller: itemVolume,
+                          labelText: 'Volume',
+                          obscureText: false,
+                          keyboardType: TextInputType.name),
                       const SizedBox(height: 15),
                       GestureDetector(
-                        onTap: () => const BarcodeScanner(),
+                        onTap: _openBarcodeScanner,
                         child: AbsorbPointer(
                           child: FieldText(
                             controller: itemBarcode,
                             labelText: 'Barcode',
-                            obscureText: false,
-                            keyboardType: TextInputType.name
+                            keyboardType: TextInputType.name,
                           ),
                         ),
                       ),
@@ -281,43 +295,43 @@ class _LrFormState extends State<LrForm> {
                   ),
                   const SizedBox(height: 25),
                   if (items.isNotEmpty)
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2,
-                        ),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          return Container(
-                            margin: const EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                                style: BorderStyle.solid,
-                              ),
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Name: ${item['name']}'),
-                                  Text('Weight: ${item['weight']}'),
-                                  Text('Volume: ${item['volume']}'),
-                                  Text('Barcode: ${item['barcode']}'),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 2,
                       ),
-                    const SizedBox(height: 25),
-                    MyButton(onTap: submitData, name: 'Submit'),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return Container(
+                          margin: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.grey,
+                              style: BorderStyle.solid,
+                            ),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Name: ${item['name']}'),
+                                Text('Weight: ${item['weight']}'),
+                                Text('Volume: ${item['volume']}'),
+                                Text('Barcode: ${item['barcode']}'),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  const SizedBox(height: 25),
+                  MyButton(onTap: submitData, name: 'Submit'),
                 ],
               ),
             ),
