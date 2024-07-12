@@ -48,48 +48,53 @@ class _LrFormState extends State<LrForm> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(item == null ? 'Add Item' : 'Edit Item'),
-          content: Column(
-            children: [
-              const SizedBox(height: 10,),
-              DialogTextField(
-                controller: itemName,
-                keyboardType: TextInputType.name,
-                labelText: "Item Name",
-              ),
-              const SizedBox(height: 10,),
-              DialogTextField(
-                controller: itemWeight,
-                keyboardType: TextInputType.name,
-                labelText: "Weight",
-              ),
-              const SizedBox(height: 10,),
-              DialogTextField(
-                controller: itemVolume,
-                keyboardType: TextInputType.name,
-                labelText: "Volume",
-              ),
-              const SizedBox(height: 10,),
-              // Row(
-                // children: [
-                  // Expanded(
-                    DialogTextField(
-                      controller: itemBarcode,
-                      keyboardType: TextInputType.text,
-                      labelText: "Barcode",
-                    ),
+          content: Container(
+            width: MediaQuery.of(context).size.width * 1.8,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 10,),
+                  DialogTextField(
+                    controller: itemName,
+                    keyboardType: TextInputType.name,
+                    labelText: "Item Name",
+                  ),
+                  const SizedBox(height: 10,),
+                  DialogTextField(
+                    controller: itemWeight,
+                    keyboardType: TextInputType.name,
+                    labelText: "Weight",
+                  ),
+                  const SizedBox(height: 10,),
+                  DialogTextField(
+                    controller: itemVolume,
+                    keyboardType: TextInputType.name,
+                    labelText: "Volume",
+                  ),
+                  const SizedBox(height: 10,),
+                  // Row(
+                    // children: [
+                      // Expanded(
+                        DialogTextField(
+                          controller: itemBarcode,
+                          keyboardType: TextInputType.text,
+                          labelText: "Barcode",
+                        ),
+                      // ),
+                      // const SizedBox(width: 2,),
+                      // Expanded(
+                        TextButton(
+                          onPressed: () {
+                            _openBarcodeScanner();
+                          },
+                          child: const Text("Scan")
+                          ),
+                      // )
+                    // ],
                   // ),
-                  // const SizedBox(width: 2,),
-                  // Expanded(
-                    TextButton(
-                      onPressed: () {
-                        _openBarcodeScanner();
-                      },
-                      child: const Text("Scan")
-                      ),
-                  // )
-                // ],
-              // ),
-            ],
+                ],
+              ),
+            ),
           ),
           actions: <Widget>[
             TextButton(
