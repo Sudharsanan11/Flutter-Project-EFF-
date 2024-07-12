@@ -18,7 +18,7 @@ class CollectionRequestForm extends StatefulWidget {
 
 class _CollectionRequestFormState extends State<CollectionRequestForm> {
 
-  TextEditingController consignor = TextEditingController();
+  final TextEditingController consignor = TextEditingController();
   final TextEditingController consignee = TextEditingController();
   final TextEditingController location = TextEditingController();
   TextEditingController date = TextEditingController();

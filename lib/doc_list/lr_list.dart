@@ -1,6 +1,7 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/forms/collection_request_form.dart';
+import 'package:erpnext_logistics_mobile/forms/lr_form.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/form_view.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
@@ -93,7 +94,7 @@ class _LRListState extends State<LRList> {
         child: const Icon(Icons.add),
         onPressed: () {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => CollectionRequestForm()));
+          MaterialPageRoute(builder: (context) => LrForm()));
         },
       ),
       bottomNavigationBar: const BottomNavigation(),

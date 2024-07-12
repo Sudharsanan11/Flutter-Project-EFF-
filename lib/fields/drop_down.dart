@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DropDown extends StatelessWidget {
   final String labelText;
   final List<String> items;
-  final String? selectedItem;
+  final dynamic selectedItem;
   final ValueChanged<String?> onChanged;
 
   const DropDown({

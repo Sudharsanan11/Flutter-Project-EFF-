@@ -1,4 +1,6 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
+import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
 import 'package:erpnext_logistics_mobile/fields/dotted_input.dart';
@@ -34,6 +36,117 @@ class _LrFormState extends State<LrForm> {
   String? selectedLrType;
   List<Map<String, String>> items = [];
 
+  Future<void> _showItemDialog({dynamic item, int? index}) async {
+    itemName.text = item?['item_code'] ?? "";
+    itemWeight.text = item?['item_weight'] ?? "";
+    itemVolume.text = item?['item_vloume'] ?? "";
+    itemBarcode.text = item?['item_barcode'] ?? "";
+
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(item == null ? 'Add Item' : 'Edit Item'),
+          content: Column(
+            children: [
+              const SizedBox(height: 10,),
+              DialogTextField(
+                controller: itemName,
+                keyboardType: TextInputType.name,
+                labelText: "Item Name",
+              ),
+              const SizedBox(height: 10,),
+              DialogTextField(
+                controller: itemWeight,
+                keyboardType: TextInputType.name,
+                labelText: "Weight",
+              ),
+              const SizedBox(height: 10,),
+              DialogTextField(
+                controller: itemVolume,
+                keyboardType: TextInputType.name,
+                labelText: "Volume",
+              ),
+              const SizedBox(height: 10,),
+              // Row(
+                // children: [
+                  // Expanded(
+                    DialogTextField(
+                      controller: itemBarcode,
+                      keyboardType: TextInputType.text,
+                      labelText: "Barcode",
+                    ),
+                  // ),
+                  // const SizedBox(width: 2,),
+                  // Expanded(
+                    TextButton(
+                      onPressed: () {
+                        _openBarcodeScanner();
+                      },
+                      child: const Text("Scan")
+                      ),
+                  // )
+                // ],
+              // ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(item == null ? 'Cancel' : 'Delete'),
+              onPressed: () {
+                if(item == null){
+                  Navigator.of(context).pop();
+                }
+                else {
+                  setState(() {  
+                  // items.removeWhere((item) => item.length == index);
+                  items.remove(item);
+                  });
+                  Navigator.of(context).pop();
+                }
+              }
+            ),
+            TextButton(
+              child: Text(item == null ? 'Add' : 'Save'),
+              onPressed: () {
+                if(item == null) {
+                  setState(() {
+                  items.add(
+                    {"item_code" : itemName.text,
+                     "item_weight" : itemWeight.text,
+                     "item_volume" : itemVolume.text,
+                     "item_barcode" : itemBarcode.text,
+                     }
+                  );
+                  });
+                  itemName.clear();
+                  itemWeight.clear();
+                  itemVolume.clear();
+                  itemBarcode.clear();
+                  Navigator.of(context).pop();
+                }
+                else {
+                  setState(() {
+                    items[index!]["item_code"] = itemName.text;
+                    items[index]["item_weight"] = itemWeight.text;
+                    items[index]["item_volume"] = itemVolume.text;
+                    items[index]["item_barcode"] = itemBarcode.text;
+                  });
+                  itemName.clear();
+                  itemWeight.clear();
+                  itemVolume.clear();
+                  itemBarcode.clear();
+                  Navigator.of(context).pop();
+                }
+              },
+            )
+          ]
+        );
+      }
+    );
+  }
+
   void submitData() {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       // Form is valid, proceed with submission logic
@@ -42,6 +155,21 @@ class _LrFormState extends State<LrForm> {
       // Form is invalid, display validation errors
       print("Validation failed");
     }
+  }
+
+  void _openBarcodeScanner() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BarcodeScanner(
+          onScanResult: (scanResult) {
+            setState(() {
+              itemBarcode.text = scanResult;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void addItem() {
@@ -94,7 +222,7 @@ class _LrFormState extends State<LrForm> {
                       ),
                       const SizedBox(height: 15),
                       GestureDetector(
-                        onTap: () => const BarcodeScanner(),
+                        onTap: () => _openBarcodeScanner(),
                         child: AbsorbPointer(
                           child: FieldText(
                             controller: itemBarcode,
@@ -105,6 +233,12 @@ class _LrFormState extends State<LrForm> {
                         ),
                       ),
                       const SizedBox(height: 15),
+                      FieldText(
+                      controller: freight,
+                      labelText: 'Freight',
+                      keyboardType: TextInputType.number,
+                      obscureText: false),
+                      const SizedBox(height: 25),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -249,75 +383,142 @@ class _LrFormState extends State<LrForm> {
                       obscureText: false,
                       readOnly: true),
                   const SizedBox(height: 25),
-                  GestureDetector(
-                    onTap: () => _showItemForm(context),
-                    child: const AbsorbPointer(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 25.0, vertical: 3.0),
-                        child: DottedInput(
-                          labelText: 'Items',
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Items',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16.0,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Icon(
-                                Icons.add,
-                                color: Colors.grey,
-                                size: 30,
-                              ),
-                            ],
+                  // GestureDetector(
+                  //   onTap: () => _showItemForm(context),
+                  //   child: const AbsorbPointer(
+                  //     child: Padding(
+                  //       padding: EdgeInsets.symmetric(
+                  //           horizontal: 25.0, vertical: 3.0),
+                  //       child: DottedInput(
+                  //         labelText: 'Items',
+                  //         child: Column(
+                  //           mainAxisAlignment: MainAxisAlignment.center,
+                  //           children: [
+                  //             Text(
+                  //               'Items',
+                  //               style: TextStyle(
+                  //                 color: Colors.grey,
+                  //                 fontSize: 16.0,
+                  //               ),
+                  //             ),
+                  //             SizedBox(height: 2),
+                  //             Icon(
+                  //               Icons.add,
+                  //               color: Colors.grey,
+                  //               size: 30,
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 25),
+                  // if (items.isNotEmpty)
+                  //     GridView.builder(
+                  //       shrinkWrap: true,
+                  //       physics: const NeverScrollableScrollPhysics(),
+                  //       gridDelegate:
+                  //           const SliverGridDelegateWithFixedCrossAxisCount(
+                  //         crossAxisCount: 2,
+                  //         childAspectRatio: 2,
+                  //       ),
+                  //       itemCount: items.length,
+                  //       itemBuilder: (context, index) {
+                  //         final item = items[index];
+                  //         return Container(
+                  //           margin: const EdgeInsets.all(8.0),
+                  //           decoration: BoxDecoration(
+                  //             border: Border.all(
+                  //               color: Colors.grey,
+                  //               style: BorderStyle.solid,
+                  //             ),
+                  //             borderRadius: BorderRadius.circular(10.0),
+                  //           ),
+                  //           child: Padding(
+                  //             padding: const EdgeInsets.all(8.0),
+                  //             child: Column(
+                  //               crossAxisAlignment: CrossAxisAlignment.start,
+                  //               children: [
+                  //                 Text('Name: ${item['name']}'),
+                  //                 Text('Weight: ${item['weight']}'),
+                  //                 Text('Volume: ${item['volume']}'),
+                  //                 Text('Barcode: ${item['barcode']}'),
+                  //               ],
+                  //             ),
+                  //           ),
+                  //         );
+                  //       },
+                  //     ),
+                  //   const SizedBox(height: 25),
+                  //   MyButton(onTap: submitData, name: 'Submit'),
+                  const SizedBox(height: 10,),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
+                    Text("Items"),
+                    ElevatedButton(
+                      child: Icon(Icons.add),
+                      onPressed: () {
+                        _showItemDialog();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+                if (items.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                    child: Column(
+                      children: [
+                        DottedBorder(
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12.0),
+                          strokeWidth: 1,
+                          dashPattern: const [8,4],
+                          color: Colors.black,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
+                            child: const Center(
+                              child: Text("No Items Found"),
+                            )
                           ),
-                        ),
-                      ),
+                        )
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 25),
-                  if (items.isNotEmpty)
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2,
-                        ),
+                if (items.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      child: ListView.builder(
                         itemCount: items.length,
                         itemBuilder: (context, index) {
-                          final item = items[index];
-                          return Container(
-                            margin: const EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                                style: BorderStyle.solid,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(width: 1, color: Colors.black),
+                                borderRadius: BorderRadius.circular(10),
+                                shape: BoxShape.rectangle,
                               ),
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Name: ${item['name']}'),
-                                  Text('Weight: ${item['weight']}'),
-                                  Text('Volume: ${item['volume']}'),
-                                  Text('Barcode: ${item['barcode']}'),
-                                ],
+                              child: ListTile(
+                                title: Text(items[index]["item_code"].toString()),
+                                onTap: () {
+                                  _showItemDialog(item: items[index], index: index);
+                                },
                               ),
                             ),
                           );
                         },
                       ),
-                    const SizedBox(height: 25),
-                    MyButton(onTap: submitData, name: 'Submit'),
+                    ),
+                  ),
                 ],
               ),
             ),
