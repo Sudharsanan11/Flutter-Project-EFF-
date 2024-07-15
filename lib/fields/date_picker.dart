@@ -5,6 +5,8 @@ import 'package:flutter_holo_date_picker/widget/date_picker_widget.dart';
 
 
 class DateWidget extends StatefulWidget {
+  const DateWidget({super.key});
+
   @override
   _DateWidgetState createState() => _DateWidgetState();
 }

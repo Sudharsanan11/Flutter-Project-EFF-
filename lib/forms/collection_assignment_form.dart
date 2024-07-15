@@ -1,10 +1,9 @@
 import 'package:dotted_border/dotted_border.dart';
+import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
-import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
+import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:get/get_rx/get_rx.dart';
 
 class CollectionAssignmentForm extends StatefulWidget {
   const CollectionAssignmentForm({super.key});
@@ -30,6 +29,8 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
   String? orderVia;
   List<Map<String, String>> items = [];
   String? status;
+
+  void submitData() {}
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     collectionRequest.text = item?['collection_request'] ?? "";
@@ -214,7 +215,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                 if (items.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                    child: Container(
+                    child: SizedBox(
                       height: 200, // Set a fixed height for the ListView
                       child: ListView.builder(
                         itemCount: items.length,
@@ -240,10 +241,12 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                     ),
                   ),
                   const SizedBox(height: 40,),
+                  MyButton(onTap: submitData, name: "Submit")
             ],
             ),
         ),
       ),
+      bottomNavigationBar: const BottomNavigation(),
     );
   }
 }

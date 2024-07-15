@@ -5,7 +5,7 @@ import "package:flutter/material.dart";
 class FormView extends StatelessWidget {
   final String itemName;
 
-  FormView({required this.itemName});
+  const FormView({super.key, required this.itemName});
 
   @override
   Widget build(BuildContext context) {

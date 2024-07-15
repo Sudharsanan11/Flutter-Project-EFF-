@@ -10,8 +10,8 @@ class BottomNavigation extends StatefulWidget {
 }
 
 class _BottomNavigationState extends State<BottomNavigation> {
-  int index;
-  _BottomNavigationState({this.index = 0});
+  int index = 0;
+  // _BottomNavigationState();
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +36,11 @@ class _BottomNavigationState extends State<BottomNavigation> {
         });
         if(currentIndex == 0) {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context)=> EFF()));
+          MaterialPageRoute(builder: (context)=> const EFF()));
         }
         else if(currentIndex == 1) {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context)=> Profile()));
+          MaterialPageRoute(builder: (context)=> const Profile()));
         }
       },);
   }

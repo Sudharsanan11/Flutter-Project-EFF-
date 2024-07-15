@@ -2,7 +2,6 @@ import "package:erpnext_logistics_mobile/doc_list/collection_assignment_list.dar
 import "package:erpnext_logistics_mobile/doc_list/collection_request_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/gdm_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/lr_list.dart";
-import "package:erpnext_logistics_mobile/modules/form_view.dart";
 import "package:flutter/material.dart";
 // import "package:erpnext_logistics_mobile/modules/doc_list.dart";
 
@@ -44,12 +43,17 @@ class _AppDrawerState extends State<AppDrawer> {
       child: SafeArea(
         child: Column(
           children: <Widget>[
+            const UserAccountsDrawerHeader(
+              accountName: Text(""),
+              accountEmail: Text("EFF Logistics", style: TextStyle(fontSize: 25), textAlign: TextAlign.end,),
+              decoration: BoxDecoration(color: Colors.grey,),
+            ),
             ListTile(
               title: const Text("Collection Request"),
               leading: const Icon(Icons.file_copy),
               onTap: () {
                 Navigator.push(context,
-                MaterialPageRoute(builder: (context) => CollectionRequestList()));
+                MaterialPageRoute(builder: (context) => const CollectionRequestList()));
               },
             ),
             ListTile(
@@ -57,7 +61,7 @@ class _AppDrawerState extends State<AppDrawer> {
               leading: const Icon(Icons.list),
               onTap: () {
                 Navigator.push(context,
-                MaterialPageRoute(builder: (context) => CollectionAssignmentList()));
+                MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
               },
             ),
             ListTile(
@@ -65,15 +69,15 @@ class _AppDrawerState extends State<AppDrawer> {
               leading: const Icon(Icons.format_list_bulleted),
               onTap: () {
                 Navigator.push(context,
-                MaterialPageRoute(builder: (context) => LRList(),));
+                MaterialPageRoute(builder: (context) => const LRList(),));
               },
             ),
             ListTile(
               title: const Text("GDM"),
-              leading: Icon(Icons.local_shipping),
+              leading: const Icon(Icons.local_shipping),
               onTap: () {
                 Navigator.push(context,
-                MaterialPageRoute(builder: (context) => GdmList()));
+                MaterialPageRoute(builder: (context) => const GdmList()));
               },
             ),
           ],

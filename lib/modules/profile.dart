@@ -31,7 +31,7 @@ class _ProfileState extends State<Profile>
         title: const Text('Profile'),
       ),
       body: Center(
-        child: Container(
+        child: SizedBox(
           width: 200,
           height: 200,
           child: CircularProgressIndicator(
@@ -47,7 +47,7 @@ class _ProfileState extends State<Profile>
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: BottomNavigation(),
+      bottomNavigationBar: const BottomNavigation(),
     );
   }
 }

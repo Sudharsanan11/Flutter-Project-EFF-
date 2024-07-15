@@ -21,7 +21,7 @@ class _CollectionRequestListState extends State<CollectionRequestList> {
   void initState() {
     super.initState();
     data = fetchData();
-    print("data : ${data}");
+    print("data : $data");
   }
 
   Future<List<Map<String, String>>> fetchData () async{
@@ -55,7 +55,7 @@ class _CollectionRequestListState extends State<CollectionRequestList> {
           )
         ],
       ),
-      drawer: AppDrawer(),
+      drawer: const AppDrawer(),
       body: FutureBuilder<List<Map<String, String>>>(
         future: data,
         builder: (context, snapshot){
@@ -92,7 +92,7 @@ class _CollectionRequestListState extends State<CollectionRequestList> {
         child: const Icon(Icons.add),
         onPressed: () {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => CollectionRequestForm()));
+          MaterialPageRoute(builder: (context) => const CollectionRequestForm()));
         },
       ),
       bottomNavigationBar: const BottomNavigation(),

@@ -4,9 +4,8 @@ import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
-import 'package:erpnext_logistics_mobile/fields/dotted_input.dart';
+import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 
@@ -50,7 +49,7 @@ class _LrFormState extends State<LrForm> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(item == null ? 'Add Item' : 'Edit Item'),
-          content: Container(
+          content: SizedBox(
             width: MediaQuery.of(context).size.width * 1.8,
             child: SingleChildScrollView(
               child: Column(
@@ -314,9 +313,9 @@ class _LrFormState extends State<LrForm> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                        Text("Items"),
+                        const Text("Items"),
                         ElevatedButton(
-                          child: Icon(Icons.add),
+                          child: const Icon(Icons.add),
                           onPressed: () {
                             _showItemDialog();
                           },
@@ -349,7 +348,7 @@ class _LrFormState extends State<LrForm> {
                     if (items.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                      child: Container(
+                      child: SizedBox(
                         height: 200, // Set a fixed height for the ListView
                         child: ListView.builder(
                           itemCount: items.length,
@@ -374,12 +373,14 @@ class _LrFormState extends State<LrForm> {
                       ),
                     ),
                   ),
+                  MyButton(onTap: submitData, name: "Submit")
                 ],
               ),
             ),
           ),
         ),
       ),
+      bottomNavigationBar: const BottomNavigation(),
     );
   }
 }

@@ -5,7 +5,7 @@ class DateField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   
-  DateField({super.key,
+  const DateField({super.key,
   required this.controller,
   required this.labelText,});
 
