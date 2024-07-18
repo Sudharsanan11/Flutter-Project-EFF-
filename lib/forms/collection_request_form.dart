@@ -1,9 +1,13 @@
 import 'package:dotted_border/dotted_border.dart';
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
+import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
+import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 
 
@@ -27,23 +31,95 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   final TextEditingController itemName = TextEditingController();
   final TextEditingController itemWeight = TextEditingController();
   final TextEditingController itemVolume = TextEditingController();
-  final TextEditingController itemBarcode = TextEditingController();
+
+  List<String> consignorList = [];
+  List<String> locationList = [];
+
+  final List<String> options = <String>[
+    'Apple',
+    'Banana',
+    'Cherry',
+    'Date',
+    'Elderberry',
+    'Fig',
+    'Grape',
+    'Honeydew',
+  ];
 
   List<Map<String, String>> items = [];
+  // final response = "";
 
   @override
   void initState () {
     super.initState();
-    status.text = "Open";
+    fetchConsignor();
+    fetchLocation();
+    print("fetch Consignor");
+    print(fetchConsignor());
+    setState(() {
+      // consignorList = fetchConsignor();
+    });
   }
 
-  void submitData() {}
+  // void submitData() {}
+  Future<String> submitData () async{
+    print("submit");
+    final ApiService apiService = ApiService();
+    final data = {
+      "consignor": consignor.text,
+      "consignee": consignee.text,
+      "location": location.text,
+      "vehicle_required_date": date.text,
+      "required_time": timePicker.text,
+      "items": items,
+    };
+    try {
+      return await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionRequest, data);
+    }
+    catch (error) {
+      print(error);
+      return "Error: Failed to submit data";
+    }
+
+  }
+
+  Future<List<String>> fetchConsignor() async {
+    final ApiService apiService = ApiService();
+    // String consignorFilter = '?filters=[["custom_party_type","=","Consignor"]]';
+    final body = {
+      "doctype" : "Customer",
+      "filters" : [["custom_party_type","=","Consignor"]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<List<String>> fetchLocation () async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype" : "Location",
+      // "filters" : [["is_warehouse","=","1"]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
     itemWeight.text = item?['item_weight'] ?? "";
     itemVolume.text = item?['item_vloume'] ?? "";
-    itemBarcode.text = item?['item_barcode'] ?? "";
 
 
     await showDialog<void>(
@@ -103,14 +179,12 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     {"item_code" : itemName.text,
                      "item_weight" : itemWeight.text,
                      "item_volume" : itemVolume.text,
-                     "item_barcode" : itemBarcode.text,
                      }
                   );
                   });
                   itemName.clear();
                   itemWeight.clear();
                   itemVolume.clear();
-                  itemBarcode.clear();
                   Navigator.of(context).pop();
                 }
                 else {
@@ -118,12 +192,10 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     items[index!]["item_code"] = itemName.text;
                     items[index]["item_weight"] = itemWeight.text;
                     items[index]["item_volume"] = itemVolume.text;
-                    items[index]["item_barcode"] = itemBarcode.text;
                   });
                   itemName.clear();
                   itemWeight.clear();
                   itemVolume.clear();
-                  itemBarcode.clear();
                   Navigator.of(context).pop();
                 }
               },
@@ -172,24 +244,70 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
           child: Column(
             children: <Widget>[
               const SizedBox(height: 10,),
-              FieldText(
-                controller: consignor,
-                labelText: "Consignor",
-                keyboardType: TextInputType.name,
+              FutureBuilder<List<String>>(
+                future: fetchConsignor(),
+                builder: (context, snapshot) { 
+                  if(snapshot.hasError) {
+                    return AutoComplete(
+                      hintText: 'Consignor Name',
+                      onSelected: (String selection) {
+                        print('You selected: $selection');
+                      },
+                      options: consignorList,
+                    );
+                  }
+                  else if (snapshot.hasData) {
+                    consignorList = snapshot.data!;
+                    return AutoComplete(
+                      hintText: 'Consignor Name',
+                      onSelected: (String selection) {
+                        print('You selected: $selection');
+                      },
+                      options: consignorList,
+                    );
+                  } else {
+                    return Text("");
+                  }
+                },
               ),
               const SizedBox(height: 10.0,),
-              FieldText(
-                controller: location,
-                labelText: "Location",
-                keyboardType: TextInputType.text
+              FutureBuilder<List<String>>(
+                future: fetchLocation(),
+                builder: (context, snapshot) {
+                  if(snapshot.hasError) {
+                    return AutoComplete(
+                      hintText: 'Location',
+                      onSelected: (String selection) {
+                        print('You selected: $selection');
+                      },
+                      options: locationList,
+                    );
+                  }
+                  else if (snapshot.hasData) {
+                    locationList = snapshot.data!;
+                    return AutoComplete(
+                      hintText: 'Location',
+                      onSelected: (String selection) {
+                        print('You selected: $selection');
+                      },
+                      options: locationList,
+                    );
+                  } else {
+                    return Text("");
+                  }
+                },
               ),
               const SizedBox(height: 10.0,),
+              
+              // AutoComplete(hintText: 'Type something',onSelected: (String selection) {
+              //   print('You selected: $selection'); },options: options,),
               // FieldText(
               //   controller: consignor,
               //   labelText: "Vehicle Required Date",
               //   obscureText: false,
               //   keyboardType: TextInputType.text
               // ),
+              const SizedBox(height: 10.0,),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 25.0,
@@ -244,35 +362,34 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                 ),
               ),
               const SizedBox(height: 10.0,),
-              FieldText(
-                controller: status,
-                labelText: "Status",
-                readOnly: true,
-                keyboardType: TextInputType.text,
-              ),
-              const SizedBox(height: 10.0,),
-              FieldText(
-                controller: no_of_pcs,
-                labelText: "No. of Pcs",
-                readOnly: true,
-                keyboardType: TextInputType.none
-              ),
+              // FieldText(
+              //   controller: status,
+              //   labelText: "Status",
+              //   readOnly: true,
+              //   keyboardType: TextInputType.text,
+              // ),
+              // const SizedBox(height: 10.0,),
+              // FieldText(
+              //   controller: no_of_pcs,
+              //   labelText: "No. of Pcs",
+              //   readOnly: true,
+              //   keyboardType: TextInputType.none
+              // ),
               const SizedBox(height: 10.0,),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                      const Text("Items"),
-                      ElevatedButton(
-                        child: const Icon(Icons.add),
-                        onPressed: () {
-                          _showItemDialog();
-                        },
-                      ),
-                    ],
-                )
+                  children: [
+                    const Text("Items"),
+                    ElevatedButton(
+                      child: const Icon(Icons.add),
+                      onPressed: () {
+                        _showItemDialog();
+                      },
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               if (items.isEmpty)
@@ -284,19 +401,23 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                         borderType: BorderType.RRect,
                         radius: const Radius.circular(12.0),
                         strokeWidth: 1,
-                        dashPattern: const [8,4],
+                        dashPattern: const [8, 4],
                         color: Colors.black,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
                           child: const Center(
                             child: Text("No Items Found"),
-                          )
+                          ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
-                if (items.isNotEmpty)
+              if (items.isEmpty)
+                const SizedBox(height: 15.0),
+              if (items.isEmpty)
+                MyButton(onTap: submitData, name: "Submit"),
+              if (items.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
                   child: SizedBox(
@@ -317,15 +438,17 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                               onTap: () {
                                 _showItemDialog(item: items[index], index: index);
                               },
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 15.0,),
-              MyButton(onTap: submitData, name: "Submit")
+              if (items.isNotEmpty)
+                const SizedBox(height: 15.0),
+              if (items.isNotEmpty)
+                MyButton(onTap: submitData, name: "Submit"),
             ]
           ),
         ),

@@ -33,5 +33,55 @@ class ApiService {
       throw Exception('Failed to load resources');
     }
   }
+
+  Future<List<String>> getLinkedNames(String resource, Object body) async {
+    print(resource);
+    print(body);
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    String api = manager.getString("api")!;
+    String secret = manager.getString("secret")!;
+    final response = await http.post(
+      Uri.parse(ApiEndpoints.baseUrl+resource),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'token $api:$secret',
+      },
+      body: json.encode(body),
+    );
+    if(response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      List<dynamic> data = jsonResponse['message'];
+      print("Consignor");
+      print(data);
+      List<String> list = data.map((item) => item['name'].toString()).toList();
+      print("list");
+      print(list);
+      return list;
+      // return data.map((item) => item['name']).toList();
+    }
+    else {
+      throw Exception('Failed to load linked names');
+    }
+  }
+
+  Future<String> createDocument(String endpoint, Object body) async {
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    String api = manager.getString("api")!;
+    String secret = manager.getString("secret")!;
+    final response = await http.post(
+      Uri.parse(ApiEndpoints.baseUrl+endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'token $api:$secret',
+      },
+      body: json.encode(body),
+    );
+    if(response.statusCode == 200) {
+      return "Document Created Successfully";
+    }
+    else {
+      throw Exception('Failed to create document');
+    }
+  }
 }
 
