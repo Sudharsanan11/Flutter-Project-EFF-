@@ -39,7 +39,7 @@ class _AppDrawerState extends State<AppDrawer> {
     //   ),
     // );
     return Drawer(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           children: <Widget>[

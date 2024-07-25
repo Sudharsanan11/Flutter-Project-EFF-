@@ -28,7 +28,6 @@ class _LoginPageState extends State<LoginPage> {
       final String url =
           ApiEndpoints.baseUrl + ApiEndpoints.authEndpoints.loginEmail;
 
-
       try {
         final response = await http.post(
           Uri.parse(url),
@@ -89,17 +88,20 @@ class _LoginPageState extends State<LoginPage> {
                   const Icon(
                     Icons.lock,
                     size: 100,
+                    color: Colors.black,
                   ),
                   const SizedBox(height: 50),
                   const Text(
                     "Welcome to EFF!",
                     style: TextStyle(
                       fontSize: 16,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 50),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25.0, vertical: 3.0),
                     child: TextFormField(
                       controller: usernameController,
                       obscureText: false,
@@ -126,7 +128,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 50),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25.0, vertical: 3.0),
                     child: TextFormField(
                       controller: passwordController,
                       obscureText: true,

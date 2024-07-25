@@ -223,6 +223,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Collection Request'),
@@ -240,6 +242,12 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return AutoComplete(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Consignor name is required";
+                        }
+                        return null;
+                      },
                       hintText: 'Consignor Name',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -249,6 +257,12 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   } else if (snapshot.hasData) {
                     consignorList = snapshot.data!;
                     return AutoComplete(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Consignor name required";
+                        }
+                        return null;
+                      },
                       hintText: 'Consignor Name',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -268,6 +282,12 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return AutoComplete(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Time is required";
+                        }
+                        return null;
+                      },
                       hintText: 'Location',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -277,6 +297,12 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   } else if (snapshot.hasData) {
                     locationList = snapshot.data!;
                     return AutoComplete(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Location is required";
+                        }
+                        return null;
+                      },
                       hintText: 'Location',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -284,7 +310,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                       options: locationList,
                     );
                   } else {
-                    return Text("");
+                    return const Text("");
                   }
                 },
               ),
@@ -301,20 +327,23 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     if (value == null || value.isEmpty) {
                       return "Date is required";
                     }
-                    return null; // Added return statement
+                    return null;
                   },
                   readOnly: true,
                   decoration: InputDecoration(
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
                     ),
-                    fillColor: Colors.white,
+                    fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     filled: true,
                     labelText: "Vehicle Date",
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    labelStyle: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[600]),
                   ),
                   onTap: () {
                     _showDatePicket(context);
@@ -334,20 +363,23 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     if (value == null || value.isEmpty) {
                       return "Time is required";
                     }
-                    return null; // Added return statement
+                    return null;
                   },
                   readOnly: true,
                   decoration: InputDecoration(
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
                     ),
-                    fillColor: Colors.white,
+                    fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     filled: true,
                     labelText: "Required Time",
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    labelStyle: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[600]),
                   ),
                   onTap: () {
                     _showTimePicker(context);
@@ -376,8 +408,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
               const SizedBox(height: 10),
               if (items.isEmpty)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 25.0, vertical: 3.0),
                   child: Column(
                     children: [
                       DottedBorder(
@@ -385,7 +417,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                         radius: const Radius.circular(12.0),
                         strokeWidth: 1,
                         dashPattern: const [8, 4],
-                        color: Colors.black,
+                        color: isDarkMode ? Colors.white : Colors.black,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 25.0, vertical: 20.0),
@@ -398,15 +430,18 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   ),
                 ),
               if (items.isEmpty) const SizedBox(height: 15.0),
-              if (items.isEmpty) MyButton(onTap: () {
-                if (_formKey.currentState?.validate() ?? false) {
-                  submitData();
-                }
-              }, name: "Submit"),
+              if (items.isEmpty)
+                MyButton(
+                    onTap: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        submitData();
+                      }
+                    },
+                    name: "Request"),
               if (items.isNotEmpty)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 17.0, vertical: 3.0),
                   child: SizedBox(
                     height: 200,
                     child: ListView.builder(
@@ -416,14 +451,18 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                           padding: const EdgeInsets.symmetric(vertical: 10.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(width: 1, color: Colors.black),
+                              border: Border.all(
+                                  width: 1,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black),
                               borderRadius: BorderRadius.circular(10),
                               shape: BoxShape.rectangle,
                             ),
                             child: ListTile(
                               title: Text(items[index]["item_code"].toString()),
                               onTap: () {
-                                _showItemDialog(item: items[index], index: index);
+                                _showItemDialog(
+                                    item: items[index], index: index);
                               },
                             ),
                           ),
@@ -433,11 +472,14 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   ),
                 ),
               if (items.isNotEmpty) const SizedBox(height: 15.0),
-              if (items.isNotEmpty) MyButton(onTap: () {
-                if (_formKey.currentState?.validate() ?? false) {
-                  submitData();
-                }
-              }, name: "Submit"),
+              if (items.isNotEmpty)
+                MyButton(
+                    onTap: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        submitData();
+                      }
+                    },
+                    name: "Submit"),
             ]),
           ),
         ),

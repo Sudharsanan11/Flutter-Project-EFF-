@@ -24,18 +24,18 @@ class _LRListState extends State<LRList> {
     print(data);
   }
 
-  Future<List<Map<String, String>>> fetchData () async {
+  Future<List<Map<String, String>>> fetchData() async {
     final ApiService apiService = ApiService();
     String fields = '?fields=["name","consignor"]';
 
     try {
-      return await apiService.getresources(ApiEndpoints.authEndpoints.lrList + fields);
+      return await apiService
+          .getresources(ApiEndpoints.authEndpoints.lrList + fields);
+    } catch (e) {
+      throw ('Error $e');
     }
-    catch (e) {
-      throw('Error $e');
-    }
-
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,32 +44,34 @@ class _LRListState extends State<LRList> {
         centerTitle: true,
         actions: [
           FutureBuilder<List<Map<String, String>>>(
-            future: data,
-            builder: (context, snapshot) {
+              future: data,
+              builder: (context, snapshot) {
                 return IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {
-                    showSearch(context: context, delegate: CustomSearchBar(snapshot.data!));
+                    showSearch(
+                        context: context,
+                        delegate: CustomSearchBar(snapshot.data!));
                   },
                 );
-              }
-          )
+              })
         ],
       ),
       drawer: const AppDrawer(),
       body: FutureBuilder<List<Map<String, String>>>(
         future: data,
-        builder: (context, snapshot){
-          if(snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          }
-          else if(snapshot.hasError) {
-            return Center(child: Text("Error : ${snapshot.error}"),);
-          }
-          else if(!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No Data Found"),);
-          }
-          else {
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text("Error : ${snapshot.error}"),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text("No Data Found"),
+            );
+          } else {
             return ListView.builder(
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
@@ -79,8 +81,11 @@ class _LRListState extends State<LRList> {
                   title: Text(item['key1']!),
                   subtitle: Text(item['key2']!),
                   onTap: () {
-                    Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => FormView(itemName: item['key1']!)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                FormView(itemName: item['key1']!)));
                   },
                 );
               },
@@ -89,11 +94,14 @@ class _LRListState extends State<LRList> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.grey,
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
         onPressed: () {
-          Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const LrForm()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => const LrForm()));
         },
       ),
       bottomNavigationBar: const BottomNavigation(),
