@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:erpnext_logistics_mobile/Authentication/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const EFF(),
+          home: const LoginPage(),
         );
       },
     );

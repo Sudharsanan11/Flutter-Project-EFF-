@@ -49,9 +49,11 @@ class _LoginPageState extends State<LoginPage> {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('api', responseData['message']['api_key']);
           prefs.setString('secret', responseData['message']['api_secret']);
+          prefs.setString('full_name', responseData['message']['full_name']);
 
           print('Session token: ${prefs.getString('api')}');
           print('Session token: ${prefs.getString('secret')}');
+          print('Full Name: ${prefs.getString('full_name')}');
 
           Navigator.pushReplacement(
             context,
@@ -160,9 +162,12 @@ class _LoginPageState extends State<LoginPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text(
-                          'Forgot Password?',
-                          style: TextStyle(color: Colors.grey[600]),
+                        TextButton(
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          onPressed: () {},
                         ),
                       ],
                     ),
@@ -180,12 +185,13 @@ class _LoginPageState extends State<LoginPage> {
                         'Not a user?',
                         style: TextStyle(color: Colors.grey[700]),
                       ),
+                      TextButton(
+                        child: const Text("Register Now", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),),
+                        onPressed: () {
+                          // Navigator.of(context).pop();
+                        },
+                      ),
                       const SizedBox(width: 4),
-                      const Text(
-                        'Register now',
-                        style: TextStyle(
-                            color: Colors.blue, fontWeight: FontWeight.bold),
-                      )
                     ],
                   )
                 ],
