@@ -13,4 +13,10 @@ class _AuthEndPoints {
   final String lrList = '/api/resource/LR';
   final String gdmList = '/api/resource/GDM';
   final String createCollectionRequest = '/api/resource/Collection Request';
+  final String createCollectionAssignment = '/api/resource/Collection Assignment';
+  final String createLR = '/api/resource/LR';
+  final String getCollectionRequest = '/api/resource/Collection Request/';
+  final String getCollectionAssignment = '/api/resource/Collection Assignment/';
+  final String getLR = '/api/resource/LR/';
+  final String getGDM = '/api/resource/GDM/';
 }

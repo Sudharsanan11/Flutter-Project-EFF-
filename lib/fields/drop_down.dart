@@ -5,6 +5,7 @@ class DropDown extends StatelessWidget {
   final List<String> items;
   final String? selectedItem;
   final ValueChanged<String?> onChanged;
+  final TextEditingController controller;
 
   const DropDown({
     super.key,
@@ -12,6 +13,7 @@ class DropDown extends StatelessWidget {
     required this.items,
     required this.selectedItem,
     required this.onChanged,
+    required this.controller,
   });
 
   @override
@@ -50,7 +52,10 @@ class DropDown extends StatelessWidget {
             ),
           );
         }).toList(),
-        onChanged: onChanged,
+        onChanged: (String? newValue) {
+          onChanged(newValue);
+          controller.text = newValue ?? "";
+        },
         dropdownColor: isDarkMode ? Colors.black54 : Colors.white,
         value: selectedItem,
       ),

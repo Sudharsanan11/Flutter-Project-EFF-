@@ -1,8 +1,8 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
 import 'package:erpnext_logistics_mobile/forms/collection_assignment_form.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
-import 'package:erpnext_logistics_mobile/modules/form_view.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:flutter/material.dart';
@@ -64,15 +64,14 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text("Error : ${snapshot.error}"),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text("No Data Found"),
-            );
-          } else {
+          }
+          else if(snapshot.hasError) {
+            return const Center(child: Text("No Data Found"),);
+          }
+          else if(!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No Data Found"),);
+          }
+          else {
             return ListView.builder(
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
@@ -82,11 +81,8 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
                   title: Text(item['key1']!),
                   subtitle: Text(item['key2']!),
                   onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                FormView(itemName: item['key1']!)));
+                    Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: item['key1']!)));
                   },
                 );
               },

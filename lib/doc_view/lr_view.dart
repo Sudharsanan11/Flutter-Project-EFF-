@@ -3,6 +3,7 @@ import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
+import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
@@ -11,14 +12,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 
-class LrForm extends StatefulWidget {
-  const LrForm({super.key});
+class LRView extends StatefulWidget {
+  final String name;
+  const LRView({super.key, required this.name});
 
   @override
-  State<LrForm> createState() => _LrFormState();
+  State<LRView> createState() => _LRViewState();
 }
 
-class _LrFormState extends State<LrForm> {
+class _LRViewState extends State<LRView> {
   final _formKey = GlobalKey<FormBuilderState>();
   final TextEditingController collectionRequest = TextEditingController();
   final TextEditingController logsheet = TextEditingController();
@@ -37,10 +39,12 @@ class _LrFormState extends State<LrForm> {
   final TextEditingController itemWeight = TextEditingController();
   final TextEditingController itemVolume = TextEditingController();
   final TextEditingController itemBarcode = TextEditingController();
+  final TextEditingController selectedLrType = TextEditingController();
 
 
-  String? selectedLrType;
+  // String? selectedLrType;
   List<Map<String, String>> items = [];
+  int zero = 0;
 
   List<String> requestList = [];
   List<String> logsheetList = [];
@@ -48,6 +52,12 @@ class _LrFormState extends State<LrForm> {
   List<String> consigneeList = [];
   List<String> destinationList = [];
   List<String> itemList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchLR();
+  }
 
   Future<List<String>> fetchRequest() async {
     final ApiService apiService = ApiService();
@@ -58,6 +68,34 @@ class _LrFormState extends State<LrForm> {
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
       print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchLR() async{
+    final ApiService apiService = ApiService();
+    try {
+      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.getLR + widget.name);
+      setState(() {
+        collectionRequest.text = response["collection_request"].toString();
+        logsheet.text = response["logsheet"].toString();
+        consignor.text = response["consignor"].toString();
+        consignee.text = response["consignee"].toString();
+        destination.text = response["destination"].toString();
+        boxCount.text =  response["box_count"] == 0 ? response["box_count"].toString() : zero.toString();
+        boxMismatchFromOrder.text = response["box_mismatch_from_order"].toString();
+        boxMismatchOnRescan.text = response["box_mismatch_on_rescan"].toString();
+        freight.text = response["freight"].toString();
+        lrCharge.text = response["lr_charge"].toString();
+        totalFreight.text = response["total_freight"].toString();
+        boxDelivered.text = response["box_delivered"].toString();
+        totalItems.text = response["total_items"].toString();
+        items = response["items"];
+        print(response);
+      });
       return response;
     }
     catch(e) {
@@ -154,13 +192,13 @@ class _LrFormState extends State<LrForm> {
                   const SizedBox(height: 10,),
                   DialogTextField(
                     controller: itemWeight,
-                    keyboardType: TextInputType.name,
+                    keyboardType: TextInputType.number,
                     labelText: "Weight",
                   ),
                   const SizedBox(height: 10,),
                   DialogTextField(
                     controller: itemVolume,
-                    keyboardType: TextInputType.name,
+                    keyboardType: TextInputType.number,
                     labelText: "Volume",
                   ),
                   const SizedBox(height: 10,),
@@ -318,7 +356,7 @@ class _LrFormState extends State<LrForm> {
         title: const Text('LR Form'),
       ),
       drawer: const AppDrawer(),
-      // backgroundColor: Colors.white,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(15.0),
@@ -328,20 +366,21 @@ class _LrFormState extends State<LrForm> {
               child: Column(
                 children: <Widget>[
                   const SizedBox(height: 5),
-                  // DropDown(
-                  //   labelText: 'LR Type',
-                  //   items: const [
-                  //     'By Collection Request',
-                  //     'By Log Sheet',
-                  //     'By Manual'
-                  //   ],
-                  //   selectedItem: selectedLrType,
-                  //   onChanged: (String? newValue) {
-                  //     setState(() {
-                  //       selectedLrType = newValue;
-                  //     });
-                  //   },
-                  // ),
+                  DropDown(
+                    labelText: 'LR Type',
+                    items: const [
+                      'By Collection Request',
+                      'By Log Sheet',
+                      'By Manual'
+                    ],
+                    controller: selectedLrType,
+                    selectedItem: selectedLrType.text,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedLrType.text = newValue.toString();
+                      });
+                    },
+                  ),
                   if(selectedLrType == "By Collection Request")
                     const SizedBox(height: 25),
                   if(selectedLrType == "By Collection Request")
@@ -534,7 +573,7 @@ class _LrFormState extends State<LrForm> {
                         child: FieldText(
                           controller: boxMismatchFromOrder,
                           labelText: 'Box Mismatch from order',
-                          keyboardType: TextInputType.name,
+                          keyboardType: TextInputType.number,
                           obscureText: false,
                         ),
                       ),
@@ -544,7 +583,7 @@ class _LrFormState extends State<LrForm> {
                         child: FieldText(
                           controller: boxMismatchOnRescan,
                           labelText: 'Box mismatch on rescan',
-                          keyboardType: TextInputType.name,
+                          keyboardType: TextInputType.number,
                           obscureText: false,
                         ),
                       ),

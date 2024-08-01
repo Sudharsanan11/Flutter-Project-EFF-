@@ -1,9 +1,12 @@
 import 'package:dotted_border/dotted_border.dart';
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
+import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
-import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
+// import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
+import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -18,22 +21,14 @@ class GdmForm extends StatefulWidget {
   State<GdmForm> createState() => _GdmFormState();
 }
 
-String? selectedDriver;
-String? selectedStaff;
-List<String> selectedLoadingStaffs = [];
-List<String> selectedLr = [];
-final List<String> loadingStaffItems = ['Revi', 'Bhavan', 'Sudar'];
-final List<String> selectLR = ['1', '2', '3'];
-
-void submitData() {}
-
 class _GdmFormState extends State<GdmForm> {
   final _formKey = GlobalKey<FormBuilderState>();
   final TextEditingController dispatchOn = TextEditingController();
   final TextEditingController dispatchTime = TextEditingController();
   final TextEditingController dispatchNumber = TextEditingController();
   final TextEditingController advance = TextEditingController();
-  final TextEditingController deliveryStaff = TextEditingController();
+  final TextEditingController assignedDriver = TextEditingController();
+  final TextEditingController assignedAttender = TextEditingController();
   final TextEditingController loadingStaffs = TextEditingController();
   final TextEditingController vehicleRegisterNo = TextEditingController();
   final TextEditingController lrSelected = TextEditingController();
@@ -49,6 +44,89 @@ class _GdmFormState extends State<GdmForm> {
   final TextEditingController boxCount = TextEditingController();
 
   List<Map<String, String>> items = [];
+  List<String> driverList = [];
+  List<String> attenderList = [];
+  List<String> lrList = [];
+
+String? selectedDriver;
+String? selectedStaff;
+List<String> selectedLoadingStaffs = [];
+List<String> selectedLr = [];
+List<String> loadingStaffItems = [];
+final List<String> selectLR = ['1', '2', '3'];
+
+
+
+  @override
+void dispose() {
+  selectedLoadingStaffs = [];
+  super.dispose();
+}
+
+
+  Future<List<String>> fetchDriver() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype" : "Employee",
+      "filters" : [["designation","=","Driver"], ["status", "=", "Active"]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<List<String>> fetchAttender() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype" : "Employee",
+      "filters" : [["designation","=","Attender"], ["status", "=", "Active"]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<List<String>> fetchLoadingStaff() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype" : "Employee",
+      "filters" : [["designation","=","Loading Staff"], ["status", "=", "Active"]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<List<String>> fetchLR() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype" : "LR",
+      "filters" : [["status", "=", "Pending"], ["docstatus", "=", 1]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     lr.text = item?['lr_no'] ?? "";
@@ -206,72 +284,264 @@ class _GdmFormState extends State<GdmForm> {
         });
   }
 
-  void _showLoadingStaffs(BuildContext context) {
-    TextEditingController searchController = TextEditingController();
-    List<String> filteredItems = loadingStaffItems;
+//   void _showLoadingStaffs(BuildContext context, {Map<String, dynamic>? item, int? index}) {
+//   TextEditingController lr = TextEditingController();
+//   TextEditingController consignor = TextEditingController();
+//   TextEditingController consignee = TextEditingController();
+//   TextEditingController invoiceNo = TextEditingController();
+//   TextEditingController destination = TextEditingController();
+//   TextEditingController accountPay = TextEditingController();
+//   TextEditingController toPay = TextEditingController();
+//   TextEditingController VOG = TextEditingController();
+//   TextEditingController boxCount = TextEditingController();
+  
+//   List<String> lrList = [];
+  
+//   Future<List<String>> fetchLR() async {
+//     // Replace with your logic to fetch LR data
+//     return Future.value(["LR1", "LR2", "LR3"]);
+//   }
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Select Loading Staffs'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search...',
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          searchController.clear();
-                          setState(() {
-                            filteredItems = loadingStaffItems;
-                          });
-                        },
-                      ),
+//   showDialog(
+//     context: context,
+//     builder: (BuildContext context) {
+//       return StatefulBuilder(
+//         builder: (context, setState) {
+//           return AlertDialog(
+//             title: const Text('Select Loading Staffs'),
+//             content: SingleChildScrollView(
+//               child: Column(
+//                 mainAxisSize: MainAxisSize.min,
+//                 children: [
+//                   const SizedBox(height: 10,),
+//                   FutureBuilder<List<String>>(
+//                     future: fetchLR(),
+//                     builder: (context, snapshot) {
+//                       if (snapshot.hasError) {
+//                         return Text("Error: ${snapshot.error}");
+//                       } else if (snapshot.hasData) {
+//                         lrList = snapshot.data!;
+//                         return AutoComplete(
+//                           controller: lr,
+//                           hintText: 'LR No.',
+//                           onSelected: (String selection) {
+//                             print('You selected: $selection');
+//                           },
+//                           options: lrList,
+//                         );
+//                       } else {
+//                         return const CircularProgressIndicator();
+//                       }
+//                     },
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: consignor,
+//                     keyboardType: TextInputType.name,
+//                     labelText: "Consignor",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: consignee,
+//                     keyboardType: TextInputType.name,
+//                     labelText: "Consignee",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: invoiceNo,
+//                     keyboardType: TextInputType.name,
+//                     labelText: "Invoice No",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: destination,
+//                     keyboardType: TextInputType.name,
+//                     labelText: "Destination",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: accountPay,
+//                     keyboardType: TextInputType.number,
+//                     labelText: "Account Pay",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: toPay,
+//                     keyboardType: TextInputType.number,
+//                     labelText: "ToPay",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: VOG,
+//                     keyboardType: TextInputType.number,
+//                     labelText: "Value of Goods",
+//                   ),
+//                   const SizedBox(height: 10,),
+//                   DialogTextField(
+//                     controller: boxCount,
+//                     keyboardType: TextInputType.name,
+//                     labelText: "Box Count",
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             actions: <Widget>[
+//               TextButton(
+//                 child: Text(item == null ? 'Cancel' : 'Delete'),
+//                 onPressed: () {
+//                   if (item == null) {
+//                     Navigator.of(context).pop();
+//                   } else {
+//                     setState(() {
+//                       items.remove(item);
+//                     });
+//                     Navigator.of(context).pop();
+//                   }
+//                 },
+//               ),
+//               TextButton(
+//                 child: Text(item == null ? 'Add' : 'Save'),
+//                 onPressed: () {
+//                   if (item == null) {
+//                     setState(() {
+//                       items.add({
+//                         "lr_no": lr.text,
+//                         "consignor": consignor.text,
+//                         "consignee": consignee.text,
+//                         "invoice_no": invoiceNo.text,
+//                         "destination": destination.text,
+//                         "account_pay": accountPay.text,
+//                         "to_pay": toPay.text,
+//                         "value_of_goods": VOG.text,
+//                         "box_count": boxCount.text,
+//                       });
+//                     });
+//                   } else {
+//                     setState(() {
+//                       items[index!]["lr_no"] = lr.text;
+//                       items[index]["consignor"] = consignor.text;
+//                       items[index]["consignee"] = consignee.text;
+//                       items[index]["invoice_no"] = invoiceNo.text;
+//                       items[index]["destination"] = destination.text;
+//                       items[index]["account_pay"] = accountPay.text;
+//                       items[index]["to_pay"] = toPay.text;
+//                       items[index]["value_of_goods"] = VOG.text;
+//                       items[index]["box_count"] = boxCount.text;
+//                     });
+//                   }
+//                   lr.clear();
+//                   consignor.clear();
+//                   consignee.clear();
+//                   invoiceNo.clear();
+//                   destination.clear();
+//                   accountPay.clear();
+//                   toPay.clear();
+//                   VOG.clear();
+//                   boxCount.clear();
+//                   Navigator.of(context).pop();
+//                 },
+//               ),
+//             ],
+//           );
+//         },
+//       );
+//     },
+//   );
+// }
+
+  Future<String> submitData() async{
+    final body = {
+      "dispatch_on": dispatchOn,
+      "dispatch_time": dispatchTime,
+      "dispatch_number": dispatchNumber,
+      "advance": advance,
+      "driver": assignedDriver,
+      "delivery_staff": assignedAttender,
+      "loading_staff": loadingStaffs,
+      "vehicle_register_no": vehicleRegisterNo,
+      "items": items,
+    };
+    return "";
+  }
+
+
+
+  void _showLoadingStaffs(BuildContext context) {
+  TextEditingController searchController = TextEditingController();
+  List<String> filteredItems = loadingStaffItems;
+
+  fetchLoadingStaff().then((response) => {
+    setState(() {
+      loadingStaffItems = [];
+      loadingStaffItems = response;
+      // filteredItems = loadingStaffItems;
+    })
+  }).catchError((error) => {
+    throw "Error: $error"
+  });
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select Loading Staffs'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          filteredItems = loadingStaffItems;
+                        });
+                      },
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        filteredItems = loadingStaffItems
-                            .where((item) => item
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
                   ),
-                  const SizedBox(height: 10),
-                  MultiSelect(
-                    items: filteredItems,
-                    selectedItems: selectedLoadingStaffs,
-                    onSelectedItemsListChanged:
-                        (List<String> newSelectedItems) {
-                      setState(() {
-                        selectedLoadingStaffs = newSelectedItems;
-                        loadingStaffs.text = selectedLoadingStaffs.join(', ');
-                      });
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
+                  onChanged: (value) {
+                    setState(() {
+                      filteredItems = loadingStaffItems
+                          .where((item) => item
+                              .toLowerCase()
+                              .contains(value.toLowerCase()))
+                          .toList();
+                    });
                   },
-                  child: const Text('OK'),
+                ),
+                const SizedBox(height: 10),
+                MultiSelect(
+                  items: filteredItems,
+                  selectedItems: selectedLoadingStaffs,
+                  onSelectedItemsListChanged: (List<String> newSelectedItems) {
+                    setState(() {
+                      selectedLoadingStaffs = newSelectedItems;
+                      loadingStaffs.text = selectedLoadingStaffs.join(', ');
+                    });
+                  },
                 ),
               ],
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   void _showLR(BuildContext context) {
     TextEditingController searchController = TextEditingController();
@@ -449,27 +719,77 @@ class _GdmFormState extends State<GdmForm> {
                       obscureText: false,
                       keyboardType: TextInputType.number),
                   const SizedBox(height: 15.0),
-                  DropDown(
-                    labelText: 'Driver',
-                    items: const ['Ravi', 'Bhavan', 'Sudarshan'],
-                    selectedItem: selectedDriver,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedDriver = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 15.0),
-                  DropDown(
-                    labelText: 'Delivery Staff',
-                    items: const ['Revi', 'Bhavan', 'Sudarshan'],
-                    selectedItem: selectedStaff,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedStaff = newValue;
-                      });
-                    },
-                  ),
+                  FutureBuilder<List<String>>(
+                  future: fetchDriver(),
+                  builder: (context, snapshot) {
+                    if(snapshot.hasError) {
+                      return AutoComplete(
+                        controller: assignedDriver,
+                        hintText: 'Assign Driver',
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: driverList,
+                      );
+                    }
+                    else if (snapshot.hasData) {
+                      driverList = snapshot.data!;
+                      return AutoComplete(
+                        controller: assignedDriver,
+                        hintText: 'Assign Driver',
+                        onSelected: (String selection) {
+                          print(selection);
+                        },
+                        options: driverList,
+                      );
+                    } else {
+                      return AutoComplete(
+                        controller: assignedDriver,
+                        hintText: 'Assign Driver',
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: driverList,
+                      );
+                    }
+                  },
+                ),
+              const SizedBox(height: 10,),
+              FutureBuilder<List<String>>(
+                  future: fetchAttender(),
+                  builder: (context, snapshot) {
+                    if(snapshot.hasError) {
+                      return AutoComplete(
+                        controller: assignedAttender,
+                        hintText: 'Assign Attender',
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: attenderList,
+                      );
+                    }
+                    else if (snapshot.hasData) {
+                      attenderList = snapshot.data!;
+                      return AutoComplete(
+                        controller: assignedAttender,
+                        hintText: 'Assign Attender',
+                        onSelected: (String selection) {
+                          print(selection);
+                        },
+                        options: attenderList,
+                      );
+                    } else {
+                      return AutoComplete(
+                        controller: assignedAttender,
+                        hintText: 'Assign Attender',
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: attenderList,
+                      );
+                    }
+                  },
+                ),
                   const SizedBox(height: 15.0),
                   GestureDetector(
                     onTap: () => _showLoadingStaffs(context),
@@ -595,4 +915,5 @@ class _GdmFormState extends State<GdmForm> {
       bottomNavigationBar: const BottomNavigation(),
     );
   }
-}
+  }
+

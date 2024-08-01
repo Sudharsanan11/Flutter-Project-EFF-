@@ -26,21 +26,11 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   final TextEditingController itemName = TextEditingController();
   final TextEditingController itemWeight = TextEditingController();
   final TextEditingController itemVolume = TextEditingController();
-
+  
+  String cons = "";
   List<String> consignorList = [];
   List<String> locationList = [];
-
-  final List<String> options = <String>[
-    'Apple',
-    'Banana',
-    'Cherry',
-    'Date',
-    'Elderberry',
-    'Fig',
-    'Grape',
-    'Honeydew',
-  ];
-
+  List<String> itemList = [];
   List<Map<String, String>> items = [];
 
   @override
@@ -50,7 +40,9 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     fetchLocation();
     print("fetch Consignor");
     print(fetchConsignor());
-    setState(() {});
+    setState(() {
+      // consignorList = fetchConsignor();
+    });
   }
 
   Future<String> submitData() async {
@@ -65,15 +57,16 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
       "items": items,
     };
     try {
-      return await apiService.createDocument(
-          ApiEndpoints.authEndpoints.createCollectionRequest, data);
-    } catch (error) {
+      return await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionRequest, data);
+    }
+    catch (error) {
       print(error);
       return "Error: Failed to submit data";
     }
   }
 
   Future<List<String>> fetchConsignor() async {
+    print("fetchConsignor =================================================================");
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Customer",
@@ -82,8 +75,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
       ]
     };
     try {
-      final response = await apiService.getLinkedNames(
-          ApiEndpoints.authEndpoints.getList, body);
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
       print(response);
       return response;
     } catch (e) {
@@ -106,92 +98,113 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     }
   }
 
+  Future<List<String>> fetchItem () async {
+    print("date ${date.text}");
+    final ApiService apiService = ApiService();
+    print("COnsignor================= ${consignor.text}");
+    final body = {
+      "doctype" : "Item",
+      "filters" : [["customer","=", consignor.text]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
   Future<void> _showItemDialog({dynamic item, int? index}) async {
+    print("items $items");
     itemName.text = item?['item_code'] ?? "";
     itemWeight.text = item?['item_weight'] ?? "";
-    itemVolume.text = item?['item_volume'] ?? "";
+    itemVolume.text = item?['item_vloume'] ?? "";
+
 
     await showDialog<void>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              title: Text(item == null ? 'Add Item' : 'Edit Item'),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      DialogTextField(
-                        controller: itemName,
-                        keyboardType: TextInputType.name,
-                        labelText: "Item Name",
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      DialogTextField(
-                        controller: itemWeight,
-                        keyboardType: TextInputType.number,
-                        labelText: "Weight",
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      DialogTextField(
-                        controller: itemVolume,
-                        keyboardType: TextInputType.number,
-                        labelText: "Volume",
-                      ),
-                    ],
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(item == null ? 'Add Item' : 'Edit Item'),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 10,),
+                  DialogTextField(
+                    controller: itemName,
+                    keyboardType: TextInputType.name,
+                    labelText: "Item Name",
                   ),
-                ),
+                  const SizedBox(height: 10,),
+                  DialogTextField(
+                    controller: itemWeight,
+                    keyboardType: TextInputType.name,
+                    labelText: "Weight",
+                  ),
+                  const SizedBox(height: 10,),
+                  DialogTextField(
+                    controller: itemVolume,
+                    keyboardType: TextInputType.name,
+                    labelText: "Volume",
+                  ),
+                ],
               ),
-              actions: <Widget>[
-                TextButton(
-                    child: Text(item == null ? 'Cancel' : 'Delete'),
-                    onPressed: () {
-                      if (item == null) {
-                        Navigator.of(context).pop();
-                      } else {
-                        setState(() {
-                          items.remove(item);
-                        });
-                        Navigator.of(context).pop();
-                      }
-                    }),
-                TextButton(
-                  child: Text(item == null ? 'Add' : 'Save'),
-                  onPressed: () {
-                    if (item == null) {
-                      setState(() {
-                        items.add({
-                          "item_code": itemName.text,
-                          "item_weight": itemWeight.text,
-                          "item_volume": itemVolume.text,
-                        });
-                      });
-                      itemName.clear();
-                      itemWeight.clear();
-                      itemVolume.clear();
-                      Navigator.of(context).pop();
-                    } else {
-                      setState(() {
-                        items[index!]["item_code"] = itemName.text;
-                        items[index]["item_weight"] = itemWeight.text;
-                        items[index]["item_volume"] = itemVolume.text;
-                      });
-                      itemName.clear();
-                      itemWeight.clear();
-                      itemVolume.clear();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                )
-              ]);
-        });
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(item == null ? 'Cancel' : 'Delete'),
+              onPressed: () {
+                if(item == null){
+                  Navigator.of(context).pop();
+                }
+                else {
+                  setState(() {  
+                  // items.removeWhere((item) => item.length == index);
+                  items.remove(item);
+                  });
+                  Navigator.of(context).pop();
+                }
+              }
+            ),
+            TextButton(
+              child: Text(item == null ? 'Add' : 'Save'),
+              onPressed: () {
+                if(item == null) {
+                  setState(() {
+                  items.add(
+                    {"item_code" : itemName.text,
+                     "item_weight" : itemWeight.text,
+                     "item_volume" : itemVolume.text,
+                     }
+                  );
+                  });
+                  itemName.clear();
+                  itemWeight.clear();
+                  itemVolume.clear();
+                  Navigator.of(context).pop();
+                }
+                else {
+                  setState(() {
+                    items[index!]["item_code"] = itemName.text;
+                    items[index]["item_weight"] = itemWeight.text;
+                    items[index]["item_volume"] = itemVolume.text;
+                  });
+                  itemName.clear();
+                  itemWeight.clear();
+                  itemVolume.clear();
+                  Navigator.of(context).pop();
+                }
+              },
+            )
+          ]
+        );
+      }
+    );
   }
 
   Future<void> _showDatePicket(BuildContext context) async {
@@ -249,23 +262,24 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                         return null;
                       },
                       hintText: 'Consignor Name',
+                      controller: consignor,
                       onSelected: (String selection) {
                         print('You selected: $selection');
+                        setState(() {
+                          print("sele");
+                          consignor.text = selection;
+                          fetchItem();
+                        });
                       },
                       options: consignorList,
                     );
                   } else if (snapshot.hasData) {
                     consignorList = snapshot.data!;
                     return AutoComplete(
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Consignor name required";
-                        }
-                        return null;
-                      },
+                      controller: consignor,
                       hintText: 'Consignor Name',
                       onSelected: (String selection) {
-                        print('You selected: $selection');
+                        print('You selected: ${consignor.text}');
                       },
                       options: consignorList,
                     );
@@ -282,12 +296,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return AutoComplete(
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Time is required";
-                        }
-                        return null;
-                      },
+                      controller: location,
                       hintText: 'Location',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -297,12 +306,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   } else if (snapshot.hasData) {
                     locationList = snapshot.data!;
                     return AutoComplete(
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Location is required";
-                        }
-                        return null;
-                      },
+                      controller: location,
                       hintText: 'Location',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -314,9 +318,17 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   }
                 },
               ),
-              const SizedBox(
-                height: 10.0,
-              ),
+              const SizedBox(height: 10.0,),
+              
+              // AutoComplete(hintText: 'Type something',onSelected: (String selection) {
+              //   print('You selected: $selection'); },options: options,),
+              // FieldText(
+              //   controller: consignor,
+              //   labelText: "Vehicle Required Date",
+              //   obscureText: false,
+              //   keyboardType: TextInputType.text
+              // ),
+              const SizedBox(height: 10.0,),
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
