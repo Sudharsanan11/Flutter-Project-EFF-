@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
@@ -7,24 +9,24 @@ import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 
 
 
-class CollectionRequestForm extends StatefulWidget {
-  const CollectionRequestForm({super.key});
+class CollectionRequestView extends StatefulWidget {
+  final String name;
+  const CollectionRequestView({super.key, required this.name});
   
 
   @override
-  State<CollectionRequestForm> createState() => _CollectionRequestFormState();
+  State<CollectionRequestView> createState() => _CollectionRequestViewState();
 }
 
-class _CollectionRequestFormState extends State<CollectionRequestForm> {
+class _CollectionRequestViewState extends State<CollectionRequestView> {
 
   final TextEditingController consignor = TextEditingController();
   final TextEditingController consignee = TextEditingController();
   final TextEditingController location = TextEditingController();
-  TextEditingController date = TextEditingController();
+  TextEditingController vehicle_required_date = TextEditingController();
   TextEditingController timePicker = TextEditingController();
   final TextEditingController status = TextEditingController();
   final TextEditingController no_of_pcs = TextEditingController();
@@ -42,14 +44,38 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   @override
   void initState () {
     super.initState();
+    print("===============================");
+    print(widget.name);
+    fetchCollectionRequest();
     fetchConsignor();
     fetchLocation();
     // fetchItem();
-    print("fetch Consignor------------------------------------ $fetchConsignor()");
+    print("fetch Consignor------------------------------------ ${fetchConsignor()}");
     // print(fetchConsignor());
     // setState(() {
     //   // consignorList = fetchConsignor();
     // });
+  }
+
+  Future<Map<String, dynamic>> fetchCollectionRequest() async {
+    print("widget.name ${widget.name}");
+    ApiService apiService = ApiService();
+    final response = await apiService.getDocument(ApiEndpoints.authEndpoints.getCollectionRequest + widget.name);
+    // consignor.text = response["consignor"];
+    print("response $response");
+    setState(() {
+    consignor.text = response["consignor"];
+    location.text = response["location"];
+    vehicle_required_date.text = response["vehicle_required_date"];
+    timePicker.text = response["required_time"];
+    status.text = response["status"];
+    no_of_pcs.text = response["no_of_pcs"].toString();
+    // items = response["items"] as List<Map<String, String>>;
+    items = (response["items"] as List).map((item) {
+    return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
+      }).toList();
+    });
+    return response;
   }
 
   // void submitData() {}
@@ -60,7 +86,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
       "consignor": consignor.text,
       "consignee": consignee.text,
       "location": location.text,
-      "vehicle_required_date": date.text,
+      "vehicle_required_date": vehicle_required_date.text,
       "required_time": timePicker.text,
       "items": items,
     };
@@ -112,7 +138,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   }
 
   Future<List<String>> fetchItem () async {
-    print("date ${date.text}");
+    print("date ${vehicle_required_date.text}");
     final ApiService apiService = ApiService();
     print("COnsignor================= ${consignor.text}");
     final body = {
@@ -132,8 +158,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     print("items $items");
     itemName.text = item?['item_code'] ?? "";
-    itemWeight.text = item?['item_weight'] ?? "";
-    itemVolume.text = item?['item_volume'] ?? "";
+    itemWeight.text = item?['item_weight'] ?? "0";
+    itemVolume.text = item?['item_volume'] ?? "0";
 
 
     await showDialog<void>(
@@ -270,7 +296,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     
     if(picked != null) {
       setState(() {
-        date.text = "${picked.toLocal()}".split(" ")[0];
+        vehicle_required_date.text = "${picked.toLocal()}".split(" ")[0];
       });
     }
   }
@@ -289,6 +315,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Collection Request'),
       ),
@@ -381,7 +408,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   vertical: 3.0
                 ),
                 child: TextField(
-                controller: date,
+                controller: vehicle_required_date,
                 keyboardType: TextInputType.datetime,
                 readOnly: true,
                 decoration: InputDecoration(
@@ -393,7 +420,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   ),
                   fillColor: Colors.white,
                   filled: true,
-                  labelText: "Date",
+                  labelText: "Required Date",
                   labelStyle: TextStyle(color: Colors.grey[600]),
                 ),
                 onTap: () {
@@ -429,19 +456,19 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                 ),
               ),
               const SizedBox(height: 10.0,),
-              // FieldText(
-              //   controller: status,
-              //   labelText: "Status",
-              //   readOnly: true,
-              //   keyboardType: TextInputType.text,
-              // ),
-              // const SizedBox(height: 10.0,),
-              // FieldText(
-              //   controller: no_of_pcs,
-              //   labelText: "No. of Pcs",
-              //   readOnly: true,
-              //   keyboardType: TextInputType.none
-              // ),
+              FieldText(
+                controller: status,
+                labelText: "Status",
+                readOnly: true,
+                keyboardType: TextInputType.text,
+              ),
+              const SizedBox(height: 10.0,),
+              FieldText(
+                controller: no_of_pcs,
+                labelText: "No. of Pcs",
+                readOnly: true,
+                keyboardType: TextInputType.none
+              ),
               const SizedBox(height: 10.0,),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
@@ -487,28 +514,37 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
               if (items.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                  child: SizedBox(
+                  child: Container(
                     height: 200, // Set a fixed height for the ListView
-                    child: ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(width: 1, color: Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                              shape: BoxShape.rectangle,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey
+                      ),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: ListView.builder(
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(width: 1, color: Colors.black),
+                                borderRadius: BorderRadius.circular(10),
+                                shape: BoxShape.rectangle,
+                              ),
+                              child: ListTile(
+                                title: Text(items[index]["item_code"].toString()),
+                                onTap: () {
+                                  _showItemDialog(item: items[index], index: index);
+                                },
+                              ),
                             ),
-                            child: ListTile(
-                              title: Text(items[index]["item_code"].toString()),
-                              onTap: () {
-                                _showItemDialog(item: items[index], index: index);
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

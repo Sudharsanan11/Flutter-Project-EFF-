@@ -34,6 +34,29 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getDocument (String endpoint) async {
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    String api = manager.getString("api")!;
+    String secret = manager.getString("secret")!;
+    final response = await http.get(
+      Uri.parse(ApiEndpoints.baseUrl+endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'token $api:$secret',
+      },
+    );
+    if(response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print(jsonResponse);
+      Map<String, dynamic> data = jsonResponse['data'];
+      print("data======================== $data");
+      return data;
+    }
+    else {
+      throw Exception('Failed to load document');
+    }
+  }
+
   Future<List<String>> getLinkedNames(String resource, Object body) async {
     print(resource);
     print(body);
@@ -77,7 +100,7 @@ class ApiService {
       body: json.encode(body),
     );
     if(response.statusCode == 200) {
-      return "Document Created Successfully";
+      return response.statusCode.toString();
     }
     else {
       throw Exception('Failed to create document');

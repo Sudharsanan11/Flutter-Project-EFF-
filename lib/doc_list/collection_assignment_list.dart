@@ -1,5 +1,6 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
 import 'package:erpnext_logistics_mobile/forms/collection_assignment_form.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/form_view.dart';
@@ -66,7 +67,7 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
             return const Center(child: CircularProgressIndicator());
           }
           else if(snapshot.hasError) {
-            return Center(child: Text("Error : ${snapshot.error}"),);
+            return const Center(child: Text("No Data Found"),);
           }
           else if(!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text("No Data Found"),);
@@ -82,7 +83,7 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
                   subtitle: Text(item['key2']!),
                   onTap: () {
                     Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => FormView(itemName: item['key1']!)));
+                    MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: item['key1']!)));
                   },
                 );
               },

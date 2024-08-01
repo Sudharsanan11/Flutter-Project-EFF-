@@ -1,4 +1,5 @@
 import 'package:erpnext_logistics_mobile/fields/button.dart';
+import 'package:erpnext_logistics_mobile/fields/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
@@ -48,6 +49,7 @@ class _LoginPageState extends State<LoginPage> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setString('api', responseData['message']['api_key']);
         prefs.setString('secret', responseData['message']['api_secret']);
+        // prefs.setString('user',responseData['message']['username']);
 
         print('Session token: ${prefs.getString('api')}');
         print('Session token: ${prefs.getString('secret')}');
@@ -136,6 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(
                           color: Colors.blue, fontWeight: FontWeight.bold),
                     )
+                    
                   ],
                 )
               ],

@@ -4,6 +4,7 @@ class DropDown extends StatelessWidget {
   final String labelText;
   final List<String> items;
   final dynamic selectedItem;
+  final TextEditingController controller;
   final ValueChanged<String?> onChanged;
 
   const DropDown({
@@ -12,13 +13,14 @@ class DropDown extends StatelessWidget {
     required this.items,
     required this.selectedItem,
     required this.onChanged,
+    required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-      child: DropdownButtonFormField<String>(
+        child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
@@ -38,8 +40,27 @@ class DropDown extends StatelessWidget {
           );
         }).toList(),
         onChanged: onChanged,
+        // value: controller.text,
         dropdownColor: Colors.white,
       ),
+      //  child: DropdownButton(
+      //   hint: Text(labelText),
+      //   dropdownColor: Colors.white,
+      //   items: items.map((String valueItem){
+      //     return DropdownMenuItem<String>(
+      //       value: valueItem,
+      //       child: Text(valueItem),
+      //     );
+      //   }).toList(),
+      //   onChanged: (String? newValue) {
+      //     onChanged(newValue as String?);
+      //     controller.text = newValue ?? "";
+      //   },
+        // underline: SizedBox(),
+      //   style: const TextStyle(color: Colors.black),
+      //   value: controller,
+      //   icon: const Icon(Icons.arrow_drop_down),
+      //  ),
     );
   }
 }

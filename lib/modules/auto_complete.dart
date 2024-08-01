@@ -4,12 +4,15 @@ class AutoComplete extends StatelessWidget {
   final List<String> options;
   final String hintText;
   final ValueChanged<String> onSelected;
+  // TextEditingController controller = TextEditingController();
+  final TextEditingController controller;
 
 
   AutoComplete({
     required this.options,
     required this.hintText,
     required this.onSelected,
+    required this.controller,
   });
 
   @override
@@ -25,6 +28,17 @@ class AutoComplete extends StatelessWidget {
       },
       onSelected: onSelected,
       fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+        // if(controller.text == ''){
+          // controller.text = textEditingController.text;
+        // }
+        // else {
+        //   textEditingController.text = controller.text;
+        // }
+        textEditingController.text = controller.text;
+        
+        textEditingController.addListener(() {
+          controller.text = textEditingController.text;
+        });
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 27.0),
           child: TextField(

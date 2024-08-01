@@ -64,7 +64,7 @@ class _GdmListState extends State<GdmList> {
             return const Center(child: CircularProgressIndicator());
           }
           else if(snapshot.hasError) {
-            return Center(child: Text("Error : ${snapshot.error}"),);
+            return const Center(child: Text("No Data Found"),);
           }
           else if(!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text("No Data Found"),);

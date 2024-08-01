@@ -14,14 +14,15 @@ import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 
-class GdmForm extends StatefulWidget {
-  const GdmForm({super.key});
+class GDMView extends StatefulWidget {
+  final String name;
+  const GDMView({super.key, required this.name});
 
   @override
-  State<GdmForm> createState() => _GdmFormState();
+  State<GDMView> createState() => _GDMViewState();
 }
 
-class _GdmFormState extends State<GdmForm> {
+class _GDMViewState extends State<GDMView> {
   final _formKey = GlobalKey<FormBuilderState>();
   final TextEditingController dispatchOn = TextEditingController();
   final TextEditingController dispatchTime = TextEditingController();
@@ -58,10 +59,10 @@ final List<String> selectLR = ['1', '2', '3'];
 
 
   @override
-void dispose() {
-  selectedLoadingStaffs = [];
-  super.dispose();
-}
+  void dispose() {
+    selectedLoadingStaffs = [];
+    super.dispose();
+  }
 
 
   Future<List<String>> fetchDriver() async {
@@ -71,8 +72,32 @@ void dispose() {
       "filters" : [["designation","=","Driver"], ["status", "=", "Active"]]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
       print(response);
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchGDM() async{
+    final ApiService apiService = ApiService();
+    try {
+      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.getCollectionAssignment + widget.name);
+      setState(() {
+        dispatchOn.text = response["dispatch_on"];
+        dispatchTime.text = response["dispatch_time"];
+        dispatchNumber.text = response["dispatch_number"];
+        advance.text = response["advance"];
+        assignedDriver.text = response["assigned_driver"];
+        assignedAttender.text = response["assigned_attender"];
+        loadingStaffs.text = response["loading_staffs"];
+        vehicleRegisterNo.text = response["vehicle_register_no"];
+        lrSelected.text = response["lr_selected"];
+        lr.text = response["lr"];
+        print(response);
+      });
       return response;
     }
     catch(e) {
@@ -87,7 +112,7 @@ void dispose() {
       "filters" : [["designation","=","Attender"], ["status", "=", "Active"]]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
       print(response);
       return response;
     }

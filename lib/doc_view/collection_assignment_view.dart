@@ -9,20 +9,21 @@ import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CollectionAssignmentForm extends StatefulWidget {
-  const CollectionAssignmentForm({super.key});
+class CollectionAssignmentView extends StatefulWidget {
+  final String name;
+  const CollectionAssignmentView({super.key, required this.name});
 
   @override
-  State<CollectionAssignmentForm> createState() => _CollectionAssignmentFormState();
+  State<CollectionAssignmentView> createState() => _CollectionAssignmentViewState();
 }
 
 
-class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
+class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
 
   final List<String> data = [];
 
   final TextEditingController enteredBy = TextEditingController();
-  // TextEditingController orderVia = TextEditingController();
+  TextEditingController orderVia = TextEditingController();
   final TextEditingController aproxValueOfGoods = TextEditingController();
   final TextEditingController assignedDriver = TextEditingController();
   final TextEditingController assignedAttender = TextEditingController();
@@ -30,7 +31,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
   final TextEditingController collectionRequest = TextEditingController(); 
   
 
-  String? orderVia;
+  // String? orderVia;
   List<Map<String, String>> items = [];
   String? status;
  
@@ -44,6 +45,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
   void initState () {
     super.initState();
     // fetchStaff();
+    fetchCollectionAssignment();
     setEnterBy();
     fetchDriver();
     fetchAttender();
@@ -73,6 +75,31 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
     catch (error) {
       print(error);
       return "Error: Failed to submit data";
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCollectionAssignment() async{
+    final ApiService apiService = ApiService();
+    try {
+      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.getCollectionAssignment + widget.name);
+      setState(() {
+        enteredBy.text = response['entered_by'];
+        // orderVia = response['order_via'].toString();
+        // orderVia = "Phone";
+        aproxValueOfGoods.text = response['aprox_value_of_the_goods'].toString();
+        assignedDriver.text = response['assigned_driver'].toString();
+        assignedAttender.text = response['assigned_attender'].toString();
+        assignedVehicle.text = response['assigned_vehicle'].toString();
+        items = (response['collection_req'] as List).map((item) {
+          return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
+            }).toList();
+        status = response['status'];
+        print(response);
+      });
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
     }
   }
 
@@ -311,16 +338,18 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
               //     "Email",
               //     "App",
               //   ],
+              //   controller: orderVia,
               //   selectedItem: orderVia,
               //   onChanged: (String? newValue) {
               //           setState(() {
-              //             orderVia = newValue;
+              //             print("newValue $newValue");
+              //             orderVia.value = newValue;
               //           });
               //         },
               //   ),
               const SizedBox(height: 10,),
               FieldText(
-                controller: aproxValueOfGoods, 
+                controller: aproxValueOfGoods,
                 labelText: "Aprox. Value of Goods", 
                 keyboardType: TextInputType.number
               ),
