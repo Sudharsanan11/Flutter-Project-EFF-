@@ -3,29 +3,24 @@ import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
-import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
-
-
 
 class CollectionRequestForm extends StatefulWidget {
   const CollectionRequestForm({super.key});
-  
 
   @override
   State<CollectionRequestForm> createState() => _CollectionRequestFormState();
 }
 
 class _CollectionRequestFormState extends State<CollectionRequestForm> {
-
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController consignor = TextEditingController();
   final TextEditingController consignee = TextEditingController();
   final TextEditingController location = TextEditingController();
-  TextEditingController date = TextEditingController();
-  TextEditingController timePicker = TextEditingController();
+  final TextEditingController date = TextEditingController();
+  final TextEditingController timePicker = TextEditingController();
   final TextEditingController status = TextEditingController();
   final TextEditingController no_of_pcs = TextEditingController();
   final TextEditingController itemName = TextEditingController();
@@ -37,23 +32,20 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   List<String> locationList = [];
   List<String> itemList = [];
   List<Map<String, String>> items = [];
-  // final response = "";
 
   @override
-  void initState () {
+  void initState() {
     super.initState();
     fetchConsignor();
     fetchLocation();
-    // fetchItem();
-    print("fetch Consignor------------------------------------ $fetchConsignor()");
-    // print(fetchConsignor());
-    // setState(() {
-    //   // consignorList = fetchConsignor();
-    // });
+    print("fetch Consignor");
+    print(fetchConsignor());
+    setState(() {
+      // consignorList = fetchConsignor();
+    });
   }
 
-  // void submitData() {}
-  Future<String> submitData () async{
+  Future<String> submitData() async {
     print("submit");
     final ApiService apiService = ApiService();
     final body = {
@@ -65,11 +57,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
       "items": items,
     };
     try {
-      final response = await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionRequest, body);
-      if(response == "200") {
-        Navigator.pop(context);
-      }
-      return "";
+      return await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionRequest, data);
     }
     catch (error) {
       print(error);
@@ -81,32 +69,31 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     print("fetchConsignor =================================================================");
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Customer",
-      "filters" : [["custom_party_type","=","Consignor"]]
-    };
-    try {
-      print("try=======");
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print("consignor============================== $response");
-      return response;
-    }
-    catch(e) {
-      throw "Fetch Error";
-    }
-  }
-
-  Future<List<String>> fetchLocation () async {
-    final ApiService apiService = ApiService();
-    final body = {
-      "doctype" : "Location",
-      // "filters" : [["is_warehouse","=","1"]]
+      "doctype": "Customer",
+      "filters": [
+        ["custom_party_type", "=", "Consignor"]
+      ]
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
       print(response);
       return response;
+    } catch (e) {
+      throw "Fetch Error";
     }
-    catch(e) {
+  }
+
+  Future<List<String>> fetchLocation() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype": "Location",
+    };
+    try {
+      final response = await apiService.getLinkedNames(
+          ApiEndpoints.authEndpoints.getList, body);
+      print(response);
+      return response;
+    } catch (e) {
       throw "Fetch Error";
     }
   }
@@ -133,7 +120,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     print("items $items");
     itemName.text = item?['item_code'] ?? "";
     itemWeight.text = item?['item_weight'] ?? "";
-    itemVolume.text = item?['item_volume'] ?? "";
+    itemVolume.text = item?['item_vloume'] ?? "";
 
 
     await showDialog<void>(
@@ -147,60 +134,21 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
               child: Column(
                 children: [
                   const SizedBox(height: 10,),
-                  // DialogTextField(
-                  //   controller: itemName,
-                  //   keyboardType: TextInputType.name,
-                  //   labelText: "Item Name",
-                  // ),
-                  FutureBuilder<List<String>>(
-                  future: fetchItem(),
-                  builder: (context, snapshot) {
-                    if(snapshot.hasError) {
-                      return AutoComplete(
-                        controller: itemName,
-                        hintText: 'Item Name',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                          setState(() {
-                            itemName.text = selection;
-                          });
-                        },
-                        options: itemList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      itemList = snapshot.data!;
-                      return AutoComplete(
-                        controller: itemName,
-                        hintText: 'Item Name',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: itemList,
-                      );
-                    } else {
-                      // 
-                      return AutoComplete(
-                        controller: itemName,
-                        hintText: 'Item Name',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: itemList,
-                      );
-                    }
-                  },
-                ),
+                  DialogTextField(
+                    controller: itemName,
+                    keyboardType: TextInputType.name,
+                    labelText: "Item Name",
+                  ),
                   const SizedBox(height: 10,),
                   DialogTextField(
                     controller: itemWeight,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.name,
                     labelText: "Weight",
                   ),
                   const SizedBox(height: 10,),
                   DialogTextField(
                     controller: itemVolume,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.name,
                     labelText: "Volume",
                   ),
                 ],
@@ -259,49 +207,60 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     );
   }
 
-
-  Future<void> _showDatePicket (BuildContext context) async{
+  Future<void> _showDatePicket(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2150),
-      );
-    
-    if(picked != null) {
+    );
+
+    if (picked != null) {
       setState(() {
         date.text = "${picked.toLocal()}".split(" ")[0];
       });
     }
   }
 
-  Future<void> _showTimePicker (BuildContext context) async{
+  Future<void> _showTimePicker(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      );
-    if(picked != null) {
+    );
+    if (picked != null) {
       setState(() {
         timePicker.text = picked.format(context).split(" ")[0];
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Collection Request'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            children: <Widget>[
-              const SizedBox(height: 10,),
+          child: Form(
+            key: _formKey,
+            child: Column(children: <Widget>[
+              const SizedBox(
+                height: 10,
+              ),
               FutureBuilder<List<String>>(
                 future: fetchConsignor(),
-                builder: (context, snapshot) { 
-                  if(snapshot.hasError) {
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
                     return AutoComplete(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Consignor name is required";
+                        }
+                        return null;
+                      },
                       hintText: 'Consignor Name',
                       controller: consignor,
                       onSelected: (String selection) {
@@ -314,11 +273,9 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                       },
                       options: consignorList,
                     );
-                  }
-                  else if (snapshot.hasData) {
+                  } else if (snapshot.hasData) {
                     consignorList = snapshot.data!;
                     return AutoComplete(
-                      controller: consignor,
                       hintText: 'Consignor Name',
                       onSelected: (String selection) {
                         print('You selected: ${consignor.text}');
@@ -326,35 +283,27 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                       options: consignorList,
                     );
                   } else {
-                    return AutoComplete(
-                      controller: consignor,
-                      hintText: 'Consignor Name',
-                      onSelected: (String selection) {
-                        print('You selected: ${consignor.text}');
-                      },
-                      options: consignorList,
-                    );
+                    return Text("");
                   }
                 },
               ),
-              const SizedBox(height: 10.0,),
+              const SizedBox(
+                height: 10.0,
+              ),
               FutureBuilder<List<String>>(
                 future: fetchLocation(),
                 builder: (context, snapshot) {
-                  if(snapshot.hasError) {
+                  if (snapshot.hasError) {
                     return AutoComplete(
-                      controller: location,
                       hintText: 'Location',
                       onSelected: (String selection) {
                         print('You selected: $selection');
                       },
                       options: locationList,
                     );
-                  }
-                  else if (snapshot.hasData) {
+                  } else if (snapshot.hasData) {
                     locationList = snapshot.data!;
                     return AutoComplete(
-                      controller: location,
                       hintText: 'Location',
                       onSelected: (String selection) {
                         print('You selected: $selection');
@@ -362,89 +311,96 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                       options: locationList,
                     );
                   } else {
-                    return AutoComplete(
-                      controller: location,
-                      hintText: 'Location',
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                      },
-                      options: locationList,
-                    );
+                    return Text("");
                   }
                 },
               ),
-              // const SizedBox(height: 10.0,),
+              const SizedBox(height: 10.0,),
+              
+              // AutoComplete(hintText: 'Type something',onSelected: (String selection) {
+              //   print('You selected: $selection'); },options: options,),
+              // FieldText(
+              //   controller: consignor,
+              //   labelText: "Vehicle Required Date",
+              //   obscureText: false,
+              //   keyboardType: TextInputType.text
+              // ),
               const SizedBox(height: 10.0,),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25.0,
-                  vertical: 3.0
-                ),
-                child: TextField(
-                controller: date,
-                keyboardType: TextInputType.datetime,
-                readOnly: true,
-                decoration: InputDecoration(
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  fillColor: Colors.white,
-                  filled: true,
-                  labelText: "Date",
-                  labelStyle: TextStyle(color: Colors.grey[600]),
-                ),
-                onTap: () {
-                  _showDatePicket(context);
-                },
-              ),
-              ),
-              const SizedBox(height: 10.0,),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25.0,
-                  vertical: 3.0
-                ),
-                child: TextField(
-                  controller: timePicker,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                child: TextFormField(
+                  controller: date,
                   keyboardType: TextInputType.datetime,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Date is required";
+                    }
+                    return null;
+                  },
                   readOnly: true,
                   decoration: InputDecoration(
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
                     ),
-                    fillColor: Colors.white,
+                    fillColor: isDarkMode ? Colors.black54 : Colors.white,
+                    filled: true,
+                    labelText: "Vehicle Date",
+                    labelStyle: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[600]),
+                  ),
+                  onTap: () {
+                    _showDatePicket(context);
+                  },
+                ),
+              ),
+              const SizedBox(
+                height: 10.0,
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                child: TextFormField(
+                  controller: timePicker,
+                  keyboardType: TextInputType.datetime,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Time is required";
+                    }
+                    return null;
+                  },
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: isDarkMode ? Colors.white : Colors.black),
+                    ),
+                    fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     filled: true,
                     labelText: "Required Time",
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    labelStyle: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[600]),
                   ),
                   onTap: () {
                     _showTimePicker(context);
                   },
                 ),
               ),
-              const SizedBox(height: 10.0,),
-              // FieldText(
-              //   controller: status,
-              //   labelText: "Status",
-              //   readOnly: true,
-              //   keyboardType: TextInputType.text,
-              // ),
-              // const SizedBox(height: 10.0,),
-              // FieldText(
-              //   controller: no_of_pcs,
-              //   labelText: "No. of Pcs",
-              //   readOnly: true,
-              //   keyboardType: TextInputType.none
-              // ),
-              const SizedBox(height: 10.0,),
+              const SizedBox(
+                height: 10.0,
+              ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -461,7 +417,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
               const SizedBox(height: 10),
               if (items.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 25.0, vertical: 3.0),
                   child: Column(
                     children: [
                       DottedBorder(
@@ -469,9 +426,10 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                         radius: const Radius.circular(12.0),
                         strokeWidth: 1,
                         dashPattern: const [8, 4],
-                        color: Colors.black,
+                        color: isDarkMode ? Colors.white : Colors.black,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 25.0, vertical: 20.0),
                           child: const Center(
                             child: Text("No Items Found"),
                           ),
@@ -480,15 +438,21 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     ],
                   ),
                 ),
+              if (items.isEmpty) const SizedBox(height: 15.0),
               if (items.isEmpty)
-                const SizedBox(height: 15.0),
-              if (items.isEmpty)
-                MyButton(onTap: submitData, name: "Submit"),
+                MyButton(
+                    onTap: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        submitData();
+                      }
+                    },
+                    name: "Request"),
               if (items.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 17.0, vertical: 3.0),
                   child: SizedBox(
-                    height: 200, // Set a fixed height for the ListView
+                    height: 200,
                     child: ListView.builder(
                       itemCount: items.length,
                       itemBuilder: (context, index) {
@@ -496,14 +460,18 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                           padding: const EdgeInsets.symmetric(vertical: 10.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(width: 1, color: Colors.black),
+                              border: Border.all(
+                                  width: 1,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black),
                               borderRadius: BorderRadius.circular(10),
                               shape: BoxShape.rectangle,
                             ),
                             child: ListTile(
                               title: Text(items[index]["item_code"].toString()),
                               onTap: () {
-                                _showItemDialog(item: items[index], index: index);
+                                _showItemDialog(
+                                    item: items[index], index: index);
                               },
                             ),
                           ),
@@ -512,11 +480,16 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     ),
                   ),
                 ),
+              if (items.isNotEmpty) const SizedBox(height: 15.0),
               if (items.isNotEmpty)
-                const SizedBox(height: 15.0),
-              if (items.isNotEmpty)
-                MyButton(onTap: submitData, name: "Submit"),
-            ]
+                MyButton(
+                    onTap: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        submitData();
+                      }
+                    },
+                    name: "Submit"),
+            ]),
           ),
         ),
       ),

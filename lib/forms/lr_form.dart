@@ -319,7 +319,7 @@ class _LrFormState extends State<LrForm> {
         title: const Text('LR Form'),
       ),
       drawer: const AppDrawer(),
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(15.0),

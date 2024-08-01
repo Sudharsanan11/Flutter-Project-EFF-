@@ -1,14 +1,12 @@
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/toast.dart';
 import 'package:flutter/material.dart';
-import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:erpnext_logistics_mobile/main.dart';
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,51 +16,54 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
+  final _formKey = GlobalKey<FormState>();
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
   Future<void> signUserIn(BuildContext context) async {
-    final String username = usernameController.text;
-    final String password = passwordController.text;
+    if (_formKey.currentState?.validate() ?? false) {
+      final String username = usernameController.text;
+      final String password = passwordController.text;
 
-    final String url =
-        ApiEndpoints.baseUrl + ApiEndpoints.authEndpoints.loginEmail;
+      final String url =
+          ApiEndpoints.baseUrl + ApiEndpoints.authEndpoints.loginEmail;
 
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'usr': username,
-          'pwd': password,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        print('Login successful: $responseData');
-
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('api', responseData['message']['api_key']);
-        prefs.setString('secret', responseData['message']['api_secret']);
-        // prefs.setString('user',responseData['message']['username']);
-
-        print('Session token: ${prefs.getString('api')}');
-        print('Session token: ${prefs.getString('secret')}');
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const EFF()),
+      try {
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'usr': username,
+            'pwd': password,
+          }),
         );
-      } else {
-        print('Login failed: ${response.body}');
+
+        if (response.statusCode == 200) {
+          final responseData = jsonDecode(response.body);
+          const ToastComponent(message: "Login successful");
+          print('Login successful: $responseData');
+
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('api', responseData['message']['api_key']);
+          prefs.setString('secret', responseData['message']['api_secret']);
+
+          print('Session token: ${prefs.getString('api')}');
+          print('Session token: ${prefs.getString('secret')}');
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const EFF()),
+          );
+        } else {
+          const ToastComponent(message: "Invalid credentials");
+          print('Login failed: ${response.body}');
+        }
+      } catch (e) {
+        print(e);
       }
-    } catch (e) {
-      print(e);
     }
   }
 
@@ -70,78 +71,125 @@ class _LoginPageState extends State<LoginPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('session_token');
   }
+
   @override
   Widget build(BuildContext context) {
-   return Scaffold(
+    return Scaffold(
       backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 50),
-                const Icon(
-                  Icons.lock,
-                  size: 100,
-                ),
-                const SizedBox(height: 50),
-                const Text(
-                  "Welcome to EFF!",
-                  style: TextStyle(
-                    fontSize: 16,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 50),
+                  const Icon(
+                    Icons.lock,
+                    size: 100,
+                    color: Colors.black,
                   ),
-                ),
-                const SizedBox(height: 50),
-                FieldText(
-                  controller: usernameController,
-                  labelText: 'Username',
-                  obscureText: false,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 50),
-                FieldText(
-                  controller: passwordController,
-                  labelText: 'Password',
-                  obscureText: true,
-                  keyboardType: TextInputType.text,
-                ),
-                const SizedBox(height: 50),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  const SizedBox(height: 50),
+                  const Text(
+                    "Welcome to EFF!",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25.0, vertical: 3.0),
+                    child: TextFormField(
+                      controller: usernameController,
+                      obscureText: false,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your username';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                        ),
+                        fillColor: Colors.white,
+                        filled: true,
+                        labelText: 'Username',
+                        labelStyle: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25.0, vertical: 3.0),
+                    child: TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      keyboardType: TextInputType.text,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                        ),
+                        fillColor: Colors.white,
+                        filled: true,
+                        labelText: 'Password',
+                        labelStyle: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  MyButton(
+                    name: 'Sign In',
+                    onTap: () => signUserIn(context),
+                  ),
+                  const SizedBox(height: 50),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Forgot Password?',
-                        style: TextStyle(color: Colors.grey[600]),
+                        'Not a user?',
+                        style: TextStyle(color: Colors.grey[700]),
                       ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Register now',
+                        style: TextStyle(
+                            color: Colors.blue, fontWeight: FontWeight.bold),
+                      )
                     ],
-                  ),
-                ),
-                const SizedBox(height: 50),
-                MyButton(
-                  name: 'Sign In',
-                  onTap: () => signUserIn(context),
-                ),
-                const SizedBox(height: 50),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Not a user?',
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'Register now',
-                      style: TextStyle(
-                          color: Colors.blue, fontWeight: FontWeight.bold),
-                    )
-                    
-                  ],
-                )
-              ],
+                  )
+                ],
+              ),
             ),
           ),
         ),
@@ -149,6 +197,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
+
 
 // class LoginPage extends StatelessWidget {
 //   const LoginPage({super.key});

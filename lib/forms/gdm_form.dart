@@ -140,16 +140,163 @@ void dispose() {
     VOG.text = item?['value_of_goods'] ?? "";
     boxCount.text = item?['box_count'] ?? "";
 
-
     await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text(item == null ? 'Add Item' : 'Edit Item'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      DialogTextField(
+                        controller: lr,
+                        keyboardType: TextInputType.name,
+                        labelText: "Item Name",
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      DialogTextField(
+                        controller: consignor,
+                        keyboardType: TextInputType.name,
+                        labelText: "Consignor",
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      DialogTextField(
+                        controller: consignee,
+                        keyboardType: TextInputType.name,
+                        labelText: "Consignee",
+                      ),
+                      DialogTextField(
+                        controller: invoiceNo,
+                        keyboardType: TextInputType.name,
+                        labelText: "Invoice No",
+                      ),
+                      DialogTextField(
+                        controller: destination,
+                        keyboardType: TextInputType.name,
+                        labelText: "Destination",
+                      ),
+                      DialogTextField(
+                        controller: accountPay,
+                        keyboardType: TextInputType.number,
+                        labelText: "Account Pay",
+                      ),
+                      DialogTextField(
+                        controller: toPay,
+                        keyboardType: TextInputType.number,
+                        labelText: "ToPay",
+                      ),
+                      // DialogTextField(
+                      //   controller: isPaid,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "Consignee",
+                      // ),
+                      DialogTextField(
+                        controller: VOG,
+                        keyboardType: TextInputType.number,
+                        labelText: "Value of Goods",
+                      ),
+                      DialogTextField(
+                        controller: boxCount,
+                        keyboardType: TextInputType.name,
+                        labelText: "Box Count",
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                    child: Text(item == null ? 'Cancel' : 'Delete'),
+                    onPressed: () {
+                      if (item == null) {
+                        Navigator.of(context).pop();
+                      } else {
+                        setState(() {
+                          // items.removeWhere((item) => item.length == index);
+                          items.remove(item);
+                        });
+                        Navigator.of(context).pop();
+                      }
+                    }),
+                TextButton(
+                  child: Text(item == null ? 'Add' : 'Save'),
+                  onPressed: () {
+                    if (item == null) {
+                      setState(() {
+                        items.add({
+                          "lr_no": lr.text,
+                          "consignor": consignor.text,
+                          "consignee": consignee.text,
+                          "invoice_no": invoiceNo.text,
+                          "destination": destination.text,
+                          "account_pay": accountPay.text,
+                          "to_pay": toPay.text,
+                          // "is_paid" : isPaid.text,
+                          "value_of_goods": VOG.text,
+                          "box_count": boxCount.text,
+                        });
+                      });
+                      lr.clear();
+                      consignor.clear();
+                      consignee.clear();
+                      invoiceNo.clear();
+                      destination.clear();
+                      VOG.clear();
+                      accountPay.clear();
+                      toPay.clear();
+                      boxCount.clear();
+                      Navigator.of(context).pop();
+                    } else {
+                      setState(() {
+                        items[index!]["lr_no"] = lr.text;
+                        items[index]["consignor"] = consignor.text;
+                        items[index]["consignee"] = consignee.text;
+                        items[index]["invoice_no"] = invoiceNo.text;
+                        items[index]["destination"] = destination.text;
+                        items[index]["account_pay"] = accountPay.text;
+                        items[index]["to_pay"] = toPay.text;
+                        items[index]["value_of_goods"] = VOG.text;
+                        items[index]["box_count"] = boxCount.text;
+                      });
+                      lr.clear();
+                      consignor.clear();
+                      consignee.clear();
+                      invoiceNo.clear();
+                      destination.clear();
+                      VOG.clear();
+                      accountPay.clear();
+                      toPay.clear();
+                      boxCount.clear();
+                      Navigator.of(context).pop();
+                    }
+                  },
+                )
+              ]);
+        });
+  }
+
+  void _showLoadingStaffs(BuildContext context) {
+    TextEditingController searchController = TextEditingController();
+    List<String> filteredItems = loadingStaffItems;
+
+    showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(item == null ? 'Add Item' : 'Edit Item'),
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.8,
-            child: SingleChildScrollView(
-              child: Column(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Loading Staffs'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 10,),
                   FutureBuilder<List<String>>(
@@ -238,6 +385,7 @@ void dispose() {
               ),
             ),
           ),
+      }
           actions: <Widget>[
             TextButton(
               child: Text(item == null ? 'Cancel' : 'Delete'),
@@ -310,8 +458,8 @@ void dispose() {
             )
           ]
         );
-      }
-    );
+      },
+);
   }
   Future<String> submitData() async{
     final body = {
@@ -408,80 +556,79 @@ void dispose() {
 
 
   void _showLR(BuildContext context) {
-  TextEditingController searchController = TextEditingController();
-  List<String> filteredItems = selectLR;
+    TextEditingController searchController = TextEditingController();
+    List<String> filteredItems = selectLR;
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Select LR'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        searchController.clear();
-                        setState(() {
-                          filteredItems = selectLR;
-                        });
-                      },
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select LR'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() {
+                            filteredItems = selectLR;
+                          });
+                        },
+                      ),
                     ),
+                    onChanged: (value) {
+                      setState(() {
+                        filteredItems = selectLR
+                            .where((item) => item
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      filteredItems = selectLR
-                          .where((item) => item
-                              .toLowerCase()
-                              .contains(value.toLowerCase()))
-                          .toList();
-                    });
+                  const SizedBox(height: 10),
+                  MultiSelect(
+                    items: filteredItems,
+                    selectedItems: selectedLr,
+                    onSelectedItemsListChanged:
+                        (List<String> newSelectedItems) {
+                      setState(() {
+                        selectedLr = newSelectedItems;
+                        lrSelected.text = selectedLr.join(', ');
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
-                ),
-                const SizedBox(height: 10),
-                MultiSelect(
-                  items: filteredItems,
-                  selectedItems: selectedLr,
-                  onSelectedItemsListChanged: (List<String> newSelectedItems) {
-                    setState(() {
-                      selectedLr = newSelectedItems;
-                      lrSelected.text = selectedLr.join(', ');
-                    });
-                  },
+                  child: const Text('OK'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('GDM'),
-        backgroundColor: Colors.grey[200],
       ),
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(15.0),
@@ -513,6 +660,12 @@ void dispose() {
                     child: AbsorbPointer(
                       child: FieldText(
                         controller: dispatchOn,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Dispatch date is required";
+                          }
+                          return null;
+                        },
                         labelText: "Dispatch On",
                         obscureText: false,
                         keyboardType: TextInputType.name,
@@ -547,18 +700,30 @@ void dispose() {
                     child: AbsorbPointer(
                       child: FieldText(
                         controller: dispatchTime,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Dispatch time is required";
+                          }
+                          return null;
+                        },
                         labelText: "Dispatch Time",
                         obscureText: false,
                         keyboardType: TextInputType.name,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15.0),
-                  FieldText(
-                      controller: dispatchNumber,
-                      labelText: "Dispatch Number",
-                      obscureText: false,
-                      keyboardType: TextInputType.number),
+                  // const SizedBox(height: 15.0),
+                  // FieldText(
+                  //     controller: dispatchNumber,
+                  //     validator: (value) {
+                  //       if (value == null || value.isEmpty) {
+                  //         return 'Dispatch number is required';
+                  //       }
+                  //       return null;
+                  //     },
+                  //     labelText: "Dispatch Number",
+                  //     obscureText: false,
+                  //     keyboardType: TextInputType.number),
                   const SizedBox(height: 15.0),
                   FieldText(
                       controller: advance,
@@ -643,6 +808,12 @@ void dispose() {
                     child: AbsorbPointer(
                       child: FieldText(
                         controller: loadingStaffs,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Loading staffs required';
+                          }
+                          return null;
+                        },
                         labelText: "Loading Staffs",
                         obscureText: false,
                         keyboardType: TextInputType.name,
@@ -652,82 +823,101 @@ void dispose() {
                   const SizedBox(height: 15.0),
                   FieldText(
                       controller: vehicleRegisterNo,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Vehicle Reg.no is required";
+                        }
+                        return null;
+                      },
                       labelText: 'Vehicle Registration Number',
                       keyboardType: TextInputType.name),
                   const SizedBox(
                     height: 15.0,
                   ),
-                  const SizedBox(height: 10.0,),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                      const Text("Items"),
-                      ElevatedButton(
-                        child: const Icon(Icons.add),
-                        onPressed: () {
-                          _showItemDialog();
-                        },
-                      ),
-                    ],
-                )
-              ),
-              const SizedBox(height: 10),
-              if (items.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-                  child: Column(
-                    children: [
-                      DottedBorder(
-                        borderType: BorderType.RRect,
-                        radius: const Radius.circular(12.0),
-                        strokeWidth: 1,
-                        dashPattern: const [8,4],
-                        color: Colors.black,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-                          child: const Center(
-                            child: Text("No Items Found"),
-                          )
-                        ),
-                      )
-                    ],
+                  const SizedBox(
+                    height: 10.0,
                   ),
-                ),
-                if (items.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                  child: SizedBox(
-                    height: 200, // Set a fixed height for the ListView
-                    child: ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(width: 1, color: Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                              shape: BoxShape.rectangle,
-                            ),
-                            child: ListTile(
-                              title: Text(items[index]["lr_no"].toString()),
-                              onTap: () {
-                                _showItemDialog(item: items[index], index: index);
-                              },
+                  Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 25.0, vertical: 3.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
+                          const Text("Items"),
+                          ElevatedButton(
+                            child: const Icon(Icons.add),
+                            onPressed: () {
+                              _showItemDialog();
+                            },
                           ),
+                        ],
+                      )),
+                  const SizedBox(height: 10),
+                  if (items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 25.0, vertical: 3.0),
+                      child: Column(
+                        children: [
+                          DottedBorder(
+                            borderType: BorderType.RRect,
+                            radius: const Radius.circular(12.0),
+                            strokeWidth: 1,
+                            dashPattern: const [8, 4],
+                            color: Colors.black,
+                            child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 25.0, vertical: 20.0),
+                                child: const Center(
+                                  child: Text("No Items Found"),
+                                )),
+                          )
+                        ],
+                      ),
+                    ),
+                  if (items.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 17.0, vertical: 3.0),
+                      child: SizedBox(
+                        height: 200, // Set a fixed height for the ListView
+                        child: ListView.builder(
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(width: 1, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: ListTile(
+                                  title: Text(items[index]["lr_no"].toString()),
+                                  onTap: () {
+                                    _showItemDialog(
+                                        item: items[index], index: index);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+                      ),
+                    ),
                   const SizedBox(
                     height: 15.0,
                   ),
-                  MyButton(onTap: submitData, name: "Submit")
+                  MyButton(
+                      onTap: () {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          submitData();
+                        }
+                      },
+                      name: "Submit"),
                 ],
               ),
             ),

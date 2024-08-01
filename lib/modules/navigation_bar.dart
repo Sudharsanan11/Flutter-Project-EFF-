@@ -22,11 +22,11 @@ class _BottomNavigationState extends State<BottomNavigation> {
           icon: Icon(Icons.home),
           backgroundColor: Colors.white,
           label: "Home",
-          ),
+        ),
         BottomNavigationBarItem(
-        icon: Icon(Icons.person),
-        backgroundColor: Colors.white,
-        label: "Profile",
+          icon: Icon(Icons.person),
+          backgroundColor: Colors.white,
+          label: "Profile",
         )
       ],
       onTap: (currentIndex) {
@@ -34,14 +34,14 @@ class _BottomNavigationState extends State<BottomNavigation> {
           index = currentIndex;
           print(currentIndex);
         });
-        if(currentIndex == 0) {
-          Navigator.push(context,
-          MaterialPageRoute(builder: (context)=> const EFF()));
+        if (currentIndex == 0) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const EFF()));
+        } else if (currentIndex == 1) {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => const Profile()));
         }
-        else if(currentIndex == 1) {
-          Navigator.push(context,
-          MaterialPageRoute(builder: (context)=> const Profile()));
-        }
-      },);
+      },
+    );
   }
 }

@@ -24,18 +24,18 @@ class _GdmListState extends State<GdmList> {
     print(data);
   }
 
-  Future<List<Map<String, String>>> fetchData () async {
+  Future<List<Map<String, String>>> fetchData() async {
     final ApiService apiService = ApiService();
     String fields = '?fields=["name","vehicle_register_no"]';
 
     try {
-      return await apiService.getresources(ApiEndpoints.authEndpoints.gdmList + fields);
+      return await apiService
+          .getresources(ApiEndpoints.authEndpoints.gdmList + fields);
+    } catch (e) {
+      throw ('Error $e');
     }
-    catch (e) {
-      throw('Error $e');
-    }
-
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,23 +44,24 @@ class _GdmListState extends State<GdmList> {
         centerTitle: true,
         actions: [
           FutureBuilder<List<Map<String, String>>>(
-            future: data,
-            builder: (context, snapshot) {
+              future: data,
+              builder: (context, snapshot) {
                 return IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {
-                    showSearch(context: context, delegate: CustomSearchBar(snapshot.data!));
+                    showSearch(
+                        context: context,
+                        delegate: CustomSearchBar(snapshot.data!));
                   },
                 );
-              }
-          )
+              })
         ],
       ),
       drawer: const AppDrawer(),
       body: FutureBuilder<List<Map<String, String>>>(
         future: data,
-        builder: (context, snapshot){
-          if(snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           else if(snapshot.hasError) {
@@ -79,8 +80,11 @@ class _GdmListState extends State<GdmList> {
                   title: Text(item['key1']!),
                   subtitle: Text(item['key2']!),
                   onTap: () {
-                    Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => FormView(itemName: item['key1']!)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                FormView(itemName: item['key1']!)));
                   },
                 );
               },
@@ -89,11 +93,14 @@ class _GdmListState extends State<GdmList> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.grey,
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
         onPressed: () {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const GdmForm()));
+              MaterialPageRoute(builder: (context) => const GdmForm()));
         },
       ),
       bottomNavigationBar: const BottomNavigation(),

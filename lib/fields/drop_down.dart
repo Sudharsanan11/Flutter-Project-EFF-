@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 class DropDown extends StatelessWidget {
   final String labelText;
   final List<String> items;
-  final dynamic selectedItem;
-  final TextEditingController controller;
+  final String? selectedItem;
   final ValueChanged<String?> onChanged;
 
   const DropDown({
@@ -13,35 +12,47 @@ class DropDown extends StatelessWidget {
     required this.items,
     required this.selectedItem,
     required this.onChanged,
-    required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
         child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: isDarkMode ? Colors.white : Colors.grey,
+            ),
           ),
-          fillColor: Colors.white,
+          fillColor: isDarkMode ? Colors.black54 : Colors.white,
           filled: true,
           labelText: labelText,
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle: TextStyle(
+            color: isDarkMode ? Colors.white70 : Colors.grey[600],
+          ),
         ),
         items: items.map((String item) {
           return DropdownMenuItem<String>(
             value: item,
-            child: Text(item),
+            child: Text(
+              item,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
           );
         }).toList(),
         onChanged: onChanged,
-        // value: controller.text,
-        dropdownColor: Colors.white,
+        dropdownColor: isDarkMode ? Colors.black54 : Colors.white,
+        value: selectedItem,
       ),
       //  child: DropdownButton(
       //   hint: Text(labelText),

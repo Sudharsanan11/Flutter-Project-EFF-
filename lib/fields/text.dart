@@ -5,7 +5,8 @@ class FieldText extends StatelessWidget {
   final String labelText;
   final bool obscureText;
   final bool readOnly;
-  final keyboardType;
+  final TextInputType keyboardType;
+  final String? Function(String?)? validator;
 
   const FieldText({
     super.key,
@@ -13,29 +14,36 @@ class FieldText extends StatelessWidget {
     required this.labelText,
     this.obscureText = false,
     this.readOnly = false,
-    required this.keyboardType
+    required this.keyboardType,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         obscureText: obscureText,
         readOnly: readOnly,
         keyboardType: keyboardType,
+        validator: validator,
         decoration: InputDecoration(
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+          enabledBorder: OutlineInputBorder(
+            borderSide:
+                BorderSide(color: isDarkMode ? Colors.white : Colors.black),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+          focusedBorder: OutlineInputBorder(
+            borderSide:
+                BorderSide(color: isDarkMode ? Colors.white : Colors.black),
           ),
-          fillColor: Colors.white,
+          fillColor: isDarkMode ? Colors.black : Colors.white,
           filled: true,
           labelText: labelText,
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle:
+              TextStyle(color: isDarkMode ? Colors.white70 : Colors.grey[600]),
         ),
       ),
     );

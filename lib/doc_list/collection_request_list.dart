@@ -26,17 +26,18 @@ class _CollectionRequestListState extends State<CollectionRequestList> {
     print("data : $data");
   }
 
-  Future<List<Map<String, String>>> fetchData () async{
+  Future<List<Map<String, String>>> fetchData() async {
     final ApiService apiService = ApiService();
     String fields = '?fields=["name","consignor"]';
     print(fields);
     try {
-      return  await apiService.getresources(ApiEndpoints.authEndpoints.collectionRequestList + fields);
-    }
-    catch(e) {
-      throw('Error $e' );
+      return await apiService.getresources(
+          ApiEndpoints.authEndpoints.collectionRequestList + fields);
+    } catch (e) {
+      throw ('Error $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,23 +46,24 @@ class _CollectionRequestListState extends State<CollectionRequestList> {
         centerTitle: true,
         actions: [
           FutureBuilder<List<Map<String, String>>>(
-            future: data,
-            builder: (context, snapshot) {
+              future: data,
+              builder: (context, snapshot) {
                 return IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () {
-                    showSearch(context: context, delegate: CustomSearchBar(snapshot.data!));
+                    showSearch(
+                        context: context,
+                        delegate: CustomSearchBar(snapshot.data!));
                   },
                 );
-              }
-          )
+              })
         ],
       ),
       drawer: const AppDrawer(),
       body: FutureBuilder<List<Map<String, String>>>(
         future: data,
-        builder: (context, snapshot){
-          if(snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           else if(snapshot.hasError) {
@@ -90,11 +92,16 @@ class _CollectionRequestListState extends State<CollectionRequestList> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.grey,
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
         onPressed: () {
-          Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const CollectionRequestForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const CollectionRequestForm()));
         },
       ),
       bottomNavigationBar: const BottomNavigation(),

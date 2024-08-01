@@ -5,7 +5,7 @@ class DialogTextField extends StatelessWidget {
   final String labelText;
   final bool obscureText;
   final bool readOnly;
-  final keyboardType;
+  final TextInputType keyboardType;
 
   const DialogTextField({
     super.key,
@@ -13,11 +13,13 @@ class DialogTextField extends StatelessWidget {
     required this.labelText,
     this.obscureText = false,
     this.readOnly = false,
-    required this.keyboardType
+    required this.keyboardType,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3.0),
       child: TextField(
@@ -26,16 +28,22 @@ class DialogTextField extends StatelessWidget {
         readOnly: readOnly,
         keyboardType: keyboardType,
         decoration: InputDecoration(
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
           ),
-          fillColor: Colors.white,
+          fillColor: isDarkMode ? Colors.black54 : Colors.white,
           filled: true,
           labelText: labelText,
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle: TextStyle(
+            color: isDarkMode ? Colors.white70 : Colors.grey[600],
+          ),
         ),
       ),
     );
