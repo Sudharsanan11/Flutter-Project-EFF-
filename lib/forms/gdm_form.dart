@@ -72,10 +72,39 @@ class _GdmFormState extends State<GdmForm> {
   @override
   void dispose() {
     selectedLoadingStaffs = [];
+    dispatchOn.dispose();
+    dispatchTime.dispose();
+    dispatchNumber.dispose();
+    advance.dispose();
+    assignedDriver.dispose();
+    assignedAttender.dispose();
+    loadingStaffs.dispose();
+    vehicleRegisterNo.dispose();
+    lrSelected.dispose();
+    lr.dispose();
+    consignor.dispose();
+    consignee.dispose();
+    invoiceNo.dispose();
+    destination.dispose();
+    accountPay.dispose();
+    destination.dispose();
+    toPay.dispose();
+    isPaid.dispose();
+    VOG.dispose();
+    boxCount.dispose();
+    consignorName.dispose();
+    consigneeName.dispose();
+    items = [];
+    driverList = [];
+    attenderList = [];
+    lrList = [];
+    vehicleList = [];
+    selectedLoadingStaffs = [];
+    loadingStaffDict = [];
+    selectedLr = [];
+    loadingStaffItems = [];
     super.dispose();
   }
-
-  
 
   Future<List<String>> fetchDriver() async {
     final ApiService apiService = ApiService();
@@ -794,28 +823,32 @@ class _GdmFormState extends State<GdmForm> {
                     ),
                   if (items.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 17.0, vertical: 3.0),
-                      child: SizedBox(
-                        height: 200, // Set a fixed height for the ListView
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: ListView.builder(
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 10.0),
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  border:
-                                      Border.all(width: 1, color: Colors.black),
+                                  border: Border.all(width: 1, color: Colors.black),
                                   borderRadius: BorderRadius.circular(10),
                                   shape: BoxShape.rectangle,
                                 ),
                                 child: ListTile(
                                   title: Text(items[index]["lr_no"].toString()),
                                   onTap: () {
-                                    _showItemDialog(
-                                        item: items[index], index: index);
+                                    _showItemDialog(item: items[index], index: index);
                                   },
                                 ),
                               ),
@@ -824,6 +857,7 @@ class _GdmFormState extends State<GdmForm> {
                         ),
                       ),
                     ),
+                  ),
                   const SizedBox(
                     height: 15.0,
                   ),

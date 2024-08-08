@@ -10,10 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/fields/theme_provider.dart';
 
-void main() {
+void main() async{
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SharedPreferences manager = await SharedPreferences.getInstance();
+  // var api = manager.getString("api_key");
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
+      // child: api == null ? const LoginPage() : const EFF(),
       child: const MyApp(),
     ),
   );
@@ -26,13 +30,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child){
-        // SharedPreferences manager = await SharedPreferences.getInstance();
         return MaterialApp(
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: LoginPage(),
+          home:  LoginPage(),
         );
       },
     );

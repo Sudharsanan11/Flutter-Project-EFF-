@@ -11,6 +11,7 @@ import 'package:erpnext_logistics_mobile/fields/text_area.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
+import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -54,9 +55,44 @@ class _LrFormState extends State<LrForm> {
   List<String> itemList = [];
   bool? crossCheckStatus = false;
   bool? calculationBasedOnLRLevel = false;
-  bool? manualFreightAmount = false; //
+  bool? manualFreightAmount = false;
   late Map<String, Map<String, dynamic>> CR;
   late Map<String, Map<String, dynamic>> consigneeDocList;
+
+  @override
+  void initState() {
+    super.initState();
+    setConsignor();
+    fetchLocation();
+  }
+
+  @override
+  void dispose() {
+    lrType.dispose();
+    collectionRequest.dispose();
+    logsheet.dispose();
+    consignor.dispose();
+    consignee.dispose();
+    destination.dispose();
+    invoiceNo.dispose();
+    freight.dispose();
+    lrCharge.dispose();
+    remarks.dispose();
+    itemBarcode.dispose();
+    itemName.dispose();
+    itemWeight.dispose();
+    itemVolume.dispose();
+    remarks.dispose();
+    items = [];
+    requestList = [];
+    logsheetList = [];
+    consignorList = [];
+    consigneeList = [];
+    destinationList = [];
+    itemList = [];
+    super.dispose();
+  }
+
 
   Future<List<String>> fetchRequest() async {
     final ApiService apiService = ApiService();
@@ -66,7 +102,6 @@ class _LrFormState extends State<LrForm> {
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print('$response ++++++++++++++++++++++++++++++++++++++++++++++++++++++===========================================');
       return response;
     }
     catch(e) {
@@ -190,7 +225,6 @@ class _LrFormState extends State<LrForm> {
   }
 
   Future<void> setConsignor () async {
-    print("Hiii Consignor====================================");
     final ApiService apiService = ApiService();
 
     try {
@@ -213,13 +247,7 @@ class _LrFormState extends State<LrForm> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    setConsignor();
-    fetchLocation();
-  }
-
+  
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
     itemWeight.text = item?['weight'] ?? "";
@@ -241,7 +269,7 @@ class _LrFormState extends State<LrForm> {
                     future: fetchItem(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
-                        return AutoComplete(
+                        return DialogAutoComplete(
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "Item Is Required";
@@ -261,7 +289,7 @@ class _LrFormState extends State<LrForm> {
                         );
                       } else if (snapshot.hasData) {
                         itemList = snapshot.data!;
-                        return AutoComplete(
+                        return DialogAutoComplete(
                           validator:  (value) {
                             if (value == null || value.isEmpty) {
                               return "Item Is Required";
@@ -277,7 +305,21 @@ class _LrFormState extends State<LrForm> {
                           options: itemList,
                         );
                       } else {
-                        return const Text("");
+                        return DialogAutoComplete(
+                          validator:  (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Item Is Required";
+                            }
+                            return null;
+                          },
+                          controller: itemName,
+                          hintText: 'Item Name',
+                          onSelected: (String selection) {
+                            itemName.text = selection;
+                            print('You selected: ${consignor.text}');
+                          },
+                          options: itemList,
+                        );
                       }
                     },
                   ),
@@ -707,31 +749,40 @@ class _LrFormState extends State<LrForm> {
                     if (items.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                      child: SizedBox(
+                      child: Container(
                         height: 200, // Set a fixed height for the ListView
-                        child: ListView.builder(
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(width: 1, color: Colors.black),
-                                  borderRadius: BorderRadius.circular(10),
-                                  shape: BoxShape.rectangle,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey
+                          ),
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: ListView.builder(
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(width: 1, color: Colors.black),
+                                    borderRadius: BorderRadius.circular(10),
+                                    shape: BoxShape.rectangle,
+                                  ),
+                                  child: ListTile(
+                                    title: Text(items[index]["item_code"].toString()),
+                                    onTap: () {
+                                      _showItemDialog(item: items[index], index: index);
+                                    },
+                                  ),
                                 ),
-                                child: ListTile(
-                                  title: Text(items[index]["item_code"].toString()),
-                                  onTap: () {
-                                    _showItemDialog(item: items[index], index: index);
-                                  },
-                              ),
-                            ),
-                          );
-                        },
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                   MyButton(onTap: submitData, name: "Save")
                 ],
               ),

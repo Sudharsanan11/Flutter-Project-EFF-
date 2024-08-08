@@ -4,6 +4,7 @@ import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dar
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
+import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,6 +51,23 @@ late Future<List<String>> fetchDirverFuture;
     fetchAttenderFuture = fetchAttender();
     fetchVehicleFuture = fetchVehicle();
     fetchRequestFuture = fetchRequest();
+  }
+
+  @override
+  void dispose() {
+    items = [];
+    stafflist = [];
+    driverList = [];
+    attenderList = [];
+    vehicleList = [];
+    requestList = [];
+    enteredBy.dispose();
+    aproxValueOfGoods.dispose();
+    assignedAttender.dispose();
+    assignedVehicle.dispose();
+    assignedDriver.dispose();
+    collectionRequest.dispose();
+    super.dispose();
   }
 
   Future<void> submitData() async {
@@ -166,7 +184,7 @@ late Future<List<String>> fetchDirverFuture;
             future: fetchRequestFuture,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return AutoComplete(
+                return DialogAutoComplete(
                   controller: collectionRequest,
                   hintText: 'Collection Request',
                   onSelected: (String selection) {
@@ -176,7 +194,7 @@ late Future<List<String>> fetchDirverFuture;
                 );
               } else if (snapshot.hasData) {
                 requestList = snapshot.data!;
-                return AutoComplete(
+                return DialogAutoComplete(
                   controller: collectionRequest,
                   hintText: 'Collection Request',
                   onSelected: (String selection) {
@@ -185,7 +203,7 @@ late Future<List<String>> fetchDirverFuture;
                   options: requestList,
                 );
               } else {
-                return AutoComplete(
+                return DialogAutoComplete(
                   controller: collectionRequest,
                   hintText: 'Collection Request',
                   onSelected: (String selection) {
@@ -407,23 +425,6 @@ late Future<List<String>> fetchDirverFuture;
               ),
                 const SizedBox(height: 10),
                 if(items.isNotEmpty)
-                // ListView.builder(
-                //   shrinkWrap: true,
-                //   itemCount: items.length,
-                //   itemBuilder: (context, index) {
-                //     final item = items[index];
-                //     return ListTile(
-                //       title: Text("Collection Request ${index + 1}"),
-                //       subtitle: Text(item['collection_request'] ?? ''),
-                //       trailing: IconButton(
-                //         icon: const Icon(Icons.edit),
-                //         onPressed: () {
-                //           _showItemDialog(item: item, index: index);
-                //         },
-                //       ),
-                //     );
-                //   },
-                // ),
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
                     child: Container(

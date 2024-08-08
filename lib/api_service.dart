@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:http/http.dart' as http;
@@ -105,12 +106,37 @@ class ApiService {
       print("$jsonResponse=======================================================");
       List<dynamic> data = jsonResponse['message'];
       print("${data} ============================================================");
-      // List<String> transformData;
-      // transformData = data.map((item) => item['parent'].toString()).toList();
       return data;
     }
     else { 
       throw Exception("Failed to fetch field data");
+    }
+  }
+
+  Future<Map<String, dynamic>> getDoc(String endpoint, Object body) async {
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    String api = manager.getString("api")!;
+    String secret = manager.getString("secret")!;
+    final response = await http.post(
+      Uri.parse(ApiEndpoints.baseUrl+endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'token $api:$secret',
+      },
+      body: json.encode(body),
+    );
+    print("reponse +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ $response");
+    if(response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print("$jsonResponse=======================================================");
+      Map<String, dynamic> data = jsonResponse['message'];
+      print(data['loading_staffs']);
+      print(data['items']);
+      print("${data} ============================================================");
+      return data;
+    }
+    else {
+      throw Exception('Failed to fetch document');
     }
   }
 

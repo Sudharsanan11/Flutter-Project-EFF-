@@ -6,6 +6,7 @@ import 'package:erpnext_logistics_mobile/doc_view/collection_request_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
+import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -48,6 +49,25 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     setState(() {
       // consignorList = fetchConsignor();
     });
+  }
+
+  @override
+  void dispose() {
+    consignor.dispose();
+    consignee.dispose();
+    location.dispose();
+    date.dispose();
+    timePicker.dispose();
+    status.dispose();
+    itemName.dispose();
+    itemWeight.dispose();
+    itemVolume.dispose();
+    consignorList = [];
+    locationList = [];
+    itemList = [];
+    items = [];
+    super.dispose();
+
   }
 
   Future<void> submitData() async {
@@ -157,7 +177,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                 future: fetchItem(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return AutoComplete(
+                    return DialogAutoComplete(
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return "Item Is Required";
@@ -177,7 +197,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     );
                   } else if (snapshot.hasData) {
                     itemList = snapshot.data!;
-                    return AutoComplete(
+                    return DialogAutoComplete(
                       validator:  (value) {
                         if (value == null || value.isEmpty) {
                           return "Item Is Required";
@@ -193,7 +213,21 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                       options: itemList,
                     );
                   } else {
-                    return const Text("");
+                    return DialogAutoComplete(
+                      validator:  (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Item Is Required";
+                        }
+                        return null;
+                      },
+                      controller: itemName,
+                      hintText: 'Item Name',
+                      onSelected: (String selection) {
+                        itemName.text = selection;
+                        print('You selected: ${consignor.text}');
+                      },
+                      options: itemList,
+                    );;
                   }
                 },
               ),
@@ -566,13 +600,14 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     ),
                   ),
               if (items.isNotEmpty) const SizedBox(height: 15.0),
+              if (items.isNotEmpty)
                MyButton(
-          onTap: () {
-            if (_formKey.currentState?.validate() ?? false) {
-              submitData();
-            }
-          },
-          name: "Save"),
+                onTap: () {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    submitData();
+                  }
+                },
+                name: "Save"),
             ]),
           ),
         ),

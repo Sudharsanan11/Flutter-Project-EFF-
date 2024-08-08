@@ -8,6 +8,7 @@ import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
+import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -61,6 +62,25 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
     // });
   }
 
+  @override
+  void dispose() {
+    consignor.dispose();
+    consignee.dispose();
+    location.dispose();
+    vehicle_required_date.dispose();
+    timePicker.dispose();
+    status.dispose();
+    itemName.dispose();
+    itemWeight.dispose();
+    itemVolume.dispose();
+    no_of_pcs.dispose();
+    consignorList = [];
+    locationList = [];
+    itemList = [];
+    items = [];
+    super.dispose();
+  }
+
   Future<Map<String, dynamic>> fetchCollectionRequest() async {
     print("widget.name ${widget.name}");
     ApiService apiService = ApiService();
@@ -101,7 +121,14 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
     try {
       final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name, body);
       if(response == "200") {
-        Navigator.pop(context);
+        Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        if(mounted) {
+          Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (context) => CollectionRequestView(name: widget.name)));
+        }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to submit data", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       return "";
     }
@@ -212,7 +239,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                   future: fetchItem(),
                   builder: (context, snapshot) {
                     if(snapshot.hasError) {
-                      return AutoComplete(
+                      return DialogAutoComplete(
                         controller: itemName,
                         readOnly: isDisabled,
                         hintText: 'Item Name',
@@ -227,7 +254,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                     }
                     else if (snapshot.hasData) {
                       itemList = snapshot.data!;
-                      return AutoComplete(
+                      return DialogAutoComplete(
                         controller: itemName,
                         readOnly: isDisabled,
                         hintText: 'Item Name',
@@ -238,7 +265,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                       );
                     } else {
                       // 
-                      return AutoComplete(
+                      return DialogAutoComplete(
                         controller: itemName,
                         hintText: 'Item Name',
                         readOnly: isDisabled,
@@ -635,8 +662,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                 if (items.isNotEmpty)
                   MyButton(
                     onTap: isDisabled ? (){Fluttertoast.showToast(msg: "Can't able to save", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);} : submitData,
-                    name: "Save",
-                    
+                    name: "Save",                    
                   ),
               ]
             ),

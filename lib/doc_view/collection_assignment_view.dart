@@ -61,6 +61,25 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
     // fetchRequest();
   }
 
+  @override
+  void dispose() {
+    enteredBy.dispose();
+    orderVia.dispose();
+    aproxValueOfGoods.dispose();
+    assignedDriver.dispose();
+    assignedVehicle.dispose();
+    assignedAttender.dispose();
+    collectionRequest.dispose();
+    status.dispose();
+    items = []; 
+    stafflist = [];
+    driverList = [];
+    attenderList = [];
+    vehicleList = [];
+    requestList = [];
+    super.dispose();
+  }
+
   Future<String> submitData() async{
     final ApiService apiService = ApiService();
     final body = {
@@ -192,8 +211,13 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
       print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
-        Navigator.push(context,
-        MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: widget.name)));
+        if(mounted){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
+        }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to submit document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }
@@ -212,6 +236,9 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
           Navigator.push(context,
           MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
         }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to delete document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }
@@ -233,6 +260,9 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
           Navigator.push(context,
           MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
         }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to cancel document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }

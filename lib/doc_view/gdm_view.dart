@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
@@ -50,19 +52,27 @@ class _GDMViewState extends State<GDMView> {
   List<String> driverList = [];
   List<String> attenderList = [];
   List<String> lrList = [];
+  // List<String> loadingStaffList = [];
+  int docstatus = 0;
 
   String? selectedDriver;
   String? selectedStaff;
-  String? status;
+  int status = 0;
   List<String> selectedLoadingStaffs = [];
   List<Map<String, String>> loadingStaffDict = [];
   List<String> selectedLr = [];
   List<String> loadingStaffItems = [];
+  late Future<List<String>> fetchAttenderList;
+  late Future<List<String>> fetchDriverList;
+  late Future<List<String>> fetchLRList;
+  bool isDisabled = false;
+  // late Future<List<String>> fetchLoadingStaffList;
   final List<String> selectLR = ['1', '2', '3'];
 
   @override
   void dispose() {
     selectedLoadingStaffs = [];
+    items = [];
     dispatchOn.dispose();
     dispatchTime.dispose();
     dispatchNumber.dispose();
@@ -88,14 +98,23 @@ class _GDMViewState extends State<GDMView> {
   @override
   void initState() {
     super.initState();
+    fetchAttenderList = fetchAttender();
+    fetchDriverList = fetchDriver();
+    fetchLRList = fetchLR();
+    // fetchLoadingStaffList = fetchLoadingStaff();
     fetchGDM();
   }
 
   Future<Map<String, dynamic>> fetchGDM() async {
+    print("fetch gdm");
     final ApiService apiService = ApiService();
+    Object body = {
+      "doctype": "GDM",
+      "name" : widget.name,
+    };
     try {
       final response = await apiService
-          .getDocument(ApiEndpoints.authEndpoints.GDM + widget.name);
+          .getDoc(ApiEndpoints.authEndpoints.get, body);
       setState(() {
         dispatchOn.text = response["dispatch_on"] ?? "";
         dispatchTime.text = response["dispatch_time"] ?? "";
@@ -103,14 +122,26 @@ class _GDMViewState extends State<GDMView> {
         advance.text = response["advance"]?.toString() ?? "0";
         assignedDriver.text = response["driver"] ?? "";
         assignedAttender.text = response["delivery_staff"] ?? "";
+        docstatus = response["doc_status"] ?? 0;
+        print("--------------------------------");
+        print(response['loading_staffs']);
+        loadingStaffItems = (response["loading_staffs"] as List).map<String>((item) {
+          return item['loading_staff'].toString();
+        }).toList();
+        print(loadingStaffItems);
+        print("--------------------------------");
+        loadingStaffs.text = loadingStaffItems.join(', ').toString();
         // loadingStaffs.text = response["loading_staffs"] ?? "";
         vehicleRegisterNo.text = response["vehicle_register_no"] ?? "";
         items = (response['items'] as List).map((item) {
           return (item as Map<String, dynamic>)
               .map((key, value) => MapEntry(key, value.toString()));
         }).toList();
-        status = response["docstatus"] ?? "";
+        status = response["docstatus"];
         print(response);
+        if(docstatus != 0) {
+          isDisabled = true;
+        }
       });
       return response;
     } catch (e) {
@@ -118,6 +149,10 @@ class _GDMViewState extends State<GDMView> {
       throw "Fetch Error: $e";
     }
   }
+
+  // Future<Map<String, dynamic>> fetchGDM () async {
+    
+  // }
 
   Future<List<String>> fetchLoadingStaff() async {
     final ApiService apiService = ApiService();
@@ -220,12 +255,13 @@ class _GDMViewState extends State<GDMView> {
                         height: 10,
                       ),
                       FutureBuilder<List<String>>(
-                        future: fetchLR(),
+                        future: fetchLRList,
                         builder: (context, snapshot) {
                           if (snapshot.hasError) {
                             return AutoComplete(
                               controller: lr,
                               hintText: 'LR No.',
+                              readOnly: isDisabled,
                               onSelected: (String selection) {
                                 print('You selected: $selection');
                               },
@@ -236,6 +272,7 @@ class _GDMViewState extends State<GDMView> {
                             return AutoComplete(
                               controller: lr,
                               hintText: 'LR No.',
+                              readOnly: isDisabled,
                               onSelected: (String selection) {
                                 print(selection);
                               },
@@ -245,6 +282,7 @@ class _GDMViewState extends State<GDMView> {
                             return AutoComplete(
                               controller: lr,
                               hintText: 'LR No.',
+                              readOnly: isDisabled,
                               onSelected: (String selection) {
                                 print('You selected: $selection');
                               },
@@ -259,6 +297,7 @@ class _GDMViewState extends State<GDMView> {
                       DialogTextField(
                         controller: consignor,
                         keyboardType: TextInputType.name,
+                        readOnly: true,
                         labelText: "Consignor",
                       ),
                       const SizedBox(
@@ -267,36 +306,43 @@ class _GDMViewState extends State<GDMView> {
                       DialogTextField(
                         controller: consignee,
                         keyboardType: TextInputType.name,
+                        readOnly: true,
                         labelText: "Consignee",
                       ),
                       DialogTextField(
                         controller: invoiceNo,
                         keyboardType: TextInputType.name,
+                        readOnly: true,
                         labelText: "Invoice No",
                       ),
                       DialogTextField(
                         controller: destination,
                         keyboardType: TextInputType.name,
+                        readOnly: true,
                         labelText: "Destination",
                       ),
                       DialogTextField(
                         controller: accountPay,
                         keyboardType: TextInputType.number,
+                        readOnly: isDisabled,
                         labelText: "Account Pay",
                       ),
                       DialogTextField(
                         controller: toPay,
                         keyboardType: TextInputType.number,
+                        readOnly: isDisabled,
                         labelText: "ToPay",
                       ),
                       DialogTextField(
                         controller: VOG,
                         keyboardType: TextInputType.number,
+                        readOnly: true,
                         labelText: "Value of Goods",
                       ),
                       DialogTextField(
                         controller: boxCount,
                         keyboardType: TextInputType.name,
+                        readOnly: true,
                         labelText: "Box Count",
                       ),
                     ],
@@ -393,20 +439,91 @@ class _GDMViewState extends State<GDMView> {
           '${ApiEndpoints.authEndpoints.GDM}${widget.name}', body);
       if (response == '200') {
         Fluttertoast.showToast(
-            msg: "Submitted Successfully",
+            msg: "Document updated successfully",
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 2);
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => const GdmList()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => GDMView(name: widget.name,)));
       } else {
         Fluttertoast.showToast(
-            msg: "Unable to submit",
+            msg: "Can't able to save",
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 2);
       }
     } catch (e) {
       // throw "Error: Failed to submit";
       print("Exception: $e");
+    }
+  }
+
+   void submitDoc() async{
+    final ApiService apiService = ApiService();
+    final body = {
+      "docstatus" : 1
+    };
+    try {
+      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.GDM + widget.name, body);
+      print(response);
+      if(response == "200") {
+        Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        if(mounted) {
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => GDMView(name: widget.name)));
+        }
+        // initState();
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to submit document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+      }
+      print(response);
+    }
+    catch(e) {
+      print(e);
+    }
+  }
+
+  void deleteDoc() async {
+    final ApiService apiService = ApiService();
+    try {
+      final response = await apiService.deleteDocument(ApiEndpoints.authEndpoints.GDM + widget.name);
+      if(response == "202") {
+        Fluttertoast.showToast(msg: "Document deleted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        if(mounted){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => const GdmList()));
+        }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to delete document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+      }
+      print(response);
+    }
+    catch(e) {
+      print(e);
+    }
+  }
+
+  void cancelDoc() async{
+    final ApiService apiService = ApiService();
+    final body = {
+      "docstatus" : 2
+    };
+    try {
+      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.GDM + widget.name, body);
+      if(response == "200") {
+        Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        if(mounted){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => const GdmList()));
+        }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to cancel document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+      }
+      print(response);
+    }
+    catch(e) {
+      print(e);
     }
   }
 
@@ -566,263 +683,325 @@ class _GDMViewState extends State<GDMView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('GDM'),
-        backgroundColor: Colors.grey[200],
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: SingleChildScrollView(
-            child: FormBuilder(
-              key: _formKey,
-              child: Column(
-                children: <Widget>[
-                  const SizedBox(height: 5),
-                  GestureDetector(
-                    onTap: () async {
-                      DateTime? pickedDate =
-                          await DatePicker.showSimpleDatePicker(
-                        context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                        dateFormat: "dd-MMMM-yyyy",
-                        locale: DateTimePickerLocale.en_us,
-                        looping: true,
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          dispatchOn.text =
-                              DateFormat('yyyy-MM-dd').format(pickedDate);
-                        });
-                      }
-                    },
-                    child: AbsorbPointer(
-                      child: FieldText(
-                        controller: dispatchOn,
-                        labelText: "Dispatch On",
-                        obscureText: false,
-                        keyboardType: TextInputType.name,
-                      ),
-                    ),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if(didPop) {return;}
+        Navigator.pushReplacement(context, 
+        MaterialPageRoute(builder: (context) => const GdmList()));
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('GDM'),
+          backgroundColor: Colors.grey[200],
+          actions: [
+              Padding(padding: const EdgeInsets.only(right: 20),
+              child: PopupMenuButton(
+                itemBuilder: (context) => [
+                  if(docstatus == 0)
+                  const PopupMenuItem(
+                    value: 1,
+                    child: Text('Submit', style: TextStyle(),),
                   ),
-                  const SizedBox(height: 15),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        showPicker(
-                          context: context,
-                          value: Time(
-                            hour: TimeOfDay.now().hour,
-                            minute: TimeOfDay.now().minute,
-                          ),
-                          onChange: (Time newTime) {
-                            final newTimeOfDay = TimeOfDay(
-                                hour: newTime.hour, minute: newTime.minute);
-                            setState(() {
-                              dispatchTime.text = newTimeOfDay.format(context);
-                            });
-                          },
-                          is24HrFormat: false,
-                          accentColor: Theme.of(context).colorScheme.secondary,
-                          unselectedColor: Colors.grey,
-                          okText: 'OK',
-                          cancelText: 'Cancel',
+                  if(docstatus == 0)
+                  const PopupMenuItem(
+                    value: 0,
+                    child: Text('Delete'),
+                  ),
+                  if(docstatus == 1)
+                  const PopupMenuItem(
+                    value: 2,
+                    child: Text('Cancel'),
+                  ),
+                ],
+                onSelected: (value) {
+                  setState(() {
+                    docstatus = value;
+                    if(value == 1){
+                      submitDoc();
+                    }
+                    else if(value == 0){
+                      deleteDoc();
+                    }
+                    else if(value == 2) {
+                      cancelDoc();
+                    }
+                  });
+                },
+              child: const  Icon(
+                Icons.more_vert,
+                size: 28.0,
+              ),
+              ),
+              ),
+            ],
+        ),
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: SingleChildScrollView(
+              child: FormBuilder(
+                key: _formKey,
+                child: Column(
+                  children: <Widget>[
+                    const SizedBox(height: 5),
+                    GestureDetector(
+                      onTap: () async {
+                        DateTime? pickedDate =
+                            await DatePicker.showSimpleDatePicker(
+                          context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),          
+                          lastDate: DateTime(2101),
+                          dateFormat: "dd-MMMM-yyyy",
+                          locale: DateTimePickerLocale.en_us,
+                          looping: true,
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            dispatchOn.text =
+                                DateFormat('yyyy-MM-dd').format(pickedDate);
+                          });
+                        }
+                      },
+                      child: AbsorbPointer(
+                        child: FieldText(
+                          controller: dispatchOn,
+                          labelText: "Dispatch On",
+                          readOnly: isDisabled,
+                          obscureText: false,
+                          keyboardType: TextInputType.name,
                         ),
-                      );
-                    },
-                    child: AbsorbPointer(
-                      child: FieldText(
-                        controller: dispatchTime,
-                        labelText: "Dispatch Time",
-                        obscureText: false,
-                        keyboardType: TextInputType.name,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 15.0),
-                  FieldText(
-                    controller: dispatchNumber,
-                    labelText: "Dispatch Number",
-                    obscureText: false,
-                    keyboardType: TextInputType.number,
-                    readOnly: true,
-                  ),
-                  const SizedBox(height: 15.0),
-                  FieldText(
-                    controller: advance,
-                    labelText: "Advance Amount",
-                    obscureText: false,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 15.0),
-                  FutureBuilder<List<String>>(
-                    future: fetchDriver(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return AutoComplete(
-                          controller: assignedDriver,
-                          hintText: 'Assign Driver',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: driverList,
-                        );
-                      } else if (snapshot.hasData) {
-                        driverList = snapshot.data!;
-                        return AutoComplete(
-                          controller: assignedDriver,
-                          hintText: 'Assign Driver',
-                          onSelected: (String selection) {
-                            print(selection);
-                          },
-                          options: driverList,
-                        );
-                      } else {
-                        return AutoComplete(
-                          controller: assignedDriver,
-                          hintText: 'Assign Driver',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: driverList,
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  FutureBuilder<List<String>>(
-                    future: fetchAttender(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return AutoComplete(
-                          controller: assignedAttender,
-                          hintText: 'Assign Attender',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: attenderList,
-                        );
-                      } else if (snapshot.hasData) {
-                        attenderList = snapshot.data!;
-                        return AutoComplete(
-                          controller: assignedAttender,
-                          hintText: 'Assign Attender',
-                          onSelected: (String selection) {
-                            print(selection);
-                          },
-                          options: attenderList,
-                        );
-                      } else {
-                        return AutoComplete(
-                          controller: assignedAttender,
-                          hintText: 'Assign Attender',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: attenderList,
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 15.0,
-                  ),
-                  GestureDetector(
-                    onTap: () => _showLoadingStaffs(context),
-                    child: AbsorbPointer(
-                      child: FieldText(
-                        controller: loadingStaffs,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Loading staffs required';
-                          }
-                          return null;
-                        },
-                        labelText: "Loading Staffs",
-                        obscureText: false,
-                        keyboardType: TextInputType.name,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15.0,
-                  ),
-                  FieldText(
-                      controller: vehicleRegisterNo,
-                      readOnly: true,
-                      labelText: 'Vehicle Registration Number',
-                      keyboardType: TextInputType.name),
-                  const SizedBox(
-                    height: 10.0,
-                  ),
-                  Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 25.0, vertical: 3.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text("Items"),
-                          ElevatedButton(
-                            child: const Icon(Icons.add),
-                            onPressed: () {
-                              _showItemDialog();
+                    const SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          showPicker(
+                            context: context,
+                            value: Time(
+                              hour: TimeOfDay.now().hour,
+                              minute: TimeOfDay.now().minute,
+                            ),
+                            onChange: (Time newTime) {
+                              final newTimeOfDay = TimeOfDay(
+                                  hour: newTime.hour, minute: newTime.minute);
+                              setState(() {
+                                dispatchTime.text = newTimeOfDay.format(context);
+                              });
                             },
+                            is24HrFormat: false,
+                            accentColor: Theme.of(context).colorScheme.secondary,
+                            unselectedColor: Colors.grey,
+                            okText: 'OK',
+                            cancelText: 'Cancel',
                           ),
-                        ],
-                      )),
-                  const SizedBox(height: 10),
-                  if (items.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 25.0, vertical: 3.0),
-                      child: Column(
-                        children: [
-                          DottedBorder(
-                            borderType: BorderType.RRect,
-                            radius: const Radius.circular(12.0),
-                            strokeWidth: 1,
-                            dashPattern: const [8, 4],
-                            color: Colors.black,
-                            child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 25.0, vertical: 20.0),
-                                child: const Center(
-                                  child: Text("No Items Found"),
-                                )),
-                          )
-                        ],
+                        );
+                      },
+                      child: AbsorbPointer(
+                        child: FieldText(
+                          controller: dispatchTime,
+                          labelText: "Dispatch Time",
+                          readOnly: isDisabled,
+                          obscureText: false,
+                          keyboardType: TextInputType.name,
+                        ),
                       ),
                     ),
-                  if (items.isNotEmpty)
+                    const SizedBox(height: 15.0),
+                    FieldText(
+                      controller: dispatchNumber,
+                      labelText: "Dispatch Number",
+                      obscureText: false,
+                      keyboardType: TextInputType.number,
+                      readOnly: isDisabled,
+                    ),
+                    const SizedBox(height: 15.0),
+                    FieldText(
+                      controller: advance,
+                      labelText: "Advance Amount",
+                      obscureText: false,
+                      readOnly: isDisabled,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 15.0),
+                    FutureBuilder<List<String>>(
+                      future: fetchDriverList,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return AutoComplete(
+                            controller: assignedDriver,
+                            hintText: 'Assign Driver',
+                            readOnly: isDisabled,
+                            onSelected: (String selection) {
+                              print('You selected: $selection');
+                            },
+                            options: driverList,
+                          );
+                        } else if (snapshot.hasData) {
+                          driverList = snapshot.data!;
+                          return AutoComplete(
+                            controller: assignedDriver,
+                            hintText: 'Assign Driver',
+                            readOnly: isDisabled,
+                            onSelected: (String selection) {
+                              print(selection);
+                            },
+                            options: driverList,
+                          );
+                        } else {
+                          return AutoComplete(
+                            controller: assignedDriver,
+                            hintText: 'Assign Driver',
+                            readOnly: isDisabled,
+                            onSelected: (String selection) {
+                              print('You selected: $selection');
+                            },
+                            options: driverList,
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    FutureBuilder<List<String>>(
+                      future: fetchAttenderList,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return AutoComplete(
+                            controller: assignedAttender,
+                            hintText: 'Assign Attender',
+                            readOnly: isDisabled,
+                            onSelected: (String selection) {
+                              print('You selected: $selection');
+                            },
+                            options: attenderList,
+                          );
+                        } else if (snapshot.hasData) {
+                          attenderList = snapshot.data!;
+                          return AutoComplete(
+                            controller: assignedAttender,
+                            readOnly: isDisabled,
+                            hintText: 'Assign Attender',
+                            onSelected: (String selection) {
+                              print(selection);
+                            },
+                            options: attenderList,
+                          );
+                        } else {
+                          return AutoComplete(
+                            controller: assignedAttender,
+                            hintText: 'Assign Attender',
+                            readOnly: isDisabled,
+                            onSelected: (String selection) {
+                              print('You selected: $selection');
+                            },
+                            options: attenderList,
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(
+                      height: 15.0,
+                    ),
+                    GestureDetector(
+                      onTap: () => _showLoadingStaffs(context),
+                      child: AbsorbPointer(
+                        child: FieldText(
+                          controller: loadingStaffs,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Loading staffs required';
+                            }
+                            return null;
+                          },
+                          labelText: "Loading Staffs",
+                          readOnly: isDisabled,
+                          obscureText: false,
+                          keyboardType: TextInputType.name,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15.0,
+                    ),
+                    FieldText(
+                        controller: vehicleRegisterNo,
+                        readOnly: isDisabled,
+                        labelText: 'Vehicle Registration Number',
+                        keyboardType: TextInputType.name),
+                    const SizedBox(
+                      height: 10.0,
+                    ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 17.0, vertical: 3.0),
-                      child: SizedBox(
-                        height: 200, // Set a fixed height for the ListView
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 25.0, vertical: 3.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("Items"),
+                            ElevatedButton(
+                              child: const Icon(Icons.add),
+                              onPressed: () {
+                                _showItemDialog();
+                              },
+                            ),
+                          ],
+                        )),
+                    const SizedBox(height: 10),
+                    if (items.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 25.0, vertical: 3.0),
+                        child: Column(
+                          children: [
+                            DottedBorder(
+                              borderType: BorderType.RRect,
+                              radius: const Radius.circular(12.0),
+                              strokeWidth: 1,
+                              dashPattern: const [8, 4],
+                              color: Colors.black,
+                              child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 25.0, vertical: 20.0),
+                                  child: const Center(
+                                    child: Text("No Items Found"),
+                                  )),
+                            )
+                          ],
+                        ),
+                      ),
+                    if (items.isNotEmpty)
+                      Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: ListView.builder(
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 10.0),
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  border:
-                                      Border.all(width: 1, color: Colors.black),
+                                  border: Border.all(width: 1, color: Colors.black),
                                   borderRadius: BorderRadius.circular(10),
                                   shape: BoxShape.rectangle,
                                 ),
                                 child: ListTile(
                                   title: Text(items[index]["lr_no"].toString()),
                                   onTap: () {
-                                    _showItemDialog(
-                                        item: items[index], index: index);
+                                    _showItemDialog(item: items[index], index: index);
                                   },
                                 ),
                               ),
@@ -831,17 +1010,19 @@ class _GDMViewState extends State<GDMView> {
                         ),
                       ),
                     ),
-                  const SizedBox(
-                    height: 15.0,
                   ),
-                  MyButton(onTap: submitData, name: "Submit")
-                ],
+                    const SizedBox(
+                      height: 15.0,
+                    ),
+                    MyButton(onTap: isDisabled ? (){} : submitData, name: "Save")
+                  ],
+                ),
               ),
             ),
           ),
         ),
+        bottomNavigationBar: const BottomNavigation(),
       ),
-      bottomNavigationBar: const BottomNavigation(),
     );
   }
 }

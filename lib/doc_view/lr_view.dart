@@ -58,7 +58,7 @@ class _LRViewState extends State<LRView> {
   List<String> consigneeList = [];
   List<String> destinationList = [];
   List<String> itemList = [];
-  bool isDisabled = true;
+  bool isDisabled = false;
   int docstatus = 0;
   bool? crossCheckStatus = false;
   bool? calculationBasedOnLRLevel = false;
@@ -69,6 +69,39 @@ class _LRViewState extends State<LRView> {
     super.initState();
     fetchConsignee();
     fetchLR();
+  }
+
+  @override
+  void dispose() {
+    lrType.dispose();
+    collectionRequest.dispose();
+    logsheet.dispose();
+    consignor.dispose();
+    consignee.dispose();
+    destination.dispose();
+    boxCount.dispose();
+    boxMismatchFromOrder.dispose();
+    boxMismatchOnRescan.dispose();
+    freight.dispose();
+    lrCharge.dispose();
+    totalFreight.dispose();
+    deliveredOn.dispose();
+    boxDelivered.dispose();
+    totalItems.dispose();
+    itemName.dispose();
+    itemWeight.dispose();
+    itemVolume.dispose();
+    itemBarcode.dispose();
+    selectedLrType.dispose();
+    remarks.dispose();
+    items = [];
+    requestList = [];
+    logsheetList = [];
+    consignorList = [];
+    consigneeList = [];
+    destinationList = [];
+    itemList = [];
+    super.dispose();
   }
 
   Future<List<String>> fetchRequest() async {
@@ -116,11 +149,11 @@ class _LRViewState extends State<LRView> {
         docstatus = response["docstatus"];
         print(response['items']);
         items = (response["items"] as List).map((item) {
-    return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
+            return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
       }).toList();
         print(items);
-        if(response['docstatus'] == 0){
-          isDisabled = false;
+        if(response['docstatus'] != 0){
+          isDisabled = true;
         }
       });
         print(response);
@@ -208,9 +241,14 @@ class _LRViewState extends State<LRView> {
       print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
-        Navigator.push(context,
-        MaterialPageRoute(builder: (context) => LRView(name: widget.name)));
+        if(mounted) {
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => LRView(name: widget.name)));
+        }
         // initState();
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to submit document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }
@@ -229,6 +267,9 @@ class _LRViewState extends State<LRView> {
           Navigator.push(context,
           MaterialPageRoute(builder: (context) => const LRList()));
         }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to delete document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }
@@ -250,6 +291,9 @@ class _LRViewState extends State<LRView> {
           Navigator.push(context,
           MaterialPageRoute(builder: (context) => const LRList()));
         }
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to cancel document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }
@@ -747,25 +791,33 @@ class _LRViewState extends State<LRView> {
                       ),
                       if (items.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                        child: SizedBox(
-                          height: 200, // Set a fixed height for the ListView
-                          child: ListView.builder(
-                            itemCount: items.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(width: 1, color: Colors.black),
-                                    borderRadius: BorderRadius.circular(10),
-                                    shape: BoxShape.rectangle,
-                                  ),
-                                  child: ListTile(
-                                    title: Text(items[index]["item_code"].toString()),
-                                    onTap: () {
-                                      _showItemDialog(item: items[index], index: index);
-                                    },
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: ListView.builder(
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(width: 1, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: ListTile(
+                                  title: Text(items[index]["item_code"].toString()),
+                                  onTap: () {
+                                    _showItemDialog(item: items[index], index: index);
+                                  },
                                 ),
                               ),
                             );
@@ -773,6 +825,7 @@ class _LRViewState extends State<LRView> {
                         ),
                       ),
                     ),
+                  ),
                     MyButton(onTap: isDisabled ? (){Fluttertoast.showToast(msg: "Can't able to save", gravity: ToastGravity.BOTTOM, fontSize: 16.0);} : submitData, name: "Save")
                   ],
                 ),
