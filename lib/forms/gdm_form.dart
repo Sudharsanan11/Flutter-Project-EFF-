@@ -4,7 +4,6 @@ import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_view/gdm_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
-// import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
@@ -12,6 +11,7 @@ import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 
@@ -43,41 +43,54 @@ class _GdmFormState extends State<GdmForm> {
   final TextEditingController isPaid = TextEditingController();
   final TextEditingController VOG = TextEditingController();
   final TextEditingController boxCount = TextEditingController();
+  final TextEditingController consignorName = TextEditingController();
+  final TextEditingController consigneeName = TextEditingController();
 
   List<Map<String, String>> items = [];
   List<String> driverList = [];
   List<String> attenderList = [];
   List<String> lrList = [];
+  List<String> vehicleList = [];
 
-late List<Object> linkedLoadingStaffs;
-String? selectedDriver;
-String? selectedStaff;
-List<String> selectedLoadingStaffs = [];
-List<String> selectedLr = [];
-List<String> loadingStaffItems = [];
-final List<String> selectLR = ['1', '2', '3'];
+  String? selectedDriver;
+  String? selectedStaff;
+  List<String> selectedLoadingStaffs = [];
+  List<Map<String, String>> loadingStaffDict = [];
+  List<String> selectedLr = [];
+  List<String> loadingStaffItems = [];
+  final List<String> selectLR = ['1', '2', '3'];
+  late Map<String, Map<String, dynamic>> lrDocList;
 
-
+  String convertTo24HourFormat(TimeOfDay timeOfDay) {
+    final now = DateTime.now();
+    final dt = DateTime(
+        now.year, now.month, now.day, timeOfDay.hour, timeOfDay.minute);
+    final format = DateFormat('HH:mm:ss');
+    return format.format(dt);
+  }
 
   @override
-void dispose() {
-  selectedLoadingStaffs = [];
-  super.dispose();
-}
+  void dispose() {
+    selectedLoadingStaffs = [];
+    super.dispose();
+  }
 
+  
 
   Future<List<String>> fetchDriver() async {
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Employee",
-      "filters" : [["designation","=","Driver"], ["status", "=", "Active"]]
+      "doctype": "Driver",
+      "filters": [
+        ["status", "=", "Active"],
+      ]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getLinkedNames(
+          ApiEndpoints.authEndpoints.getList, body);
       print(response);
       return response;
-    }
-    catch(e) {
+    } catch (e) {
       throw "Fetch Error";
     }
   }
@@ -85,15 +98,18 @@ void dispose() {
   Future<List<String>> fetchAttender() async {
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Employee",
-      "filters" : [["designation","=","Attender"], ["status", "=", "Active"]]
+      "doctype": "Employee",
+      "filters": [
+        ["designation", "=", "Attender"],
+        ["status", "=", "Active"]
+      ]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getLinkedNames(
+          ApiEndpoints.authEndpoints.getList, body);
       print(response);
       return response;
-    }
-    catch(e) {
+    } catch (e) {
       throw "Fetch Error";
     }
   }
@@ -101,15 +117,18 @@ void dispose() {
   Future<List<String>> fetchLoadingStaff() async {
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Employee",
-      "filters" : [["designation","=","Loading Staff"], ["status", "=", "Active"]]
+      "doctype": "Employee",
+      "filters": [
+        ["designation", "=", "Loading Staff"],
+        ["status", "=", "Active"]
+      ]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getLinkedNames(
+          ApiEndpoints.authEndpoints.getList, body);
       print(response);
       return response;
-    }
-    catch(e) {
+    } catch (e) {
       throw "Fetch Error";
     }
   }
@@ -117,15 +136,51 @@ void dispose() {
   Future<List<String>> fetchLR() async {
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "LR",
-      "filters" : [["status", "=", "Pending"], ["docstatus", "=", 1]]
+      "doctype": "LR",
+      "filters": [
+        ["status", "=", "Pending"]
+      ]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getLinkedNames(
+          ApiEndpoints.authEndpoints.getList, body);
       print(response);
       return response;
+    } catch (e) {
+      throw "Fetch Error";
     }
-    catch(e) {
+  }
+
+  Future<List<String>> fetchVehicle() async {
+    final ApiService apiService = ApiService();
+    final body = {"doctype": "Vehicle", "filters": []};
+    try {
+      final response = await apiService.getLinkedNames(
+          ApiEndpoints.authEndpoints.getList, body);
+      print(response);
+      return response;
+    } catch (e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<void> fetchLRDetails() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype": "LR",
+      "filters": [
+        ["status", "=", "Pending"]
+      ],
+      "fields": ['name']
+    };
+    try {
+      final response = await apiService.fetchFieldData(
+          ApiEndpoints.authEndpoints.getList, body);
+      print("$response ========================location");
+      print(
+          "$lrDocList ========================location===========================");
+      // return response;
+    } catch (e) {
       throw "Fetch Error";
     }
   }
@@ -155,6 +210,11 @@ void dispose() {
                       const SizedBox(
                         height: 10,
                       ),
+                      // DialogTextField(
+                      //   controller: lr,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "LR ID",
+                      // ),
                       FutureBuilder<List<String>>(
                         future: fetchLR(),
                         builder: (context, snapshot) {
@@ -163,7 +223,7 @@ void dispose() {
                               controller: lr,
                               hintText: 'LR ID',
                               onSelected: (String selection) {
-                                fetchLR();
+                                fetchLRDetails();
                               },
                               options: lrList,
                             );
@@ -173,7 +233,7 @@ void dispose() {
                               controller: lr,
                               hintText: 'LR ID',
                               onSelected: (String selection) {
-                                fetchLR();
+                                fetchLRDetails();
                               },
                               options: lrList,
                             );
@@ -182,7 +242,7 @@ void dispose() {
                               controller: lr,
                               hintText: 'LR ID',
                               onSelected: (String selection) {
-                                fetchLR();
+                                fetchLRDetails();
                               },
                               options: lrList,
                             );
@@ -192,54 +252,19 @@ void dispose() {
                       const SizedBox(
                         height: 10,
                       ),
-                      // DialogTextField(
-                      //   controller: consignor,
-                      //   keyboardType: TextInputType.name,
-                      //   labelText: "Consignor",
-                      // ),
-                      // const SizedBox(
-                      //   height: 10,
-                      // ),
-                      // DialogTextField(
-                      //   controller: consignee,
-                      //   keyboardType: TextInputType.name,
-                      //   labelText: "Consignee",
-                      // ),
-                      // DialogTextField(
-                      //   controller: invoiceNo,
-                      //   keyboardType: TextInputType.name,
-                      //   labelText: "Invoice No",
-                      // ),
-                      // DialogTextField(
-                      //   controller: destination,
-                      //   keyboardType: TextInputType.name,
-                      //   labelText: "Destination",
-                      // ),
                       DialogTextField(
                         controller: accountPay,
                         keyboardType: TextInputType.number,
                         labelText: "Account Pay",
+                      ),
+                      const SizedBox(
+                        height: 10,
                       ),
                       DialogTextField(
                         controller: toPay,
                         keyboardType: TextInputType.number,
                         labelText: "ToPay",
                       ),
-                      // DialogTextField(
-                      //   controller: isPaid,
-                      //   keyboardType: TextInputType.name,
-                      //   labelText: "Is Paid",
-                      // ),
-                      // DialogTextField(
-                      //   controller: VOG,
-                      //   keyboardType: TextInputType.number,
-                      //   labelText: "Value of Goods",
-                      // ),
-                      // DialogTextField(
-                      //   controller: boxCount,
-                      //   keyboardType: TextInputType.name,
-                      //   labelText: "Box Count",
-                      // ),
                     ],
                   ),
                 ),
@@ -265,15 +290,8 @@ void dispose() {
                       setState(() {
                         items.add({
                           "lr_no": lr.text,
-                          "consignor": consignor.text,
-                          "consignee": consignee.text,
-                          "invoice_no": invoiceNo.text,
-                          "destination": destination.text,
                           "account_pay": accountPay.text,
                           "to_pay": toPay.text,
-                          // "is_paid" : isPaid.text,
-                          "value_of_goods": VOG.text,
-                          "box_count": boxCount.text,
                         });
                       });
                       lr.clear();
@@ -315,115 +333,122 @@ void dispose() {
         });
   }
 
-  Future<void> submitData() async{
+  Future<void> submitData() async {
+    print("Submit");
     final ApiService apiService = ApiService();
-    // for(int i = 0; i < selectedLoadingStaffs.length; i++) {
-    //   linkedLoadingStaffs.add({"loading_staff" : selectedLoadingStaffs[i]});
-    // }
-    final body = {
+    final data = {
       "dispatch_on": dispatchOn.text,
       "dispatch_time": dispatchTime.text,
       "dispatch_number": dispatchNumber.text,
       "advance": advance.text,
       "driver": assignedDriver.text,
       "delivery_staff": assignedAttender.text,
-      // "loading_staff": linkedLoadingStaffs,
-      // "vehicle_register_no": vehicleRegisterNo,
+      "loading_staffs": loadingStaffDict,
+      "vehicle_register_no": vehicleRegisterNo.text,
       "items": items,
-      "vehicle_register_no" : "TN29BD2837",
-      "docstatus" : 0,
+      "docstatus": 0,
     };
+    print(data);
     try {
-      final response =  await apiService.createDocument(ApiEndpoints.authEndpoints.GDM, body);
-      if(response[0] == 200) {
-        Navigator.push(context,
-        MaterialPageRoute(builder: (context) => GDMView(name: response[1])));
+      final response = await apiService.createDocument(
+          ApiEndpoints.authEndpoints.GDM, data);
+      if (response[0] == 200) {
+        Fluttertoast.showToast(
+            msg: "Document Saved Successfully",
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 2);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    GDMView(name: response[1])));
       }
-    }
-    catch (error) {
-      print(error);
-      throw "Error: Failed to submit data";
+    } catch (error) {
+      throw "Error: Failed to submit";
     }
   }
 
-
-
   void _showLoadingStaffs(BuildContext context) {
-  TextEditingController searchController = TextEditingController();
-  List<String> filteredItems = loadingStaffItems;
+    TextEditingController searchController = TextEditingController();
+    List<String> filteredItems = loadingStaffItems;
 
-  fetchLoadingStaff().then((response) => {
-    setState(() {
-      loadingStaffItems = [];
-      loadingStaffItems = response;
-      // filteredItems = loadingStaffItems;
-    })
-  }).catchError((error) => {
-    throw "Error: $error"
-  });
+    fetchLoadingStaff()
+        .then((response) => {
+              setState(() {
+                loadingStaffItems = [];
+                loadingStaffItems = response;
+                // filteredItems = loadingStaffItems;
+              })
+            })
+        .catchError((error) => {throw "Error: $error"});
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Select Loading Staffs'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        searchController.clear();
-                        setState(() {
-                          filteredItems = loadingStaffItems;
-                        });
-                      },
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Loading Staffs'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() {
+                            filteredItems = loadingStaffItems;
+                          });
+                        },
+                      ),
                     ),
+                    onChanged: (value) {
+                      setState(() {
+                        filteredItems = loadingStaffItems
+                            .where((item) => item
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      filteredItems = loadingStaffItems
-                          .where((item) => item
-                              .toLowerCase()
-                              .contains(value.toLowerCase()))
-                          .toList();
-                    });
+                  const SizedBox(height: 10),
+                  MultiSelect(
+                    items: filteredItems,
+                    selectedItems: selectedLoadingStaffs,
+                    onSelectedItemsListChanged:
+                        (List<String> newSelectedItems) {
+                      setState(() {
+                        selectedLoadingStaffs = newSelectedItems;
+                        loadingStaffs.text = selectedLoadingStaffs.join(', ');
+                        loadingStaffDict = selectedLoadingStaffs.map((staff) {
+                          return {
+                            'loading_staff': staff,
+                          };
+                        }).toList();
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
-                ),
-                const SizedBox(height: 10),
-                MultiSelect(
-                  items: filteredItems,
-                  selectedItems: selectedLoadingStaffs,
-                  onSelectedItemsListChanged: (List<String> newSelectedItems) {
-                    setState(() {
-                      selectedLoadingStaffs = newSelectedItems;
-                      loadingStaffs.text = selectedLoadingStaffs.join(', ');
-                    });
-                  },
+                  child: const Text('OK'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _showLR(BuildContext context) {
     TextEditingController searchController = TextEditingController();
@@ -490,14 +515,6 @@ void dispose() {
         );
       },
     );
-  }
-
-  String convertTo24HourFormat(TimeOfDay timeOfDay) {
-    final now = DateTime.now();
-    final dt = DateTime(
-        now.year, now.month, now.day, timeOfDay.hour, timeOfDay.minute);
-    final format = DateFormat('HH:mm:ss');
-    return format.format(dt);
   }
 
   @override
@@ -599,18 +616,6 @@ void dispose() {
                       ),
                     ),
                   ),
-                  // const SizedBox(height: 15.0),
-                  // FieldText(
-                  //     controller: dispatchNumber,
-                  //     validator: (value) {
-                  //       if (value == null || value.isEmpty) {
-                  //         return 'Dispatch number is required';
-                  //       }
-                  //       return null;
-                  //     },
-                  //     labelText: "Dispatch Number",
-                  //     obscureText: false,
-                  //     keyboardType: TextInputType.number),
                   const SizedBox(height: 15.0),
                   FieldText(
                       controller: advance,
@@ -619,76 +624,76 @@ void dispose() {
                       keyboardType: TextInputType.number),
                   const SizedBox(height: 15.0),
                   FutureBuilder<List<String>>(
-                  future: fetchDriver(),
-                  builder: (context, snapshot) {
-                    if(snapshot.hasError) {
-                      return AutoComplete(
-                        controller: assignedDriver,
-                        hintText: 'Assign Driver',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: driverList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      driverList = snapshot.data!;
-                      return AutoComplete(
-                        controller: assignedDriver,
-                        hintText: 'Assign Driver',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: driverList,
-                      );
-                    } else {
-                      return AutoComplete(
-                        controller: assignedDriver,
-                        hintText: 'Assign Driver',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: driverList,
-                      );
-                    }
-                  },
-                ),
-              const SizedBox(height: 10,),
-              FutureBuilder<List<String>>(
-                  future: fetchAttender(),
-                  builder: (context, snapshot) {
-                    if(snapshot.hasError) {
-                      return AutoComplete(
-                        controller: assignedAttender,
-                        hintText: 'Assign Attender',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: attenderList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      attenderList = snapshot.data!;
-                      return AutoComplete(
-                        controller: assignedAttender,
-                        hintText: 'Assign Attender',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: attenderList,
-                      );
-                    } else {
-                      return AutoComplete(
-                        controller: assignedAttender,
-                        hintText: 'Assign Attender',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: attenderList,
-                      );
-                    }
-                  },
-                ),
+                    future: fetchDriver(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return AutoComplete(
+                          controller: assignedDriver,
+                          hintText: 'Assign Driver',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: driverList,
+                        );
+                      } else if (snapshot.hasData) {
+                        driverList = snapshot.data!;
+                        return AutoComplete(
+                          controller: assignedDriver,
+                          hintText: 'Assign Driver',
+                          onSelected: (String selection) {
+                            print(selection);
+                          },
+                          options: driverList,
+                        );
+                      } else {
+                        return AutoComplete(
+                          controller: assignedDriver,
+                          hintText: 'Assign Driver',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: driverList,
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  FutureBuilder<List<String>>(
+                    future: fetchAttender(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return AutoComplete(
+                          controller: assignedAttender,
+                          hintText: 'Assign Attender',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: attenderList,
+                        );
+                      } else if (snapshot.hasData) {
+                        attenderList = snapshot.data!;
+                        return AutoComplete(
+                          controller: assignedAttender,
+                          hintText: 'Assign Attender',
+                          onSelected: (String selection) {
+                            print(selection);
+                          },
+                          options: attenderList,
+                        );
+                      } else {
+                        return AutoComplete(
+                          controller: assignedAttender,
+                          hintText: 'Assign Attender',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: attenderList,
+                        );
+                      }
+                    },
+                  ),
                   const SizedBox(height: 15.0),
                   GestureDetector(
                     onTap: () => _showLoadingStaffs(context),
@@ -708,16 +713,40 @@ void dispose() {
                     ),
                   ),
                   const SizedBox(height: 15.0),
-                  FieldText(
-                      controller: vehicleRegisterNo,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Vehicle Reg.no is required";
-                        }
-                        return null;
-                      },
-                      labelText: 'Vehicle Registration Number',
-                      keyboardType: TextInputType.name),
+                  FutureBuilder<List<String>>(
+                    future: fetchVehicle(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return AutoComplete(
+                          controller: vehicleRegisterNo,
+                          hintText: 'Vehicle Registration Number',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: vehicleList,
+                        );
+                      } else if (snapshot.hasData) {
+                        vehicleList = snapshot.data!;
+                        return AutoComplete(
+                          controller: vehicleRegisterNo,
+                          hintText: 'Vehicle Registration Number',
+                          onSelected: (String selection) {
+                            print(selection);
+                          },
+                          options: vehicleList,
+                        );
+                      } else {
+                        return AutoComplete(
+                          controller: vehicleRegisterNo,
+                          hintText: 'Vehicle Registration Number',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: vehicleList,
+                        );
+                      }
+                    },
+                  ),
                   const SizedBox(
                     height: 15.0,
                   ),
@@ -804,7 +833,7 @@ void dispose() {
                           submitData();
                         }
                       },
-                      name: "Submit"),
+                      name: "Save"),
                 ],
               ),
             ),
@@ -814,5 +843,4 @@ void dispose() {
       bottomNavigationBar: const BottomNavigation(),
     );
   }
-  }
-
+}
