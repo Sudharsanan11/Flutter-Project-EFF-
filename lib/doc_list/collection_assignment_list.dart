@@ -31,7 +31,7 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
 
     try {
       return await apiService.getresources(
-          ApiEndpoints.authEndpoints.collectionAssignmentList + fields);
+          ApiEndpoints.authEndpoints.CollectionAssignment + fields);
     } catch (e) {
       throw ('Error $e');
     }
@@ -52,7 +52,7 @@ class _CollectionAssignmentListState extends State<CollectionAssignmentList> {
                   onPressed: () {
                     showSearch(
                         context: context,
-                        delegate: CustomSearchBar(snapshot.data!));
+                        delegate: CustomSearchBar(snapshot.data!, "CollectionAssignmentView"));
                   },
                 );
               })

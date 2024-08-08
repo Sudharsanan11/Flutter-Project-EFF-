@@ -1,11 +1,14 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
+import 'package:erpnext_logistics_mobile/doc_view/collection_request_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class CollectionRequestForm extends StatefulWidget {
   const CollectionRequestForm({super.key});
@@ -32,6 +35,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
   List<String> locationList = [];
   List<String> itemList = [];
   List<Map<String, String>> items = [];
+  bool isEnabled = true;
+
 
   @override
   void initState() {
@@ -45,7 +50,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     });
   }
 
-  Future<String> submitData() async {
+  Future<void> submitData() async {
+    isEnabled = false;
     print("submit");
     final ApiService apiService = ApiService();
     final data = {
@@ -57,11 +63,19 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
       "items": items,
     };
     try {
-      return await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionRequest, data);
+      final response =  await apiService.createDocument(ApiEndpoints.authEndpoints.CollectionRequest, data);
+      if(response[0] == 200) {
+        Fluttertoast.showToast(msg: "Document Saved Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        if(mounted) {
+        Navigator.push(context,
+        MaterialPageRoute(builder: (context) => CollectionRequestView(name: response[1])));
+        }
+      }
     }
     catch (error) {
       print(error);
-      return "Error: Failed to submit data";
+      isEnabled = true;
+      throw "Error: Failed to submit data";
     }
   }
 
@@ -134,23 +148,67 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
               child: Column(
                 children: [
                   const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemName,
-                    keyboardType: TextInputType.name,
-                    labelText: "Item Name",
-                  ),
-                  const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemWeight,
-                    keyboardType: TextInputType.name,
-                    labelText: "Weight",
-                  ),
-                  const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemVolume,
-                    keyboardType: TextInputType.name,
-                    labelText: "Volume",
-                  ),
+                  // DialogTextField(
+                  //   controller: itemName,
+                  //   keyboardType: TextInputType.name,
+                  //   labelText: "Item Name",
+                  // ),
+                  FutureBuilder<List<String>>(
+                future: fetchItem(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return AutoComplete(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Item Is Required";
+                        }
+                        return null;
+                      },
+                      hintText: 'Item Name',
+                      controller: itemName,
+                      onSelected: (String selection) {
+                        print('You selected: $selection');
+                        setState(() {
+                          print("sele");
+                          itemName.text = selection;
+                        });
+                      },
+                      options: itemList,
+                    );
+                  } else if (snapshot.hasData) {
+                    itemList = snapshot.data!;
+                    return AutoComplete(
+                      validator:  (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Item Is Required";
+                        }
+                        return null;
+                      },
+                      controller: itemName,
+                      hintText: 'Item Name',
+                      onSelected: (String selection) {
+                        itemName.text = selection;
+                        print('You selected: ${consignor.text}');
+                      },
+                      options: itemList,
+                    );
+                  } else {
+                    return const Text("");
+                  }
+                },
+              ),
+                  // const SizedBox(height: 10,),
+                  // DialogTextField(
+                  //   controller: itemWeight,
+                  //   keyboardType: TextInputType.name,
+                  //   labelText: "Weight",
+                  // ),
+                  // const SizedBox(height: 10,),
+                  // DialogTextField(
+                  //   controller: itemVolume,
+                  //   keyboardType: TextInputType.name,
+                  //   labelText: "Volume",
+                  // ),
                 ],
               ),
             ),
@@ -239,6 +297,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Collection Request'),
       ),
@@ -288,36 +347,36 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   }
                 },
               ),
-              const SizedBox(
-                height: 10.0,
-              ),
-              FutureBuilder<List<String>>(
-                future: fetchLocation(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return AutoComplete(
-                      controller: location,
-                      hintText: 'Location',
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                      },
-                      options: locationList,
-                    );
-                  } else if (snapshot.hasData) {
-                    locationList = snapshot.data!;
-                    return AutoComplete(
-                      controller: location,
-                      hintText: 'Location',
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                      },
-                      options: locationList,
-                    );
-                  } else {
-                    return const Text("");
-                  }
-                },
-              ),
+              // const SizedBox(
+              //   height: 10.0,
+              // ),
+              // FutureBuilder<List<String>>(
+              //   future: fetchLocation(),
+              //   builder: (context, snapshot) {
+              //     if (snapshot.hasError) {
+              //       return AutoComplete(
+              //         controller: location,
+              //         hintText: 'Location',
+              //         onSelected: (String selection) {
+              //           print('You selected: $selection');
+              //         },
+              //         options: locationList,
+              //       );
+              //     } else if (snapshot.hasData) {
+              //       locationList = snapshot.data!;
+              //       return AutoComplete(
+              //         controller: location,
+              //         hintText: 'Location',
+              //         onSelected: (String selection) {
+              //           print('You selected: $selection');
+              //         },
+              //         options: locationList,
+              //       );
+              //     } else {
+              //       return const Text("");
+              //     }
+              //   },
+              // ),
               const SizedBox(height: 10.0,),
               
               // AutoComplete(hintText: 'Type something',onSelected: (String selection) {
@@ -346,6 +405,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
                           color: isDarkMode ? Colors.white : Colors.black),
+                          borderRadius: BorderRadius.circular(10)
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
@@ -386,6 +446,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
                           color: isDarkMode ? Colors.white : Colors.black),
+                          borderRadius: BorderRadius.circular(10),
                     ),
                     fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     filled: true,
@@ -410,9 +471,9 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     const Text("Items"),
                     ElevatedButton(
                       child: const Icon(Icons.add),
-                      onPressed: () {
+                      onPressed: isEnabled ? () {
                         _showItemDialog();
-                      },
+                      } : null,
                     ),
                   ],
                 ),
@@ -444,58 +505,91 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
               if (items.isEmpty) const SizedBox(height: 15.0),
               if (items.isEmpty)
                 MyButton(
-                    onTap: () {
+                    onTap: isEnabled ? () {
                       if (_formKey.currentState?.validate() ?? false) {
                         submitData();
                       }
+                    } : (){
+                      print("enable check");
+                      Fluttertoast.showToast(
+                        msg: "Can't enable to Save",
+                        // backgroundColor: Color(00000000)
+                        gravity: ToastGravity.BOTTOM,
+                        timeInSecForIosWeb: 2,
+                      );
                     },
-                    name: "Request"),
+                    name: "Save"),
+                // ElevatedButton(
+                //   // style: ",
+                //   onPressed: isEnabled ? () {
+                //     if (_formKey.currentState?.validate() ?? false) {
+                //           submitData();
+                //         }
+                //   } : null, 
+                //   child: const Text("Save")
+                // ),
               if (items.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 17.0, vertical: 3.0),
-                  child: SizedBox(
-                    height: 200,
-                    child: ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  width: 1,
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                              shape: BoxShape.rectangle,
-                            ),
-                            child: ListTile(
-                              title: Text(items[index]["item_code"].toString()),
-                              onTap: () {
-                                _showItemDialog(
-                                    item: items[index], index: index);
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: ListView.builder(
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(width: 1, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: ListTile(
+                                  title: Text(items[index]["item_code"].toString()),
+                                  onTap: () {
+                                    _showItemDialog(item: items[index], index: index);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
               if (items.isNotEmpty) const SizedBox(height: 15.0),
-              if (items.isNotEmpty)
-                MyButton(
-                    onTap: () {
-                      if (_formKey.currentState?.validate() ?? false) {
-                        submitData();
-                      }
-                    },
-                    name: "Submit"),
+               MyButton(
+          onTap: () {
+            if (_formKey.currentState?.validate() ?? false) {
+              submitData();
+            }
+          },
+          name: "Save"),
             ]),
           ),
         ),
       ),
+      // persistentFooterButtons: <Widget>[
+      //   if (items.isNotEmpty)
+      //   MyButton(
+      //     onTap: () {
+      //       if (_formKey.currentState?.validate() ?? false) {
+      //         submitData();
+      //       }
+      //     },
+      //     name: "Save"),
+      //     Padding(
+      //       padding: EdgeInsets.only(right: 20),
+      //       child: TextButton(onPressed: () {}, child: Text("Save"),))
+      // ],
       bottomNavigationBar: const BottomNavigation(),
     );
   }

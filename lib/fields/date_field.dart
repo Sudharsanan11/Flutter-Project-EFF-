@@ -19,8 +19,9 @@ class DateField extends StatelessWidget {
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black),
+            borderRadius: BorderRadius.circular(12.0),
           ),
           focusedBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),

@@ -53,7 +53,7 @@ class _DayNightTimePickerComponentState extends State<DayNightTimePickerComponen
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(12.0),
           boxShadow: const [
             BoxShadow(
               color: Colors.black12,

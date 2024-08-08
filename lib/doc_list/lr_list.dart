@@ -3,7 +3,6 @@ import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_view/lr_view.dart';
 import 'package:erpnext_logistics_mobile/forms/lr_form.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
-import 'package:erpnext_logistics_mobile/modules/form_view.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +30,7 @@ class _LRListState extends State<LRList> {
 
     try {
       return await apiService
-          .getresources(ApiEndpoints.authEndpoints.lrList + fields);
+          .getresources(ApiEndpoints.authEndpoints.LR + fields);
     } catch (e) {
       throw ('Error $e');
     }
@@ -52,7 +51,7 @@ class _LRListState extends State<LRList> {
                   onPressed: () {
                     showSearch(
                         context: context,
-                        delegate: CustomSearchBar(snapshot.data!));
+                        delegate: CustomSearchBar(snapshot.data!, "LRList"));
                   },
                 );
               })

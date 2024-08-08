@@ -64,6 +64,11 @@ final List<String> selectLR = ['1', '2', '3'];
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    fetchGDM();
+  }
 
   Future<List<String>> fetchDriver() async {
     final ApiService apiService = ApiService();
@@ -84,18 +89,18 @@ final List<String> selectLR = ['1', '2', '3'];
   Future<Map<String, dynamic>> fetchGDM() async{
     final ApiService apiService = ApiService();
     try {
-      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.getCollectionAssignment + widget.name);
+      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.CollectionAssignment + widget.name);
       setState(() {
-        dispatchOn.text = response["dispatch_on"];
-        dispatchTime.text = response["dispatch_time"];
-        dispatchNumber.text = response["dispatch_number"];
-        advance.text = response["advance"];
-        assignedDriver.text = response["assigned_driver"];
-        assignedAttender.text = response["assigned_attender"];
-        loadingStaffs.text = response["loading_staffs"];
-        vehicleRegisterNo.text = response["vehicle_register_no"];
-        lrSelected.text = response["lr_selected"];
-        lr.text = response["lr"];
+        dispatchOn.text = response["dispatch_on"] ?? "";
+        dispatchTime.text = response["dispatch_time"] ?? "";
+        dispatchNumber.text = response["dispatch_number"] != "" ? response["dispatch_number"] : "";
+        advance.text = response["advance"] != 0 ? response['advance'] : "0";
+        assignedDriver.text = response["assigned_driver"] ?? "";
+        assignedAttender.text = response["assigned_attender"] ?? "";
+        loadingStaffs.text = response["loading_staffs"] ?? "";
+        vehicleRegisterNo.text = response["vehicle_register_no"] ?? "";
+        // lrSelected.text = response["lr_selected"];
+        // lr.text = response["lr"];
         print(response);
       });
       return response;

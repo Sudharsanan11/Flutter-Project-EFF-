@@ -1,6 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_view/gdm_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 // import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
@@ -48,6 +49,7 @@ class _GdmFormState extends State<GdmForm> {
   List<String> attenderList = [];
   List<String> lrList = [];
 
+late List<Object> linkedLoadingStaffs;
 String? selectedDriver;
 String? selectedStaff;
 List<String> selectedLoadingStaffs = [];
@@ -153,37 +155,66 @@ void dispose() {
                       const SizedBox(
                         height: 10,
                       ),
-                      DialogTextField(
-                        controller: lr,
-                        keyboardType: TextInputType.name,
-                        labelText: "Item Name",
+                      FutureBuilder<List<String>>(
+                        future: fetchLR(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return AutoComplete(
+                              controller: lr,
+                              hintText: 'LR ID',
+                              onSelected: (String selection) {
+                                fetchLR();
+                              },
+                              options: lrList,
+                            );
+                          } else if (snapshot.hasData) {
+                            lrList = snapshot.data!;
+                            return AutoComplete(
+                              controller: lr,
+                              hintText: 'LR ID',
+                              onSelected: (String selection) {
+                                fetchLR();
+                              },
+                              options: lrList,
+                            );
+                          } else {
+                            return AutoComplete(
+                              controller: lr,
+                              hintText: 'LR ID',
+                              onSelected: (String selection) {
+                                fetchLR();
+                              },
+                              options: lrList,
+                            );
+                          }
+                        },
                       ),
                       const SizedBox(
                         height: 10,
                       ),
-                      DialogTextField(
-                        controller: consignor,
-                        keyboardType: TextInputType.name,
-                        labelText: "Consignor",
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      DialogTextField(
-                        controller: consignee,
-                        keyboardType: TextInputType.name,
-                        labelText: "Consignee",
-                      ),
-                      DialogTextField(
-                        controller: invoiceNo,
-                        keyboardType: TextInputType.name,
-                        labelText: "Invoice No",
-                      ),
-                      DialogTextField(
-                        controller: destination,
-                        keyboardType: TextInputType.name,
-                        labelText: "Destination",
-                      ),
+                      // DialogTextField(
+                      //   controller: consignor,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "Consignor",
+                      // ),
+                      // const SizedBox(
+                      //   height: 10,
+                      // ),
+                      // DialogTextField(
+                      //   controller: consignee,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "Consignee",
+                      // ),
+                      // DialogTextField(
+                      //   controller: invoiceNo,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "Invoice No",
+                      // ),
+                      // DialogTextField(
+                      //   controller: destination,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "Destination",
+                      // ),
                       DialogTextField(
                         controller: accountPay,
                         keyboardType: TextInputType.number,
@@ -197,18 +228,18 @@ void dispose() {
                       // DialogTextField(
                       //   controller: isPaid,
                       //   keyboardType: TextInputType.name,
-                      //   labelText: "Consignee",
+                      //   labelText: "Is Paid",
                       // ),
-                      DialogTextField(
-                        controller: VOG,
-                        keyboardType: TextInputType.number,
-                        labelText: "Value of Goods",
-                      ),
-                      DialogTextField(
-                        controller: boxCount,
-                        keyboardType: TextInputType.name,
-                        labelText: "Box Count",
-                      ),
+                      // DialogTextField(
+                      //   controller: VOG,
+                      //   keyboardType: TextInputType.number,
+                      //   labelText: "Value of Goods",
+                      // ),
+                      // DialogTextField(
+                      //   controller: boxCount,
+                      //   keyboardType: TextInputType.name,
+                      //   labelText: "Box Count",
+                      // ),
                     ],
                   ),
                 ),
@@ -284,184 +315,35 @@ void dispose() {
         });
   }
 
-//   void _showLoadingStaffs(BuildContext context, {Map<String, dynamic>? item, int? index}) {
-//   TextEditingController lr = TextEditingController();
-//   TextEditingController consignor = TextEditingController();
-//   TextEditingController consignee = TextEditingController();
-//   TextEditingController invoiceNo = TextEditingController();
-//   TextEditingController destination = TextEditingController();
-//   TextEditingController accountPay = TextEditingController();
-//   TextEditingController toPay = TextEditingController();
-//   TextEditingController VOG = TextEditingController();
-//   TextEditingController boxCount = TextEditingController();
-  
-//   List<String> lrList = [];
-  
-//   Future<List<String>> fetchLR() async {
-//     // Replace with your logic to fetch LR data
-//     return Future.value(["LR1", "LR2", "LR3"]);
-//   }
-
-//   showDialog(
-//     context: context,
-//     builder: (BuildContext context) {
-//       return StatefulBuilder(
-//         builder: (context, setState) {
-//           return AlertDialog(
-//             title: const Text('Select Loading Staffs'),
-//             content: SingleChildScrollView(
-//               child: Column(
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   const SizedBox(height: 10,),
-//                   FutureBuilder<List<String>>(
-//                     future: fetchLR(),
-//                     builder: (context, snapshot) {
-//                       if (snapshot.hasError) {
-//                         return Text("Error: ${snapshot.error}");
-//                       } else if (snapshot.hasData) {
-//                         lrList = snapshot.data!;
-//                         return AutoComplete(
-//                           controller: lr,
-//                           hintText: 'LR No.',
-//                           onSelected: (String selection) {
-//                             print('You selected: $selection');
-//                           },
-//                           options: lrList,
-//                         );
-//                       } else {
-//                         return const CircularProgressIndicator();
-//                       }
-//                     },
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: consignor,
-//                     keyboardType: TextInputType.name,
-//                     labelText: "Consignor",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: consignee,
-//                     keyboardType: TextInputType.name,
-//                     labelText: "Consignee",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: invoiceNo,
-//                     keyboardType: TextInputType.name,
-//                     labelText: "Invoice No",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: destination,
-//                     keyboardType: TextInputType.name,
-//                     labelText: "Destination",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: accountPay,
-//                     keyboardType: TextInputType.number,
-//                     labelText: "Account Pay",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: toPay,
-//                     keyboardType: TextInputType.number,
-//                     labelText: "ToPay",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: VOG,
-//                     keyboardType: TextInputType.number,
-//                     labelText: "Value of Goods",
-//                   ),
-//                   const SizedBox(height: 10,),
-//                   DialogTextField(
-//                     controller: boxCount,
-//                     keyboardType: TextInputType.name,
-//                     labelText: "Box Count",
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             actions: <Widget>[
-//               TextButton(
-//                 child: Text(item == null ? 'Cancel' : 'Delete'),
-//                 onPressed: () {
-//                   if (item == null) {
-//                     Navigator.of(context).pop();
-//                   } else {
-//                     setState(() {
-//                       items.remove(item);
-//                     });
-//                     Navigator.of(context).pop();
-//                   }
-//                 },
-//               ),
-//               TextButton(
-//                 child: Text(item == null ? 'Add' : 'Save'),
-//                 onPressed: () {
-//                   if (item == null) {
-//                     setState(() {
-//                       items.add({
-//                         "lr_no": lr.text,
-//                         "consignor": consignor.text,
-//                         "consignee": consignee.text,
-//                         "invoice_no": invoiceNo.text,
-//                         "destination": destination.text,
-//                         "account_pay": accountPay.text,
-//                         "to_pay": toPay.text,
-//                         "value_of_goods": VOG.text,
-//                         "box_count": boxCount.text,
-//                       });
-//                     });
-//                   } else {
-//                     setState(() {
-//                       items[index!]["lr_no"] = lr.text;
-//                       items[index]["consignor"] = consignor.text;
-//                       items[index]["consignee"] = consignee.text;
-//                       items[index]["invoice_no"] = invoiceNo.text;
-//                       items[index]["destination"] = destination.text;
-//                       items[index]["account_pay"] = accountPay.text;
-//                       items[index]["to_pay"] = toPay.text;
-//                       items[index]["value_of_goods"] = VOG.text;
-//                       items[index]["box_count"] = boxCount.text;
-//                     });
-//                   }
-//                   lr.clear();
-//                   consignor.clear();
-//                   consignee.clear();
-//                   invoiceNo.clear();
-//                   destination.clear();
-//                   accountPay.clear();
-//                   toPay.clear();
-//                   VOG.clear();
-//                   boxCount.clear();
-//                   Navigator.of(context).pop();
-//                 },
-//               ),
-//             ],
-//           );
-//         },
-//       );
-//     },
-//   );
-// }
-
-  Future<String> submitData() async{
+  Future<void> submitData() async{
+    final ApiService apiService = ApiService();
+    // for(int i = 0; i < selectedLoadingStaffs.length; i++) {
+    //   linkedLoadingStaffs.add({"loading_staff" : selectedLoadingStaffs[i]});
+    // }
     final body = {
-      "dispatch_on": dispatchOn,
-      "dispatch_time": dispatchTime,
-      "dispatch_number": dispatchNumber,
-      "advance": advance,
-      "driver": assignedDriver,
-      "delivery_staff": assignedAttender,
-      "loading_staff": loadingStaffs,
-      "vehicle_register_no": vehicleRegisterNo,
+      "dispatch_on": dispatchOn.text,
+      "dispatch_time": dispatchTime.text,
+      "dispatch_number": dispatchNumber.text,
+      "advance": advance.text,
+      "driver": assignedDriver.text,
+      "delivery_staff": assignedAttender.text,
+      // "loading_staff": linkedLoadingStaffs,
+      // "vehicle_register_no": vehicleRegisterNo,
       "items": items,
+      "vehicle_register_no" : "TN29BD2837",
+      "docstatus" : 0,
     };
-    return "";
+    try {
+      final response =  await apiService.createDocument(ApiEndpoints.authEndpoints.GDM, body);
+      if(response[0] == 200) {
+        Navigator.push(context,
+        MaterialPageRoute(builder: (context) => GDMView(name: response[1])));
+      }
+    }
+    catch (error) {
+      print(error);
+      throw "Error: Failed to submit data";
+    }
   }
 
 
@@ -610,11 +492,27 @@ void dispose() {
     );
   }
 
+  String convertTo24HourFormat(TimeOfDay timeOfDay) {
+    final now = DateTime.now();
+    final dt = DateTime(
+        now.year, now.month, now.day, timeOfDay.hour, timeOfDay.minute);
+    final format = DateFormat('HH:mm:ss');
+    return format.format(dt);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('GDM'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              _showLR(context);
+            },
+          ),
+        ],
       ),
       // backgroundColor: Colors.white,
       body: SafeArea(
@@ -673,11 +571,12 @@ void dispose() {
                           onChange: (Time newTime) {
                             final newTimeOfDay = TimeOfDay(
                                 hour: newTime.hour, minute: newTime.minute);
+                            final time24h = convertTo24HourFormat(newTimeOfDay);
                             setState(() {
-                              dispatchTime.text = newTimeOfDay.format(context);
+                              dispatchTime.text = time24h;
                             });
                           },
-                          is24HrFormat: false,
+                          is24HrFormat: true,
                           accentColor: Theme.of(context).colorScheme.secondary,
                           unselectedColor: Colors.grey,
                           okText: 'OK',

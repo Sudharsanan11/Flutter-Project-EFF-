@@ -2,6 +2,7 @@ import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
@@ -44,16 +45,22 @@ class _LoginPageState extends State<LoginPage> {
         if (response.statusCode == 200) {
           final responseData = jsonDecode(response.body);
           const ToastComponent(message: "Login successful");
+          Fluttertoast.showToast(
+            msg: "Logedin successfully",
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 2,);
           print('Login successful: $responseData');
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('api', responseData['message']['api_key']);
           prefs.setString('secret', responseData['message']['api_secret']);
           prefs.setString('full_name', responseData['message']['full_name']);
+          prefs.setString('email', responseData['message']['email']);
 
           print('Session token: ${prefs.getString('api')}');
           print('Session token: ${prefs.getString('secret')}');
           print('Full Name: ${prefs.getString('full_name')}');
+          print('email ${prefs.getString('email')}');
 
           Navigator.pushReplacement(
             context,

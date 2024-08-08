@@ -52,7 +52,7 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("Collection Request"),
               leading: const Icon(Icons.file_copy),
               onTap: () {
-                Navigator.push(context,
+                Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => const CollectionRequestList()));
               },
             ),
@@ -60,7 +60,7 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("Collection Assignment"),
               leading: const Icon(Icons.list),
               onTap: () {
-                Navigator.push(context,
+                Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
               },
             ),
@@ -68,7 +68,7 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("LR"),
               leading: const Icon(Icons.format_list_bulleted),
               onTap: () {
-                Navigator.push(context,
+                Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => const LRList(),));
               },
             ),
@@ -76,7 +76,7 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("GDM"),
               leading: const Icon(Icons.local_shipping),
               onTap: () {
-                Navigator.push(context,
+                Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => const GdmList()));
               },
             ),

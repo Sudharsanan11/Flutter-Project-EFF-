@@ -1,8 +1,11 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
+import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dotted_border/dotted_border.dart';
 
@@ -33,18 +36,23 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
   List<String> attenderList = [];
   List<String> vehicleList = [];
   List<String> requestList = [];
+  bool isEnabled = true;
+late Future<List<String>> fetchVehicleFuture;
+late Future<List<String>> fetchAttenderFuture;
+late  Future<List<String>> fetchRequestFuture;
+late Future<List<String>> fetchDirverFuture;
 
   @override
   void initState() {
     super.initState();
     setEnterBy();
-    fetchDriver();
-    fetchAttender();
-    fetchVehicle();
-    fetchRequest();
+    fetchDirverFuture = fetchDriver();
+    fetchAttenderFuture = fetchAttender();
+    fetchVehicleFuture = fetchVehicle();
+    fetchRequestFuture = fetchRequest();
   }
 
-  Future<String> submitData() async {
+  Future<void> submitData() async {
     final ApiService apiService = ApiService();
     final body = {
       "entered_by": enteredBy.text,
@@ -54,32 +62,33 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
       "assigned_attender": assignedAttender.text,
       "assigned_vehicle": assignedVehicle.text,
       "collection_req": items,
-      "docstatus": 1,
+      "docstatus": 0,
     };
     try {
-      final response = await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionAssignment, body);
-      if (response == "200") {
-        Navigator.pop(context);
+      final response = await apiService.createDocument(ApiEndpoints.authEndpoints.CollectionAssignment, body);
+      if (response[0] == 200) {
+        Fluttertoast.showToast(msg: "Document Saved Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        Navigator.push(context,
+        MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: response[1])));
       }
-      return "";
     } catch (error) {
       print(error);
-      return "Error: Failed to submit data";
+      throw "Error: Failed to submit data";
     }
   }
 
   void setEnterBy() async {
     SharedPreferences manager = await SharedPreferences.getInstance();
     setState(() {
-      enteredBy.text = manager.getString('username') ?? "";
+      enteredBy.text = manager.getString('email') ?? "";
     });
   }
 
   Future<List<String>> fetchDriver() async {
     final ApiService apiService = ApiService();
     final body = {
-      "doctype": "Employee",
-      "filters": [["designation", "=", "Driver"], ["status", "=", "Active"]]
+      "doctype": "Driver",
+      "filters": [["status", "=", "Active"]]
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -113,7 +122,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Vehicle",
-      "filters": [["is_active", "=", 1]]
+      // "filters": [["is_active", "=", 1]]
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -154,7 +163,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
         return AlertDialog(
           title: Text(item == null ? 'Add Item' : 'Edit Item'),
           content: FutureBuilder<List<String>>(
-            future: fetchRequest(),
+            future: fetchRequestFuture,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return AutoComplete(
@@ -204,7 +213,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
             TextButton(
               child: Text(item == null ? 'Add' : 'Save'),
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
+                // if (_formKey.currentState!.validate()) {
                   if (item == null) {
                     setState(() {
                       items.add({"collection_request": collectionRequest.text});
@@ -216,7 +225,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                   }
                   collectionRequest.clear();
                   Navigator.of(context).pop();
-                }
+                // }
               },
             ),
           ],
@@ -227,7 +236,9 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Collection Assignment Form"),
       ),
@@ -274,7 +285,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                 ),
                 const SizedBox(height: 10),
                 FutureBuilder<List<String>>(
-                  future: fetchDriver(),
+                  future: fetchDirverFuture,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return AutoComplete(
@@ -309,7 +320,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                 ),
                 const SizedBox(height: 10),
                 FutureBuilder<List<String>>(
-                  future: fetchAttender(),
+                  future: fetchAttenderFuture,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return AutoComplete(
@@ -344,7 +355,7 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                 ),
                 const SizedBox(height: 10),
                 FutureBuilder<List<String>>(
-                  future: fetchVehicle(),
+                  future: fetchVehicleFuture,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return AutoComplete(
@@ -378,41 +389,117 @@ class _CollectionAssignmentFormState extends State<CollectionAssignmentForm> {
                   },
                 ),
                 const SizedBox(height: 10),
-                const SizedBox(height: 10),
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ListTile(
-                      title: Text("Collection Request ${index + 1}"),
-                      subtitle: Text(item['collection_request'] ?? ''),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          _showItemDialog(item: item, index: index);
-                        },
-                      ),
-                    );
-                  },
+                 Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Items"),
+                    ElevatedButton(
+                      child: const Icon(Icons.add),
+                      onPressed:() {
+                        _showItemDialog();
+                      },
+                    ),
+                  ],
                 ),
-                DottedBorder(
-                  color: Colors.black,
-                  strokeWidth: 1,
-                  dashPattern: [5, 5],
-                  child: ListTile(
-                    title: const Text('Add Collection Request'),
-                    trailing: const Icon(Icons.add),
-                    onTap: () {
-                      _showItemDialog();
-                    },
+              ),
+                const SizedBox(height: 10),
+                if(items.isNotEmpty)
+                // ListView.builder(
+                //   shrinkWrap: true,
+                //   itemCount: items.length,
+                //   itemBuilder: (context, index) {
+                //     final item = items[index];
+                //     return ListTile(
+                //       title: Text("Collection Request ${index + 1}"),
+                //       subtitle: Text(item['collection_request'] ?? ''),
+                //       trailing: IconButton(
+                //         icon: const Icon(Icons.edit),
+                //         onPressed: () {
+                //           _showItemDialog(item: item, index: index);
+                //         },
+                //       ),
+                //     );
+                //   },
+                // ),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: ListView.builder(
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(width: 1, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: ListTile(
+                                  title: Text(items[index]["collection_request"].toString()),
+                                  onTap: () {
+                                    _showItemDialog(item: items[index], index: index);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                // DottedBorder(
+                //   color: Colors.black,
+                //   strokeWidth: 1,
+                //   dashPattern: const [5, 5],
+                //   child: ListTile(
+                //     title: const Text('Add Collection Request'),
+                //     trailing: const Icon(Icons.add),
+                //     onTap: () {
+                //       _showItemDialog();
+                //     },
+                //   ),
+                // ),
+                const SizedBox(height: 10),
+                if(items.isEmpty)
+                 Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 25.0, vertical: 3.0),
+                  child: Column(
+                    children: [
+                      DottedBorder(
+                        borderType: BorderType.RRect,
+                        radius: const Radius.circular(12.0),
+                        strokeWidth: 1,
+                        dashPattern: const [8, 4],
+                        // color: isDarkMode ? Colors.white : Colors.black,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 25.0, vertical: 20.0),
+                          child: const Center(
+                            child: Text("No Items Found"),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: submitData,
-                  child: const Text('Submit'),
+                MyButton(
+                  onTap: submitData,
+                  name: 'Save',
                 ),
               ],
             ),

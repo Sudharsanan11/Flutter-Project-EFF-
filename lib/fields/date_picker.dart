@@ -20,14 +20,15 @@ class _DateWidgetState extends State<DateWidget> {
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
-              gradient: LinearGradient(
-            begin: FractionalOffset.topCenter,
-            end: FractionalOffset.bottomCenter,
-            colors: [
-              Colors.grey[900]!,
-              Colors.black,
-            ],
-            stops: const [0.7, 1.0],
+            borderRadius: BorderRadius.circular(12.0),
+            gradient: LinearGradient(
+              begin: FractionalOffset.topCenter,
+              end: FractionalOffset.bottomCenter,
+              colors: [
+                Colors.grey[900]!,
+                Colors.black,
+              ],
+              stops: const [0.7, 1.0],
           )),
           child: Center(
             child: Column(

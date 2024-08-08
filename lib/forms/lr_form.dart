@@ -1,8 +1,13 @@
+import 'dart:ffi';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_view/lr_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
+import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
+import 'package:erpnext_logistics_mobile/fields/text_area.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
@@ -10,6 +15,8 @@ import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 
 class LrForm extends StatefulWidget {
   const LrForm({super.key});
@@ -20,23 +27,20 @@ class LrForm extends StatefulWidget {
 
 class _LrFormState extends State<LrForm> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final TextEditingController lrType = TextEditingController();
   final TextEditingController collectionRequest = TextEditingController();
   final TextEditingController logsheet = TextEditingController();
   final TextEditingController consignor = TextEditingController();
   final TextEditingController consignee = TextEditingController();
   final TextEditingController destination = TextEditingController();
-  final TextEditingController boxCount = TextEditingController();
-  final TextEditingController boxMismatchFromOrder = TextEditingController();
-  final TextEditingController boxMismatchOnRescan = TextEditingController();
+  final TextEditingController invoiceNo = TextEditingController();
   final TextEditingController freight = TextEditingController();
   final TextEditingController lrCharge = TextEditingController();
-  final TextEditingController totalFreight = TextEditingController();
-  final TextEditingController boxDelivered = TextEditingController();
-  final TextEditingController totalItems = TextEditingController();
   final TextEditingController itemName = TextEditingController();
   final TextEditingController itemWeight = TextEditingController();
   final TextEditingController itemVolume = TextEditingController();
   final TextEditingController itemBarcode = TextEditingController();
+  final TextEditingController remarks = TextEditingController();
 
 
   String? selectedLrType;
@@ -48,12 +52,35 @@ class _LrFormState extends State<LrForm> {
   List<String> consigneeList = [];
   List<String> destinationList = [];
   List<String> itemList = [];
+  bool? crossCheckStatus = false;
+  bool? calculationBasedOnLRLevel = false;
+  bool? manualFreightAmount = false; //
+  late Map<String, Map<String, dynamic>> CR;
+  late Map<String, Map<String, dynamic>> consigneeDocList;
 
   Future<List<String>> fetchRequest() async {
     final ApiService apiService = ApiService();
     final body = {
       "doctype" : "Collection Request",
       "filters" : [["status", "=", "Assigned"]]
+    };
+    try {
+      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      print('$response ++++++++++++++++++++++++++++++++++++++++++++++++++++++===========================================');
+      return response;
+    }
+    catch(e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<List<String>> fetchItem () async {
+    // print("date ${date.text}");
+    final ApiService apiService = ApiService();
+    print("COnsignor================= ${consignor.text}");
+    final body = {
+      "doctype" : "Item",
+      "filters" : [["customer","=", consignor.text]]
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
@@ -85,7 +112,7 @@ class _LrFormState extends State<LrForm> {
     final ApiService apiService = ApiService();
     final body = {
       "doctype" : "Customer",
-      "filters" : [["custom_party_type","=","Consignor"]]
+      "filters" : [["custom_party_type","=","Consignor"]],
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
@@ -97,43 +124,107 @@ class _LrFormState extends State<LrForm> {
     }
   }
 
-  Future<List<String>> fetchConsignee() async {
+  // Future<void> fetchConsignee() async {
+  //   final ApiService apiService = ApiService();
+  //   final body = {
+  //     "doctype" : "Customer",
+  //     "filters" : [["custom_party_type","=","Consignee"]],
+  //     "fields" : ['*'],
+  //   };
+  //   try {
+  //     final response =  await apiService.fetchFieldData(ApiEndpoints.authEndpoints.getList , body);
+  //     print(response);
+  //     setState(() {
+  //       consigneeList = response.map<String>((item) {
+  //         return (item as Map<String, dynamic>).keys.first;
+  //       }).toList();
+  //       consigneeDocList = response;
+  //     });
+  //     // return response;
+  //   }
+  //   catch(e) {
+  //     throw "Fetch Error";
+  //   }
+  // }
+  Future<void> fetchLocation () async {
     final ApiService apiService = ApiService();
     final body = {
       "doctype" : "Customer",
-      "filters" : [["custom_party_type","=","Consignee"]]
+      "filters" : [["custom_party_type","=","Consignee"]],
+      "fields" : ['name', 'custom_location']
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print(response);
-      return response;
+      final response =  await apiService.fetchFieldData(ApiEndpoints.authEndpoints.getList , body);
+      print("$response ========================location");
+      setState(() {
+        consigneeDocList = response;
+      });
+      print("$consigneeDocList ========================location===========================");
+      // return response;
     }
     catch(e) {
       throw "Fetch Error";
     }
   }
 
-  Future<List<String>> fetchLocation () async {
+  Future<void> fetchConsignee(consignorName) async{
+    print("consignoer $consignorName");
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Location",
-      // "filters" : [["is_warehouse","=","1"]]
+      "doctype" : "Consignor List",
+      "filters" : [['consignor', '=', consignorName]],
+      "fields" : ['parent'],
+      "parent" : "Customer",
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response =  await apiService.getList(ApiEndpoints.authEndpoints.getList , body);
+      print("response_start0");
       print(response);
-      return response;
+      setState(() {
+        consigneeList = response.map((item) => item['parent'].toString()).toList();
+      });
     }
-    catch(e) {
+    catch (e) {
       throw "Fetch Error";
     }
+  }
+
+  Future<void> setConsignor () async {
+    print("Hiii Consignor====================================");
+    final ApiService apiService = ApiService();
+
+    try {
+      Object body = {
+        "doctype" : "Collection Request",
+        "fields" : ['*'],
+        "filters" : [['status', '=', 'Assigned']]
+      };
+      final response =  await apiService.fetchFieldData(ApiEndpoints.authEndpoints.getList, body);
+      print("response start");
+      print(response);
+      print("response end");
+      setState(() {
+        CR = response;
+      });
+      print("consignorList $consignorList");
+    }
+    catch (e) {
+      throw "Fetch Error $e";
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setConsignor();
+    fetchLocation();
   }
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
-    itemWeight.text = item?['item_weight'] ?? "";
-    itemVolume.text = item?['item_vloume'] ?? "";
-    itemBarcode.text = item?['item_barcode'] ?? "";
+    itemWeight.text = item?['weight'] ?? "";
+    itemVolume.text = item?['volume'] ?? "";
+    itemBarcode.text = item?['barcode'] ?? "";
 
     await showDialog<void>(
       context: context,
@@ -146,10 +237,49 @@ class _LrFormState extends State<LrForm> {
               child: Column(
                 children: [
                   const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemName,
-                    keyboardType: TextInputType.name,
-                    labelText: "Item Name",
+                  FutureBuilder<List<String>>(
+                    future: fetchItem(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return AutoComplete(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Item Is Required";
+                            }
+                            return null;
+                          },
+                          hintText: 'Item Name',
+                          controller: itemName,
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                            setState(() {
+                              print("sele");
+                              itemName.text = selection;
+                            });
+                          },
+                          options: itemList,
+                        );
+                      } else if (snapshot.hasData) {
+                        itemList = snapshot.data!;
+                        return AutoComplete(
+                          validator:  (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Item Is Required";
+                            }
+                            return null;
+                          },
+                          controller: itemName,
+                          hintText: 'Item Name',
+                          onSelected: (String selection) {
+                            itemName.text = selection;
+                            print('You selected: ${consignor.text}');
+                          },
+                          options: itemList,
+                        );
+                      } else {
+                        return const Text("");
+                      }
+                    },
                   ),
                   const SizedBox(height: 10,),
                   DialogTextField(
@@ -176,6 +306,9 @@ class _LrFormState extends State<LrForm> {
                       // const SizedBox(width: 2,),
                       // Expanded(
                         TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: const TextStyle(fontSize: 20)
+                          ),
                           onPressed: () {
                             _openBarcodeScanner();
                           },
@@ -211,9 +344,9 @@ class _LrFormState extends State<LrForm> {
                   setState(() {
                   items.add(
                     {"item_code" : itemName.text,
-                     "item_weight" : itemWeight.text,
-                     "item_volume" : itemVolume.text,
-                     "item_barcode" : itemBarcode.text,
+                     "weight" : itemWeight.text,
+                     "volume" : itemVolume.text,
+                     "barcode" : itemBarcode.text,
                      }
                   );
                   });
@@ -226,9 +359,9 @@ class _LrFormState extends State<LrForm> {
                 else {
                   setState(() {
                     items[index!]["item_code"] = itemName.text;
-                    items[index]["item_weight"] = itemWeight.text;
-                    items[index]["item_volume"] = itemVolume.text;
-                    items[index]["item_barcode"] = itemBarcode.text;
+                    items[index]["weight"] = itemWeight.text;
+                    items[index]["volume"] = itemVolume.text;
+                    items[index]["barcode"] = itemBarcode.text;
                   });
                   itemName.clear();
                   itemWeight.clear();
@@ -244,41 +377,44 @@ class _LrFormState extends State<LrForm> {
     );
   }
 
-  Future<String> submitData() async{
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      print(_formKey.currentState?.value);
+  Future<void> submitData() async{
+    // if (_formKey.currentState?.saveAndValidate() ?? false) {
+      // print(_formKey.currentState?.value);
       final ApiService apiService = ApiService();
+      print(items);
     final body = {
+      "lr_type": selectedLrType,
       "logsheet": logsheet.text,
       "collection_request": collectionRequest.text,
       "consignor": consignor.text,
       "consignee": consignee.text,
       "location": destination.text,
-      "box_count": boxCount.text,
-      "box_mismatch_from_order": boxMismatchFromOrder.text,
-      "box_mismatch_on_rescan": boxMismatchOnRescan.text,
-      "freight": freight.text,
+      "box_count": 2,
+      "cross_check_status" : crossCheckStatus,
+      "calculation_based_on_lr_level" : calculationBasedOnLRLevel,
       "lr_charge": lrCharge.text,
+      "invoice_number" : invoiceNo.text,
+      "remarks" : remarks.text,
+      "freight" : freight.text,
+      "manual_freight_amount" : manualFreightAmount,
       "items": items,
-      "total_freight": totalFreight.text,
-      "box_delivered": boxDelivered.text,
-      "total_items": totalItems.text,
+      "docstatus" : 0,
     };
     try {
-      final response = await apiService.createDocument(ApiEndpoints.authEndpoints.createLR, body);
-      if(response == "200") {
-        Navigator.pop(context);
+      final response = await apiService.createDocument(ApiEndpoints.authEndpoints.LR, body);
+      if(response[0] == 200) {
+        Fluttertoast.showToast(msg: "Document Saved Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        Navigator.push(context,
+        MaterialPageRoute(builder: (context) => LRView(name: response[1])));
       }
-      return "";
     }
     catch (error) {
       print(error);
-      return "Error: Failed to submit data";
+      throw "Error: Failed to submit data";
     }
-    } else {
-      print("Validation failed");
-      return "";
-    }
+    // } else {
+    //   print("Validation failed");
+    // }
   }
 
   void _openBarcodeScanner() {
@@ -314,34 +450,36 @@ class _LrFormState extends State<LrForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('LR Form'),
       ),
       drawer: const AppDrawer(),
       // backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: SingleChildScrollView(
+        child: 
+          // padding: const EdgeInsets.all(10.0),
+          SingleChildScrollView(
             child: FormBuilder(
               key: _formKey,
               child: Column(
                 children: <Widget>[
                   const SizedBox(height: 5),
-                  // DropDown(
-                  //   labelText: 'LR Type',
-                  //   items: const [
-                  //     'By Collection Request',
-                  //     'By Log Sheet',
-                  //     'By Manual'
-                  //   ],
-                  //   selectedItem: selectedLrType,
-                  //   onChanged: (String? newValue) {
-                  //     setState(() {
-                  //       selectedLrType = newValue;
-                  //     });
-                  //   },
-                  // ),
+                  DropDown(
+                    labelText: 'LR Type',
+                    // controller: ,
+                    items: const [
+                      'By Collection Request',
+                      'By Log Sheet',
+                      'By Manual'
+                    ],
+                    selectedItem: selectedLrType,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedLrType = newValue;
+                      });
+                    },
+                  ),
                   if(selectedLrType == "By Collection Request")
                     const SizedBox(height: 25),
                   if(selectedLrType == "By Collection Request")
@@ -351,6 +489,7 @@ class _LrFormState extends State<LrForm> {
                       if(snapshot.hasError) {
                         return AutoComplete(
                           controller: collectionRequest,
+                          readOnly: true,
                           hintText: 'Collection Request',
                           onSelected: (String selection) {
                             print('You selected: $selection');
@@ -365,6 +504,11 @@ class _LrFormState extends State<LrForm> {
                           hintText: 'Collection Request',
                           onSelected: (String selection) {
                             print(selection);
+                            // setState(() {
+                              int index = consignorList.indexOf(selection);
+                              print("index: $index");
+                              consignor.text = CR[selection]!['consignor'].toString();
+                              fetchConsignee(consignor.text);
                           },
                           options: requestList,
                         );
@@ -381,7 +525,7 @@ class _LrFormState extends State<LrForm> {
                     },
                   ),
                 if(selectedLrType == "By Log Sheet")
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 10),
                 if(selectedLrType == "By Log Sheet")
                 FutureBuilder<List<String>>(
                   future: fetchLogsheet(),
@@ -418,179 +562,110 @@ class _LrFormState extends State<LrForm> {
                     }
                   },
                 ),
-                const SizedBox(height: 25),
-                  FutureBuilder<List<String>>(
-                  future: fetchConsignor(),
-                  builder: (context, snapshot) {
-                    if(snapshot.hasError) {
-                      return AutoComplete(
-                        controller: consignor,
-                        hintText: 'Consignor Name',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: consignorList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      consignorList = snapshot.data!;
-                      return AutoComplete(
-                        controller: consignor,
-                        hintText: 'Consignor Name',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: consignorList,
-                      );
-                    } else {
-                      return AutoComplete(
-                        controller: consignor,
-                        hintText: 'Consignor Name',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: consignorList,
-                      );
-                    }
-                  },
-                ),
-                  const SizedBox(height: 25),
-                  FutureBuilder<List<String>>(
-                  future: fetchConsignee(),
-                  builder: (context, snapshot) {
-                    if(snapshot.hasError) {
-                      return AutoComplete(
-                        controller: consignee,
-                        hintText: 'Consignee Name',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: consigneeList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      consigneeList = snapshot.data!;
-                      return AutoComplete(
-                        controller: consignee,
-                        hintText: 'Consignee Name',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: consigneeList,
-                      );
-                    } else {
-                      return AutoComplete(
-                        controller: consignee,
-                        hintText: 'Consignee Name',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: consigneeList,
-                      );
-                    }
-                  },
-                ),
-                  const SizedBox(height: 25),
-                  FutureBuilder<List<String>>(
-                  future: fetchLocation(),
-                  builder: (context, snapshot) {
-                    if(snapshot.hasError) {
-                      return AutoComplete(
-                        controller: destination,
-                        hintText: 'Destination',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: destinationList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      destinationList = snapshot.data!;
-                      return AutoComplete(
-                        controller: destination,
-                        hintText: 'Destination',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: destinationList,
-                      );
-                    } else {
-                      return AutoComplete(
-                        controller: destination,
-                        hintText: 'Destination',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                        options: destinationList,
-                      );
-                    }
-                  },
-                ),
-                  const SizedBox(height: 25),
-                  Row(
-                    children: [
-                      Flexible(
-                        flex: 1,
-                        child: FieldText(
-                          controller: boxMismatchFromOrder,
-                          labelText: 'Box Mismatch from order',
-                          keyboardType: TextInputType.name,
-                          obscureText: false,
-                        ),
-                      ),
-                      const SizedBox(width: 1),
-                      Flexible(
-                        flex: 1,
-                        child: FieldText(
-                          controller: boxMismatchOnRescan,
-                          labelText: 'Box mismatch on rescan',
-                          keyboardType: TextInputType.name,
-                          obscureText: false,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-                  Row(
-                    children: [
-                      Flexible(
-                        flex: 1,
-                        child: FieldText(
-                            controller: boxCount,
-                            labelText: 'Box Count',
-                            keyboardType: TextInputType.number,
-                            obscureText: false),
-                      ),
-                      Flexible(
-                        flex: 1,
-                        child: FieldText(
-                            controller: boxDelivered,
-                            labelText: 'Box Delivered',
-                            keyboardType: TextInputType.number,
-                            obscureText: false),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
+                const SizedBox(height: 10),
                   FieldText(
-                      controller: freight,
-                      labelText: 'Freight',
-                      keyboardType: TextInputType.number,
-                      obscureText: false),
-                  const SizedBox(height: 25),
+                    controller: consignor,
+                    labelText: "Consignor Name",
+                    keyboardType: TextInputType.name,
+                  ),
+                  const SizedBox(height: 10),
+                AutoComplete(
+                  options: consigneeList,
+                  hintText: "Consignee Name",
+                  onSelected: (String selection){
+                    print(selection);
+                      destination.text = consigneeDocList[selection]!['custom_location'];
+                  },
+                  controller: consignee,
+                ),
+                  const SizedBox(height: 10),
+                FieldText(
+                  controller: destination,
+                  labelText: "Destination",
+                  keyboardType: TextInputType.none
+                ),
+                  const SizedBox(height: 10),
+                  FieldText(
+                    controller: invoiceNo,
+                    labelText: "Invoice Number",
+                    keyboardType: TextInputType.name,
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: crossCheckStatus,
+                          onChanged: (newBool) {
+                            setState(() {
+                              crossCheckStatus = newBool;
+                            });
+                          },
+                          activeColor: Colors.black,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text("Cross-Check Status"),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    child: Row(
+                      children: [                      
+                        Checkbox(
+                          value: calculationBasedOnLRLevel,
+                          onChanged: (newBool) {
+                            setState(() {
+                              calculationBasedOnLRLevel = newBool;
+                            });
+                          }, 
+                          activeColor: Colors.black,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text("Calculation Based on LR Level"),
+                      ]
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    child: Row(
+                      children: [                      
+                        Checkbox(
+                          value: manualFreightAmount,
+                          onChanged: (newBool) {
+                            setState(() {
+                              manualFreightAmount = newBool;
+                            });
+                          }, 
+                          activeColor: Colors.black,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text("Manual Freight Amount"),
+                      ]
+                    ),
+                  ),
+                  if(manualFreightAmount == true)
+                  FieldText(
+                    controller: freight,
+                    labelText: 'Freight',
+                    // readOnly: manualFreightAmount == true ? false : true,
+                    keyboardType: TextInputType.number,
+                    obscureText: false
+                  ),
+                  const SizedBox(height: 10),
                   FieldText(
                       controller: lrCharge,
                       labelText: 'LR Charge',
                       keyboardType: TextInputType.number,
                       obscureText: false),
-                  const SizedBox(height: 25),
-                  FieldText(
-                      controller: totalFreight,
-                      labelText: 'Total Freight',
-                      keyboardType: TextInputType.number,
-                      obscureText: false,
-                      readOnly: true),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 10),
+                  TextArea(
+                    controller: remarks,
+                    labelText: "Remarks",
+                    keyboardType: TextInputType.multiline
+                  ),
+                  const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
                     child: Row(
@@ -657,14 +732,13 @@ class _LrFormState extends State<LrForm> {
                       ),
                     ),
                   ),
-                  MyButton(onTap: submitData, name: "Submit")
+                  MyButton(onTap: submitData, name: "Save")
                 ],
               ),
             ),
           ),
         ),
-      ),
       bottomNavigationBar: const BottomNavigation(),
-    );
+      );
   }
 }

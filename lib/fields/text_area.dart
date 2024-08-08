@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class FieldText extends StatelessWidget {
+class TextArea extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final bool obscureText;
@@ -8,7 +8,7 @@ class FieldText extends StatelessWidget {
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
 
-  const FieldText({
+  const TextArea({
     super.key,
     required this.controller,
     required this.labelText,
@@ -28,6 +28,8 @@ class FieldText extends StatelessWidget {
         controller: controller,
         obscureText: obscureText,
         readOnly: readOnly,
+        minLines: 1,
+        maxLines: 10,
         keyboardType: keyboardType,
         validator: validator,
         decoration: InputDecoration(

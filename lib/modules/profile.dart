@@ -1,7 +1,10 @@
+import 'dart:ffi';
+
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:erpnext_logistics_mobile/fields/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'navigation_bar.dart';
 
 class Profile extends StatefulWidget {
@@ -13,12 +16,13 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  final String name = "Rethik M";
+  String name = "";
   final String? imageUrl = null;
 
   @override
   void initState() {
     super.initState();
+    setFullName();
     _controller = AnimationController(vsync: this);
   }
 
@@ -26,6 +30,15 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void setFullName() async{
+  SharedPreferences manager = await SharedPreferences.getInstance();
+    if (manager.containsKey('full_name')) {
+      setState(() {
+      name = manager.getString('full_name')!;
+      });
+    }
   }
 
   String getInitials(String name) {

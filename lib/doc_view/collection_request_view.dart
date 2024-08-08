@@ -2,12 +2,15 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
+import 'package:erpnext_logistics_mobile/doc_list/collection_assignment_list.dart';
+import 'package:erpnext_logistics_mobile/doc_list/collection_request_list.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 
 
@@ -38,6 +41,8 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
   List<String> locationList = [];
   List<String> itemList = [];
   List<Map<String, String>> items = [];
+  bool isDisabled = true;
+  int docstatus = 0;
   // final response = "";
 
   @override
@@ -59,20 +64,24 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
   Future<Map<String, dynamic>> fetchCollectionRequest() async {
     print("widget.name ${widget.name}");
     ApiService apiService = ApiService();
-    final response = await apiService.getDocument(ApiEndpoints.authEndpoints.getCollectionRequest + widget.name);
+    final response = await apiService.getDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name);
     // consignor.text = response["consignor"];
     print("response $response");
     setState(() {
-    consignor.text = response["consignor"];
-    location.text = response["location"];
-    vehicle_required_date.text = response["vehicle_required_date"];
-    timePicker.text = response["required_time"];
-    status.text = response["status"];
-    no_of_pcs.text = response["no_of_pcs"].toString();
+    consignor.text = response["consignor"] ??  "";
+    location.text = response["location"] ?? "";
+    vehicle_required_date.text = response["vehicle_required_date"] ?? "";
+    timePicker.text = response["required_time"] ?? "";
+    status.text = response["status"] ?? "";
+    no_of_pcs.text = response["no_of_pcs"] != 0 ? response["no_of_pcs"].toString() : "0";
+    docstatus = response["docstatus"];
     // items = response["items"] as List<Map<String, String>>;
     items = (response["items"] as List).map((item) {
     return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
       }).toList();
+    if(response['status'] == "Open") {
+      isDisabled = false;
+    }
     });
     return response;
   }
@@ -90,7 +99,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
       "items": items,
     };
     try {
-      final response = await apiService.createDocument(ApiEndpoints.authEndpoints.createCollectionRequest, body);
+      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name, body);
       if(response == "200") {
         Navigator.pop(context);
       }
@@ -154,11 +163,33 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
     }
   }
 
+
+   void deleteDoc() async {
+    final ApiService apiService = ApiService();
+    try {
+      final response = await apiService.deleteDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name);
+      if(response == "202") {
+        Fluttertoast.showToast(msg: "Document deleted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        if(mounted){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
+        }
+      }
+      else if(response == "417") {
+        Fluttertoast.showToast(msg: "The document may be linked with other document try deleting that document first", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 5);
+      }
+      print(response);
+    }
+    catch(e) {
+      print(e);
+    }
+  }
+
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     print("items $items");
     itemName.text = item?['item_code'] ?? "";
-    itemWeight.text = item?['item_weight'] ?? "0";
-    itemVolume.text = item?['item_volume'] ?? "0";
+    itemWeight.text = item?['appox_weight'] ?? "0";
+    itemVolume.text = item?['volume'] ?? "0";
 
 
     await showDialog<void>(
@@ -183,6 +214,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                     if(snapshot.hasError) {
                       return AutoComplete(
                         controller: itemName,
+                        readOnly: isDisabled,
                         hintText: 'Item Name',
                         onSelected: (String selection) {
                           print('You selected: $selection');
@@ -197,6 +229,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                       itemList = snapshot.data!;
                       return AutoComplete(
                         controller: itemName,
+                        readOnly: isDisabled,
                         hintText: 'Item Name',
                         onSelected: (String selection) {
                           print(selection);
@@ -208,6 +241,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                       return AutoComplete(
                         controller: itemName,
                         hintText: 'Item Name',
+                        readOnly: isDisabled,
                         onSelected: (String selection) {
                           print(selection);
                         },
@@ -220,11 +254,13 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                   DialogTextField(
                     controller: itemWeight,
                     keyboardType: TextInputType.number,
+                    readOnly: true,
                     labelText: "Weight",
                   ),
                   const SizedBox(height: 10,),
                   DialogTextField(
                     controller: itemVolume,
+                    readOnly: true,
                     keyboardType: TextInputType.number,
                     labelText: "Volume",
                   ),
@@ -233,6 +269,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
             ),
           ),
           actions: <Widget>[
+            if(!isDisabled)
             TextButton(
               child: Text(item == null ? 'Cancel' : 'Delete'),
               onPressed: () {
@@ -248,6 +285,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                 }
               }
             ),
+            if(!isDisabled)
             TextButton(
               child: Text(item == null ? 'Add' : 'Save'),
               onPressed: () {
@@ -313,249 +351,299 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
   }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Collection Request'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: <Widget>[
-              const SizedBox(height: 10,),
-              FutureBuilder<List<String>>(
-                future: fetchConsignor(),
-                builder: (context, snapshot) { 
-                  if(snapshot.hasError) {
-                    return AutoComplete(
-                      hintText: 'Consignor Name',
-                      controller: consignor,
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                        setState(() {
-                          print("sele");
-                          consignor.text = selection;
-                          fetchItem();
-                        });
-                      },
-                      options: consignorList,
-                    );
-                  }
-                  else if (snapshot.hasData) {
-                    consignorList = snapshot.data!;
-                    return AutoComplete(
-                      controller: consignor,
-                      hintText: 'Consignor Name',
-                      onSelected: (String selection) {
-                        print('You selected: ${consignor.text}');
-                      },
-                      options: consignorList,
-                    );
-                  } else {
-                    return AutoComplete(
-                      controller: consignor,
-                      hintText: 'Consignor Name',
-                      onSelected: (String selection) {
-                        print('You selected: ${consignor.text}');
-                      },
-                      options: consignorList,
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: 10.0,),
-              FutureBuilder<List<String>>(
-                future: fetchLocation(),
-                builder: (context, snapshot) {
-                  if(snapshot.hasError) {
-                    return AutoComplete(
-                      controller: location,
-                      hintText: 'Location',
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                      },
-                      options: locationList,
-                    );
-                  }
-                  else if (snapshot.hasData) {
-                    locationList = snapshot.data!;
-                    return AutoComplete(
-                      controller: location,
-                      hintText: 'Location',
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                      },
-                      options: locationList,
-                    );
-                  } else {
-                    return AutoComplete(
-                      controller: location,
-                      hintText: 'Location',
-                      onSelected: (String selection) {
-                        print('You selected: $selection');
-                      },
-                      options: locationList,
-                    );
-                  }
-                },
-              ),
-              // const SizedBox(height: 10.0,),
-              const SizedBox(height: 10.0,),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25.0,
-                  vertical: 3.0
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if(didPop) {return;}
+        Navigator.pushReplacement(context, 
+        MaterialPageRoute(builder: (context) => const CollectionRequestList()));
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text('Collection Request'),
+          actions: [
+            Padding(padding: const EdgeInsets.only(right: 20),
+            child: PopupMenuButton(
+              itemBuilder: (context) => [
+                
+                if(status.text == "Open")
+                const PopupMenuItem(
+                  value: 0,
+                  child: Text('Delete'),
                 ),
-                child: TextField(
-                controller: vehicle_required_date,
-                keyboardType: TextInputType.datetime,
-                readOnly: true,
-                decoration: InputDecoration(
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
+              ],
+              onSelected: (value) {
+                setState(() {
+                  // docstatus = value;
+                 
+                    deleteDoc();
+                });
+              },
+            child: const  Icon(
+              Icons.more_vert,
+              size: 28.0,
+            ),
+            ),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                const SizedBox(height: 10,),
+                FutureBuilder<List<String>>(
+                  future: fetchConsignor(),
+                  builder: (context, snapshot) { 
+                    if(snapshot.hasError) {
+                      return AutoComplete(
+                        hintText: 'Consignor Name',
+                        controller: consignor,
+                        readOnly: isDisabled,
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                          setState(() {
+                            print("sele");
+                            consignor.text = selection;
+                            fetchItem();
+                          });
+                        },
+                        options: consignorList,
+                      );
+                    }
+                    else if (snapshot.hasData) {
+                      consignorList = snapshot.data!;
+                      return AutoComplete(
+                        controller: consignor,
+                        hintText: 'Consignor Name',
+                        readOnly: isDisabled,
+                        onSelected: (String selection) {
+                          print('You selected: ${consignor.text}');
+                        },
+                        options: consignorList,
+                      );
+                    } else {
+                      return AutoComplete(
+                        controller: consignor,
+                        hintText: 'Consignor Name',
+                        readOnly: isDisabled,
+                        onSelected: (String selection) {
+                          print('You selected: ${consignor.text}');
+                        },
+                        options: consignorList,
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 10.0,),
+                FutureBuilder<List<String>>(
+                  future: fetchLocation(),
+                  builder: (context, snapshot) {
+                    if(snapshot.hasError) {
+                      return AutoComplete(
+                        controller: location,
+                        hintText: 'Location',
+                        readOnly: true,
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: locationList,
+                      );
+                    }
+                    else if (snapshot.hasData) {
+                      locationList = snapshot.data!;
+                      return AutoComplete(
+                        controller: location,
+                        hintText: 'Location',
+                        readOnly: true,
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: locationList,
+                      );
+                    } else {
+                      return AutoComplete(
+                        controller: location,
+                        hintText: 'Location',
+                        readOnly: true,
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: locationList,
+                      );
+                    }
+                  },
+                ),
+                // const SizedBox(height: 10.0,),
+                const SizedBox(height: 10.0,),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25.0,
+                    vertical: 3.0
                   ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  fillColor: Colors.white,
-                  filled: true,
-                  labelText: "Required Date",
-                  labelStyle: TextStyle(color: Colors.grey[600]),
-                ),
-                onTap: () {
-                  _showDatePicket(context);
-                },
-              ),
-              ),
-              const SizedBox(height: 10.0,),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25.0,
-                  vertical: 3.0
-                ),
-                child: TextField(
-                  controller: timePicker,
+                  child: TextField(
+                  controller: vehicle_required_date,
                   keyboardType: TextInputType.datetime,
                   readOnly: true,
                   decoration: InputDecoration(
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     fillColor: Colors.white,
                     filled: true,
-                    labelText: "Required Time",
+                    labelText: "Required Date",
                     labelStyle: TextStyle(color: Colors.grey[600]),
                   ),
-                  onTap: () {
-                    _showTimePicker(context);
+                  onTap: isDisabled ? (){} :() {
+                    _showDatePicket(context);
                   },
                 ),
-              ),
-              const SizedBox(height: 10.0,),
-              FieldText(
-                controller: status,
-                labelText: "Status",
-                readOnly: true,
-                keyboardType: TextInputType.text,
-              ),
-              const SizedBox(height: 10.0,),
-              FieldText(
-                controller: no_of_pcs,
-                labelText: "No. of Pcs",
-                readOnly: true,
-                keyboardType: TextInputType.none
-              ),
-              const SizedBox(height: 10.0,),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Items"),
-                    ElevatedButton(
-                      child: const Icon(Icons.add),
-                      onPressed: () {
-                        _showItemDialog();
-                      },
-                    ),
-                  ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              if (items.isEmpty)
+                const SizedBox(height: 10.0,),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25.0,
+                    vertical: 3.0
+                  ),
+                  child: TextField(
+                    controller: timePicker,
+                    keyboardType: TextInputType.datetime,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      fillColor: Colors.white,
+                      filled: true,
+                      labelText: "Required Time",
+                      labelStyle: TextStyle(color: Colors.grey[600]),
+                    ),
+                    onTap: isDisabled ? (){} : () {
+                      _showTimePicker(context);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10.0,),
+                FieldText(
+                  controller: status,
+                  labelText: "Status",
+                  readOnly: true,
+                  keyboardType: TextInputType.text,
+                ),
+                const SizedBox(height: 10.0,),
+                FieldText(
+                  controller: no_of_pcs,
+                  labelText: "No. of Pcs",
+                  readOnly: true,
+                  keyboardType: TextInputType.none
+                ),
+                const SizedBox(height: 10.0,),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-                  child: Column(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      DottedBorder(
-                        borderType: BorderType.RRect,
-                        radius: const Radius.circular(12.0),
-                        strokeWidth: 1,
-                        dashPattern: const [8, 4],
-                        color: Colors.black,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-                          child: const Center(
-                            child: Text("No Items Found"),
-                          ),
-                        ),
+                      const Text("Items"),
+                      ElevatedButton(
+                        child: Icon(Icons.add),
+                        onPressed: isDisabled ? (){} : () {
+                          _showItemDialog();
+                        },
                       ),
                     ],
                   ),
                 ),
-              if (items.isEmpty)
-                const SizedBox(height: 15.0),
-              if (items.isEmpty)
-                MyButton(onTap: submitData, name: "Submit"),
-              if (items.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
-                  child: Container(
-                    height: 200, // Set a fixed height for the ListView
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey
-                      ),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: ListView.builder(
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(width: 1, color: Colors.black),
-                                borderRadius: BorderRadius.circular(10),
-                                shape: BoxShape.rectangle,
-                              ),
-                              child: ListTile(
-                                title: Text(items[index]["item_code"].toString()),
-                                onTap: () {
-                                  _showItemDialog(item: items[index], index: index);
-                                },
-                              ),
+                const SizedBox(height: 10),
+                if (items.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                    child: Column(
+                      children: [
+                        DottedBorder(
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12.0),
+                          strokeWidth: 1,
+                          dashPattern: const [8, 4],
+                          color: Colors.black,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
+                            child: const Center(
+                              child: Text("No Items Found"),
                             ),
-                          );
-                        },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (items.isEmpty)
+                  const SizedBox(height: 15.0),
+                if (items.isEmpty)
+                  MyButton(
+                    onTap: isDisabled ? (){} : submitData,
+                    name: "Save"
+                  ),
+                if (items.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200, // Set a fixed height for the ListView
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: ListView.builder(
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(width: 1, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: ListTile(
+                                  title: Text(items[index]["item_code"].toString()),
+                                  onTap: () {
+                                    _showItemDialog(item: items[index], index: index);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-              if (items.isNotEmpty)
-                const SizedBox(height: 15.0),
-              if (items.isNotEmpty)
-                MyButton(onTap: submitData, name: "Submit"),
-            ]
+                if (items.isNotEmpty)
+                  const SizedBox(height: 15.0),
+                if (items.isNotEmpty)
+                  MyButton(
+                    onTap: isDisabled ? (){Fluttertoast.showToast(msg: "Can't able to save", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);} : submitData,
+                    name: "Save",
+                    
+                  ),
+              ]
+            ),
           ),
         ),
+        bottomNavigationBar: const BottomNavigation(),
       ),
-      bottomNavigationBar: const BottomNavigation(),
     );
   }
 }

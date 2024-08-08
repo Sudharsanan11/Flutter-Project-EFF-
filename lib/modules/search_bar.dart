@@ -1,11 +1,16 @@
+import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
+import 'package:erpnext_logistics_mobile/doc_view/collection_request_view.dart';
+import 'package:erpnext_logistics_mobile/doc_view/gdm_view.dart';
+import 'package:erpnext_logistics_mobile/doc_view/lr_view.dart';
 import 'package:flutter/material.dart';
 import 'form_view.dart';
 
 
 class CustomSearchBar extends SearchDelegate {
   final List<Map<dynamic, dynamic>> searchItem;
+  final String className;
 
-  CustomSearchBar(this.searchItem);
+  CustomSearchBar(this.searchItem, this.className);
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -45,8 +50,22 @@ class CustomSearchBar extends SearchDelegate {
           leading: const Icon(Icons.file_open_rounded),
           title: Text(result),
           onTap: () => {
+            if(className == "CollectionRequestView"){
             Navigator.push(context,
-            MaterialPageRoute(builder: (context) => FormView(itemName: result.split('\n')[0])))
+            MaterialPageRoute(builder: (context) => CollectionRequestView(name: result.split('\n')[0])))
+            }
+            else if(className == "CollectionAssignmentView"){
+              Navigator.push(context,
+              MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: result.split('\n')[0])))
+            }
+            else if(className == "LRList"){
+              Navigator.push(context,
+              MaterialPageRoute(builder: (context) => LRView(name: result.split('\n')[0])))
+            }
+            else if(className == "GDMView"){
+              Navigator.push(context,
+              MaterialPageRoute(builder: (context) => GDMView(name: result.split('\n')[0])))
+            }
           });
     });
   }
@@ -68,8 +87,22 @@ class CustomSearchBar extends SearchDelegate {
           leading: const Icon(Icons.file_open_rounded),
           title: Text(result),
           onTap: () => {
+           if(className == "CollectionRequestView"){
             Navigator.push(context,
-            MaterialPageRoute(builder: (context) => FormView(itemName: result.split('\n')[0],)))
+            MaterialPageRoute(builder: (context) => CollectionRequestView(name: result.split('\n')[0])))
+            }
+            else if(className == "CollectionAssignmentView"){
+              Navigator.push(context,
+              MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: result.split('\n')[0])))
+            }
+            else if(className == "LRList"){
+              Navigator.push(context,
+              MaterialPageRoute(builder: (context) => LRView(name: result.split('\n')[0])))
+            }
+            else if(className == "GDMView"){
+              Navigator.push(context,
+              MaterialPageRoute(builder: (context) => GDMView(name: result.split('\n')[0])))
+            }
           },
         );
       });
