@@ -11,20 +11,27 @@ import 'api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/fields/theme_provider.dart';
 
 void main() async{
-  // WidgetsFlutterBinding.ensureInitialized();
-  // SharedPreferences manager = await SharedPreferences.getInstance();
-  // var api = manager.getString("api_key");
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences manager = await SharedPreferences.getInstance();
+  var api = manager.getString("api");
+  print("#####################################################################################");
+  print(api);
+  
+  bool isLoggedIn = api != null ? true : false;
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
       // child: api == null ? const LoginPage() : const EFF(),
-      child: const MyApp(),
+      child: MyApp(isLoggedIn: isLoggedIn),
     ),
   );
+  // runApp(api == null ? const LoginPage() : const EFF(),);
+  // runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+   const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +42,7 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData.dark(),
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home:  LoginPage(),
+          home: isLoggedIn ? const EFF() : const LoginPage(),
         );
       },
     );

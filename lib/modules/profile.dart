@@ -41,6 +41,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<void> logout () async {
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    manager.clear();
+  }
+
   String getInitials(String name) {
     List<String> nameParts = name.split(" ");
     String initials = "";
@@ -103,6 +108,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     child: const Text('OK'),
                     onPressed: () {
                       Navigator.of(context).pop();
+                      logout();
                       // Add your sign-out logic here
                       Navigator.pushReplacement(
                         context,

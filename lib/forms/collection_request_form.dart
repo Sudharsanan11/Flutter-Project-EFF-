@@ -109,6 +109,8 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
       ]
     };
     try {
+      print(ApiEndpoints.baseUrl + ApiEndpoints.authEndpoints.getList);
+      print(body);
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
       print(response);
       return response;
