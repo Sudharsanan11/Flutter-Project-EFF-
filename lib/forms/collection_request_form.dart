@@ -76,8 +76,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     final ApiService apiService = ApiService();
     final data = {
       "consignor": consignor.text,
-      "consignee": consignee.text,
-      "location": location.text,
+      "location": location.text,  
       "vehicle_required_date": date.text,
       "required_time": timePicker.text,
       "items": items,

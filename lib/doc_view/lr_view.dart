@@ -123,7 +123,7 @@ class _LRViewState extends State<LRView> {
   Future<Map<String, dynamic>> fetchLR() async{
     final ApiService apiService = ApiService();
     try {
-      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.LR + widget.name);
+      final response = await apiService.getDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}');
       print(response);
        setState(() {
         

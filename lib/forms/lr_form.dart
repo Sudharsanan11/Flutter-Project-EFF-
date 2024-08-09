@@ -431,7 +431,6 @@ class _LrFormState extends State<LrForm> {
       "consignor": consignor.text,
       "consignee": consignee.text,
       "location": destination.text,
-      "box_count": 2,
       "cross_check_status" : crossCheckStatus,
       "calculation_based_on_lr_level" : calculationBasedOnLRLevel,
       "lr_charge": lrCharge.text,

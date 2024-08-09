@@ -109,7 +109,7 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   Future<Map<String, dynamic>> fetchCollectionAssignment() async{
     final ApiService apiService = ApiService();
     try {
-      final response = await apiService.getDocument(ApiEndpoints.authEndpoints.CollectionAssignment + widget.name);
+      final response = await apiService.getDocument('${ApiEndpoints.authEndpoints.CollectionAssignment}/${widget.name}');
       setState(() {
         enteredBy.text = response['entered_by'];
         // orderVia = response['order_via'].toString();
@@ -207,7 +207,7 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
       "docstatus" : 1
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.CollectionAssignment + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.CollectionAssignment}/${widget.name}', body);
       print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);

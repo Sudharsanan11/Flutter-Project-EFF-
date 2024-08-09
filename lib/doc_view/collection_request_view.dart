@@ -84,7 +84,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
   Future<Map<String, dynamic>> fetchCollectionRequest() async {
     print("widget.name ${widget.name}");
     ApiService apiService = ApiService();
-    final response = await apiService.getDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name);
+    final response = await apiService.getDocument('${ApiEndpoints.authEndpoints.CollectionRequest}/${widget.name}');
     // consignor.text = response["consignor"];
     print("response $response");
     setState(() {
