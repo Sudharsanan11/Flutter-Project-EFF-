@@ -119,7 +119,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
       "items": items,
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.CollectionRequest} / ${widget.name}', body);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted) {
@@ -194,7 +194,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
    void deleteDoc() async {
     final ApiService apiService = ApiService();
     try {
-      final response = await apiService.deleteDocument(ApiEndpoints.authEndpoints.CollectionRequest + widget.name);
+      final response = await apiService.deleteDocument('${ApiEndpoints.authEndpoints.CollectionRequest}/${widget.name}');
       if(response == "202") {
         Fluttertoast.showToast(msg: "Document deleted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){

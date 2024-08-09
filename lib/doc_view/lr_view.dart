@@ -237,7 +237,7 @@ class _LRViewState extends State<LRView> {
       "docstatus" : 1
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.LR + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}', body);
       print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
@@ -260,7 +260,7 @@ class _LRViewState extends State<LRView> {
   void deleteDoc() async {
     final ApiService apiService = ApiService();
     try {
-      final response = await apiService.deleteDocument(ApiEndpoints.authEndpoints.LR + widget.name);
+      final response = await apiService.deleteDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}');
       if(response == "202") {
         Fluttertoast.showToast(msg: "Document deleted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){
@@ -284,7 +284,7 @@ class _LRViewState extends State<LRView> {
       "docstatus" : 2
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.LR + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}', body);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){

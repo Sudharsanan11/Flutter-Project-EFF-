@@ -53,7 +53,7 @@ class _GDMViewState extends State<GDMView> {
   List<String> attenderList = [];
   List<String> lrList = [];
   // List<String> loadingStaffList = [];
-  int docstatus = 0;
+  late int docstatus;
 
   String? selectedDriver;
   String? selectedStaff;
@@ -432,7 +432,7 @@ class _GDMViewState extends State<GDMView> {
     };
     try {
       final response = await apiService.updateDocument(
-          '${ApiEndpoints.authEndpoints.GDM}${widget.name}', body);
+          '${ApiEndpoints.authEndpoints.GDM}/${widget.name}', body);
       if (response == '200') {
         Fluttertoast.showToast(
             msg: "Document updated successfully",
@@ -458,7 +458,7 @@ class _GDMViewState extends State<GDMView> {
       "docstatus" : 1
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.GDM + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.GDM}/${widget.name}', body);
       print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
@@ -481,7 +481,7 @@ class _GDMViewState extends State<GDMView> {
   void deleteDoc() async {
     final ApiService apiService = ApiService();
     try {
-      final response = await apiService.deleteDocument(ApiEndpoints.authEndpoints.GDM + widget.name);
+      final response = await apiService.deleteDocument('${ApiEndpoints.authEndpoints.GDM}/${widget.name}');
       if(response == "202") {
         Fluttertoast.showToast(msg: "Document deleted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){
@@ -505,7 +505,7 @@ class _GDMViewState extends State<GDMView> {
       "docstatus" : 2
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.GDM + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.GDM}/${widget.name}', body);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){
