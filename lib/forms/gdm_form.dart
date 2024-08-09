@@ -167,7 +167,8 @@ class _GdmFormState extends State<GdmForm> {
     final body = {
       "doctype": "LR",
       "filters": [
-        ["status", "=", "Pending"]
+        ["status", "=", "Pending"],
+        ["docstatus", "=", 1]
       ]
     };
     try {
