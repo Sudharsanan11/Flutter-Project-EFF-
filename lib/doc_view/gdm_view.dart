@@ -128,10 +128,10 @@ class _GDMViewState extends State<GDMView> {
         loadingStaffItems = (response["loading_staffs"] as List).map<String>((item) {
           return item['loading_staff'].toString();
         }).toList();
+        selectedLoadingStaffs = loadingStaffItems;
         print(loadingStaffItems);
         print("--------------------------------");
         loadingStaffs.text = loadingStaffItems.join(', ').toString();
-        // loadingStaffs.text = response["loading_staffs"] ?? "";
         vehicleRegisterNo.text = response["vehicle_register_no"] ?? "";
         items = (response['items'] as List).map((item) {
           return (item as Map<String, dynamic>)
@@ -149,10 +149,6 @@ class _GDMViewState extends State<GDMView> {
       throw "Fetch Error: $e";
     }
   }
-
-  // Future<Map<String, dynamic>> fetchGDM () async {
-    
-  // }
 
   Future<List<String>> fetchLoadingStaff() async {
     final ApiService apiService = ApiService();
