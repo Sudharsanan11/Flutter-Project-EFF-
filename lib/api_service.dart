@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_endpoints.dart';
@@ -29,6 +28,8 @@ class ApiService {
       return data.map((item) => {
         'key1' : item[keys[0]].toString(),
         'key2' : item[keys[1]].toString(),
+        'key3' : item[keys[2]].toString().split(" ")[0],
+        'key4' : item[keys[3]].toString(),
       }).toList();
     }
     else {
@@ -82,7 +83,6 @@ class ApiService {
       print("list");
       print(list);
       return list;
-      // return data.map((item) => item['name']).toList();
     }
     else {
       throw Exception('Failed to load linked names');
@@ -105,7 +105,7 @@ class ApiService {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
       print("$jsonResponse=======================================================");
       List<dynamic> data = jsonResponse['message'];
-      print("${data} ============================================================");
+      print("$data ============================================================");
       return data;
     }
     else { 
@@ -132,7 +132,7 @@ class ApiService {
       Map<String, dynamic> data = jsonResponse['message'];
       print(data['loading_staffs']);
       print(data['items']);
-      print("${data} ============================================================");
+      print("$data ============================================================");
       return data;
     }
     else {
@@ -192,6 +192,12 @@ class ApiService {
   }
 
   Future<String> updateDocument(String endpoint, Object body) async {
+    print(endpoint);
+    print("endpoint");
+    print(body);
+    print("body");
+    print(ApiEndpoints.baseUrl);
+    print("ApiEndipoint");
     SharedPreferences manager = await SharedPreferences.getInstance();
     String api = manager.getString("api")!;
     String secret = manager.getString("secret")!;

@@ -1,8 +1,6 @@
 
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:erpnext_logistics_mobile/fields/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'navigation_bar.dart';
 
@@ -108,7 +106,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     onPressed: () {
                       Navigator.of(context).pop();
                       logout();
-                      // Add your sign-out logic here
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -182,45 +179,45 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
               const SizedBox(height: 20),
               // Settings section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    _buildSettingsTile(
-                      icon: Icons.dark_mode,
-                      title: 'Dark mode',
-                      subtitle: 'Automatic',
-                      trailing: Consumer<ThemeProvider>(
-                        builder: (context, themeProvider, child) {
-                          return Switch(
-                            value: themeProvider.isDarkMode,
-                            onChanged: (value) {
-                              themeProvider.toggleTheme();
-                            },
-                          );
-                        },
-                      ),
-                      onTap: () {},
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.info,
-                      title: 'About',
-                      subtitle: 'Learn more about EFF Logistics',
-                      onTap: () {
-                        // Handle tap
-                      },
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.feedback,
-                      title: 'Send Feedback',
-                      subtitle: 'Let us know how we can make EFF App better',
-                      onTap: () {
-                        // Handle tap
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 20),
+              //   child: Column(
+              //     children: [
+              //       _buildSettingsTile(
+              //         icon: Icons.dark_mode,
+              //         title: 'Dark mode',
+              //         subtitle: 'Automatic',
+              //         trailing: Consumer<ThemeProvider>(
+              //           builder: (context, themeProvider, child) {
+              //             return Switch(
+              //               value: themeProvider.isDarkMode,
+              //               onChanged: (value) {
+              //                 themeProvider.toggleTheme();
+              //               },
+              //             );
+              //           },
+              //         ),
+              //         onTap: () {},
+              //       ),
+              //       _buildSettingsTile(
+              //         icon: Icons.info,
+              //         title: 'About',
+              //         subtitle: 'Learn more about EFF Logistics',
+              //         onTap: () {
+              //           // Handle tap
+              //         },
+              //       ),
+              //       _buildSettingsTile(
+              //         icon: Icons.feedback,
+              //         title: 'Send Feedback',
+              //         subtitle: 'Let us know how we can make EFF App better',
+              //         onTap: () {
+              //           // Handle tap
+              //         },
+              //       ),
+              //     ],
+              //   ),
+              // ),
               const SizedBox(height: 20),
               // Account section
               Padding(

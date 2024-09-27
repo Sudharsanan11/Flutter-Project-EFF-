@@ -112,23 +112,22 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
     final ApiService apiService = ApiService();
     final body = {
       "consignor": consignor.text,
-      "consignee": consignee.text,
       "location": location.text,
       "vehicle_required_date": vehicle_required_date.text,
       "required_time": timePicker.text,
       "items": items,
     };
     try {
-      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.CollectionRequest} / ${widget.name}', body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.CollectionRequest}/${widget.name}', body);
       if(response == "200") {
-        Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        Fluttertoast.showToast(msg: "Document Saved successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted) {
           Navigator.pushReplacement(context,
           MaterialPageRoute(builder: (context) => CollectionRequestView(name: widget.name)));
         }
       }
       else {
-        Fluttertoast.showToast(msg: "Failed to submit data", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        Fluttertoast.showToast(msg: "Failed to Save data", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       return "";
     }
@@ -204,6 +203,9 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
       }
       else if(response == "417") {
         Fluttertoast.showToast(msg: "The document may be linked with other document try deleting that document first", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 5);
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to delete document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
       print(response);
     }
@@ -583,10 +585,10 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                     children: [
                       const Text("Items"),
                       ElevatedButton(
-                        child: Icon(Icons.add),
                         onPressed: isDisabled ? (){} : () {
                           _showItemDialog();
                         },
+                        child: const Icon(Icons.add),
                       ),
                     ],
                   ),

@@ -1,6 +1,6 @@
+import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/profile.dart';
 import 'package:flutter/material.dart';
-import 'package:erpnext_logistics_mobile/main.dart';
 
 class BottomNavigation extends StatefulWidget {
   const BottomNavigation({super.key});
@@ -35,10 +35,10 @@ class _BottomNavigationState extends State<BottomNavigation> {
           print(currentIndex);
         });
         if (currentIndex == 0) {
-          Navigator.pushReplacement(
+          Navigator.push(
               context, MaterialPageRoute(builder: (context) => const EFF()));
         } else if (currentIndex == 1) {
-          Navigator.pushReplacement(context,
+          Navigator.push(context,
               MaterialPageRoute(builder: (context) => const Profile()));
         }
       },

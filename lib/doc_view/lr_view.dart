@@ -1,20 +1,22 @@
+import 'dart:ffi';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
+import 'package:erpnext_logistics_mobile/fields/date_field.dart';
+import 'package:erpnext_logistics_mobile/fields/date_picker.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
-import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/text_area.dart';
-import 'package:erpnext_logistics_mobile/forms/lr_form.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
-import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
 
 class LRView extends StatefulWidget {
   final String name;
@@ -33,11 +35,13 @@ class _LRViewState extends State<LRView> {
   final TextEditingController consignee = TextEditingController();
   final TextEditingController destination = TextEditingController();
   final TextEditingController boxCount = TextEditingController();
-  final TextEditingController boxMismatchFromOrder = TextEditingController();
-  final TextEditingController boxMismatchOnRescan = TextEditingController();
   final TextEditingController freight = TextEditingController();
   final TextEditingController lrCharge = TextEditingController();
+  final TextEditingController manualWeight = TextEditingController();
+  final TextEditingController loadingCharges = TextEditingController();
   final TextEditingController totalFreight = TextEditingController();
+  final TextEditingController releaseDate = TextEditingController();
+  final TextEditingController reasonForHold = TextEditingController();
   final TextEditingController deliveredOn = TextEditingController();
   final TextEditingController boxDelivered = TextEditingController();
   final TextEditingController totalItems = TextEditingController();
@@ -63,6 +67,7 @@ class _LRViewState extends State<LRView> {
   bool? crossCheckStatus = false;
   bool? calculationBasedOnLRLevel = false;
   bool? manualFreightAmount = false;
+  bool? holdLR = false;
 
   @override
   void initState() {
@@ -80,10 +85,10 @@ class _LRViewState extends State<LRView> {
     consignee.dispose();
     destination.dispose();
     boxCount.dispose();
-    boxMismatchFromOrder.dispose();
-    boxMismatchOnRescan.dispose();
     freight.dispose();
     lrCharge.dispose();
+    manualWeight.dispose();
+    loadingCharges.dispose();
     totalFreight.dispose();
     deliveredOn.dispose();
     boxDelivered.dispose();
@@ -112,7 +117,6 @@ class _LRViewState extends State<LRView> {
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print(response);
       return response;
     }
     catch(e) {
@@ -124,7 +128,6 @@ class _LRViewState extends State<LRView> {
     final ApiService apiService = ApiService();
     try {
       final response = await apiService.getDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}');
-      print(response);
        setState(() {
         
         lrType.text = response['lr_type'] ?? "";
@@ -134,29 +137,29 @@ class _LRViewState extends State<LRView> {
         consignee.text = response["consignee"] ?? "";
         destination.text = response["destination"] ?? "";
         boxCount.text =  response["box_count"] != 0 ? response["box_count"].toString() : "0";
-        boxMismatchFromOrder.text = response["box_mismatch_from_order"] != 0 ? response["box_mismatch_from_order"].toString() : "0";
-        boxMismatchOnRescan.text = response["box_mismatch_on_rescan"] != 0 ? response["box_mismatch_on_rescan"].toString() : "0";
         crossCheckStatus = response["cross_check_status"] == 0 ? false : true;
         calculationBasedOnLRLevel = response["calculation_based_on_lr_level"] == 0 ? false : true;
+        manualWeight.text = response["manual_weight"] != 0 ? response["manual_weight"].toString() : "0";
         manualFreightAmount = response["manual_freight_amount"] == 0 ? false : true;
         freight.text = response["freight"] != 0 ? response["freight"].toString() : "0";
-        lrCharge.text = response["lr_charge"] != 0 ? response["lr_charge"].toString() : "0";
+        lrCharge.text = response["lr_charges"] != 0 ? response["lr_charges"].toString() : "0";
+        loadingCharges.text = response["loading_charges"] != 0 ? response["loading_charges"].toString() : "0";
         totalFreight.text = response["total_freight"] != 0 ? response["total_freight"].toString() : "0";
+        holdLR = response["hold_lr"] != 0 ? true : false;
+        releaseDate.text = response["release_date"] ?? "";
+        reasonForHold.text = response["reason_for_the_hold"] ?? "";
         deliveredOn.text = response["delivered_on"] ?? "";
-        boxDelivered.text = response["box_delivered"] != 0 ? response["box_delivered"].toString() : "0";
+        // boxDelivered.text = response["box_delivered"] != 0 ? response["box_delivered"].toString() : "0";
         totalItems.text = response["total_items"] != 0 ? response["total_items"].toString() : "0";
         remarks.text = response["remarks"] ?? "";
         docstatus = response["docstatus"];
-        print(response['items']);
         items = (response["items"] as List).map((item) {
             return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
       }).toList();
-        print(items);
         if(response['docstatus'] != 0){
           isDisabled = true;
         }
       });
-        print(response);
       return response;
     }
     catch(e) {
@@ -172,7 +175,6 @@ class _LRViewState extends State<LRView> {
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print(response);
       return response;
     }
     catch(e) {
@@ -188,7 +190,6 @@ class _LRViewState extends State<LRView> {
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print(response);
       return response;
     }
     catch(e) {
@@ -204,7 +205,6 @@ class _LRViewState extends State<LRView> {
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print(response);
       setState(() {
         consigneeList = response;
       });
@@ -223,7 +223,6 @@ class _LRViewState extends State<LRView> {
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
-      print(response);
       return response;
     }
     catch(e) {
@@ -238,7 +237,6 @@ class _LRViewState extends State<LRView> {
     };
     try {
       final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}', body);
-      print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted) {
@@ -250,10 +248,9 @@ class _LRViewState extends State<LRView> {
       else {
         Fluttertoast.showToast(msg: "Failed to submit document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
-      print(response);
     }
     catch(e) {
-      print(e);
+      throw "Fetch Error";
     }
   }
 
@@ -271,10 +268,9 @@ class _LRViewState extends State<LRView> {
       else {
         Fluttertoast.showToast(msg: "Failed to delete document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
-      print(response);
     }
     catch(e) {
-      print(e);
+      rethrow;
     }
   }
 
@@ -295,17 +291,14 @@ class _LRViewState extends State<LRView> {
       else {
         Fluttertoast.showToast(msg: "Failed to cancel document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
-      print(response);
     }
     catch(e) {
-      print(e);
+      rethrow;
     }
   }
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
-    itemWeight.text = item?['weight'] ?? "";
-    itemVolume.text = item?['volume'] ?? "";
     itemBarcode.text = item?['barcode'] ?? "";
 
     await showDialog<void>(
@@ -326,41 +319,12 @@ class _LRViewState extends State<LRView> {
                     labelText: "Item Name",
                   ),
                   const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemWeight,
-                    keyboardType: TextInputType.number,
-                    // readOnly: true,
-                    labelText: "Weight",
-                  ),
-                  const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemVolume,
-                    keyboardType: TextInputType.number,
-                    readOnly: true,
-                    labelText: "Volume",
-                  ),
-                  const SizedBox(height: 10,),
-                  // Row(
-                    // children: [
-                      // Expanded(
                         DialogTextField(
                           controller: itemBarcode,
                           keyboardType: TextInputType.text,
                           readOnly: isDisabled,
                           labelText: "Barcode",
                         ),
-                      // ),
-                      // const SizedBox(width: 2,),
-                      // Expanded(
-                        TextButton(
-                          onPressed: () {
-                            _openBarcodeScanner();
-                          },
-                          child: const Text("Scan")
-                          ),
-                      // )
-                    // ],
-                  // ),
                 ],
               ),
             ),
@@ -373,7 +337,7 @@ class _LRViewState extends State<LRView> {
                   Navigator.of(context).pop();
                 }
                 else {
-                  setState(() {  
+                  setState(() { 
                   // items.removeWhere((item) => item.length == index);
                   items.remove(item);
                   });
@@ -388,28 +352,20 @@ class _LRViewState extends State<LRView> {
                   setState(() {
                   items.add(
                     {"item_code" : itemName.text,
-                     "weight" : itemWeight.text,
-                     "volume" : itemVolume.text,
                      "barcode" : itemBarcode.text,
                      }
                   );
                   });
                   itemName.clear();
-                  itemWeight.clear();
-                  itemVolume.clear();
                   itemBarcode.clear();
                   Navigator.of(context).pop();
                 }
                 else {
                   setState(() {
                     items[index!]["item_code"] = itemName.text;
-                    items[index]["weight"] = itemWeight.text;
-                    items[index]["volume"] = itemVolume.text;
                     items[index]["barcode"] = itemBarcode.text;
                   });
                   itemName.clear();
-                  itemWeight.clear();
-                  itemVolume.clear();
                   itemBarcode.clear();
                   Navigator.of(context).pop();
                 }
@@ -422,9 +378,7 @@ class _LRViewState extends State<LRView> {
   }
 
   Future<String> submitData() async{
-    print("Submit data");
     if (_formKey.currentState?.saveAndValidate() ?? false) {
-      print(_formKey.currentState?.value);
       final ApiService apiService = ApiService();
     final body = {
       "lr_type" : lrType.text,
@@ -434,13 +388,16 @@ class _LRViewState extends State<LRView> {
       "consignee": consignee.text,
       "location": destination.text,
       "box_count": boxCount.text,
-      "box_mismatch_from_order": boxMismatchFromOrder.text,
-      "box_mismatch_on_rescan": boxMismatchOnRescan.text,
       "cross_check_status" : crossCheckStatus,
       "calculation_based_on_lr_level" : calculationBasedOnLRLevel,
+      "manual_weight": manualWeight.text,
       "freight": freight.text,
       "lr_charge": lrCharge.text,
+      "loading_charges": loadingCharges.text,
       "manual_freight_amount" : manualFreightAmount,
+      "hold_lr": holdLR,
+      "release_date": releaseDate.text,
+      "reason_for_the_hold": reasonForHold.text,
       "items": items,
       "total_freight": totalFreight.text,
       "box_delivered": boxDelivered.text,
@@ -449,19 +406,19 @@ class _LRViewState extends State<LRView> {
       "docstatus" : 0,
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.LR + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}', body);
       if(response == "200") {
-        Navigator.push(context,
-        MaterialPageRoute(builder: (context) => LRView(name: widget.name)));
+        if(mounted){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => LRView(name: widget.name)));
+        }
       }
       return "";
     }
     catch (error) {
-      print(error);
       return "Error: Failed to submit data";
     }
     } else {
-      print("Validation failed");
       return "";
     }
   }
@@ -473,12 +430,40 @@ class _LRViewState extends State<LRView> {
         builder: (context) => BarcodeScanner(
           onScanResult: (scanResult) {
             setState(() {
-              itemBarcode.text = scanResult;
+              if(items.isEmpty){
+             items.add({
+              'item_code': itemName.text,
+              'barcode': scanResult,
+              });
+              }
+              else{
+                items.add({
+                  'item_code': items[items.length - 1]['item_code'].toString(),
+                  'barcode': scanResult,
+                });
+              }
+      itemName.clear();
+      itemBarcode.clear();
             });
           },
         ),
       ),
     );
+  }
+
+   Future<void> _showDatePicket(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2150),
+    );
+
+    if (picked != null) {
+      setState(() {
+        releaseDate.text = "${picked.toLocal()}".split(" ")[0];
+      });
+    }
   }
 
   void addItem() {
@@ -610,32 +595,6 @@ class _LRViewState extends State<LRView> {
                         Flexible(
                           flex: 1,
                           child: FieldText(
-                            controller: boxMismatchFromOrder,
-                            labelText: 'Box Mismatch from order',
-                            readOnly: true,
-                            keyboardType: TextInputType.number,
-                            obscureText: false,
-                          ),
-                        ),
-                        const SizedBox(width: 1),
-                        Flexible(
-                          flex: 1,
-                          child: FieldText(
-                            controller: boxMismatchOnRescan,
-                            labelText: 'Box mismatch on rescan',
-                            readOnly: true,
-                            keyboardType: TextInputType.number,
-                            obscureText: false,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        Flexible(
-                          flex: 1,
-                          child: FieldText(
                               controller: boxCount,
                               labelText: 'Box Count',
                               keyboardType: TextInputType.number,
@@ -654,34 +613,19 @@ class _LRViewState extends State<LRView> {
                       ],
                     ),
                     const SizedBox(height: 15),
-                    Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: crossCheckStatus,
-                          onChanged: (newBool) {
-                            setState(() {
-                              crossCheckStatus = newBool;
-                            });
-                          },
-                          activeColor: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text("Cross-Check Status"),
-                      ],
-                    ),
-                  ),
+                    
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
                       children: [                      
                         Checkbox(
                           value: calculationBasedOnLRLevel,
                           onChanged: (newBool) {
-                            setState(() {
-                              calculationBasedOnLRLevel = newBool;
-                            });
+                              if(isDisabled == false){
+                              setState(() {
+                                  calculationBasedOnLRLevel = newBool;
+                              });
+                              }
                           }, 
                           activeColor: Colors.black,
                         ),
@@ -690,16 +634,26 @@ class _LRViewState extends State<LRView> {
                       ]
                     ),
                   ),
+                  if(calculationBasedOnLRLevel == true)
+                  FieldText(
+                    controller: manualWeight,
+                    labelText: "Manual Weight",
+                    readOnly: isDisabled,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 10,),
                    Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Row(
                       children: [                      
                         Checkbox(
                           value: manualFreightAmount,
                           onChanged: (newBool) {
-                            setState(() {
-                              manualFreightAmount = newBool;
-                            });
+                            if(isDisabled == false){
+                              setState(() {
+                                  manualFreightAmount = newBool;
+                              });
+                            }
                           }, 
                           activeColor: Colors.black,
                         ),
@@ -722,7 +676,13 @@ class _LRViewState extends State<LRView> {
                         readOnly: isDisabled,
                         keyboardType: TextInputType.number,
                         obscureText: false),
-                    const SizedBox(height: 25),                    
+                    const SizedBox(height: 25),
+                     FieldText(
+                      controller: loadingCharges,
+                      labelText: 'Loading Charges',
+                      keyboardType: TextInputType.number,
+                      obscureText: false),
+                  const SizedBox(height: 10),                
                     FieldText(
                         controller: totalFreight,
                         labelText: 'Total Freight',
@@ -731,19 +691,96 @@ class _LRViewState extends State<LRView> {
                         readOnly: true
                       ),
                     const SizedBox(height: 10),
+                    Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Row(
+                      children: [                      
+                        Checkbox(
+                          value: holdLR,
+                          onChanged: (newBool) {
+                            if(isDisabled == false){
+                              setState(() {
+                                  holdLR = newBool;
+                              });
+                            }
+                          }, 
+                          activeColor: Colors.black,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text("Hold LR"),
+                      ]
+                    ),
+                  ),
+                  if(holdLR == true)
+                  const SizedBox(height: 10.0,),
+                  if(holdLR == true)
+                  Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+                child: TextFormField(
+                  controller: releaseDate,
+                  keyboardType: TextInputType.datetime,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      if(holdLR == true){
+                        return "Date is required";
+                      }
+                    }
+                    return null;
+                  },
+                  readOnly: isDisabled,
+                  decoration: InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                          color:  Colors.black),
+                          borderRadius: BorderRadius.circular(10)
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color:  Colors.black ),
+                    ),
+                    fillColor: Colors.white,
+                    filled: true,
+                    labelText: "Release Date",
+                    labelStyle: const TextStyle(
+                        color: Colors.black ),
+                  ),
+                  onTap: () {
+                    _showDatePicket(context);
+                  },
+                ),
+              ),
+                  if(holdLR == true)
+              const SizedBox(height: 10,),
+                  if(holdLR == true)
+                TextArea(
+                  controller: reasonForHold,
+                  labelText: "Reason For the Hold",
+                  keyboardType: TextInputType.multiline,
+                  validator: (value) {
+                     if (value == null || value.isEmpty) {
+                      if(holdLR == true){
+                        return "Date is required";
+                      }
+                    }
+                    return null;
+                  },
+                  readOnly: isDisabled,
+                ),
+                  const SizedBox(height: 10,),
                     TextArea(
                       controller: deliveredOn,
                       readOnly: true,
                       labelText: "Delivered On",
                       keyboardType: TextInputType.datetime
                     ),
-                    const SizedBox(height: 10),                    
-                    TextArea(
-                      controller: boxDelivered,
-                      labelText: "Box Delivered",
-                      readOnly: true,
-                      keyboardType: TextInputType.number
-                    ),
+                    // const SizedBox(height: 10),                    
+                    // TextArea(
+                    //   controller: boxDelivered,
+                    //   labelText: "Box Delivered",
+                    //   readOnly: true,
+                    //   keyboardType: TextInputType.number
+                    // ),
                     const SizedBox(height: 10),
                     TextArea(
                       controller: remarks,
@@ -757,13 +794,25 @@ class _LRViewState extends State<LRView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                          const Text("Items"),
-                          ElevatedButton(
+                        const Text("Items"),
+                          Row(
+                          children:[ ElevatedButton(
                             child: const Icon(Icons.add),
-                            onPressed: isDisabled ? (){} : () {
+                            onPressed: () {
                               _showItemDialog();
                             },
                           ),
+                          TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: const TextStyle(fontSize: 20)
+                          ),
+                          onPressed: () {
+                            _openBarcodeScanner();
+                          },
+                          child: const Icon(Icons.camera),
+                          ),
+                          ]
+                        ),
                         ],
                       ),
                     ),

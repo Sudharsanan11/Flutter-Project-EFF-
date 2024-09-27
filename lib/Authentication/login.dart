@@ -1,5 +1,5 @@
 import 'package:erpnext_logistics_mobile/fields/button.dart';
-import 'package:erpnext_logistics_mobile/fields/toast.dart';
+import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:erpnext_logistics_mobile/main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,32 +42,43 @@ class _LoginPageState extends State<LoginPage> {
         );
 
         if (response.statusCode == 200) {
+          print(response);
           final responseData = jsonDecode(response.body);
-          const ToastComponent(message: "Login successful");
-          Fluttertoast.showToast(
-            msg: "Logedin successfully",
+          print(responseData);
+
+          if(responseData['message']['message'] == 'Authentication Success'){
+
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            prefs.setString('api', responseData['message']['api_key']);
+            prefs.setString('secret', responseData['message']['api_secret']);
+            prefs.setString('full_name', responseData['message']['full_name']);
+            prefs.setString('email', responseData['message']['email']);
+
+            print('Session token: ${prefs.getString('api')}');
+            print('Session token: ${prefs.getString('secret')}');
+            print('Full Name: ${prefs.getString('full_name')}');
+            print('email ${prefs.getString('email')}');
+
+            print(responseData);
+
+            // if(mounted){
+              // ignore: use_build_context_synchronously
+              Fluttertoast.showToast(
+              msg: responseData['message']['message'],
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 2,);
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const EFF()),
+                );
+            // }
+          }
+          else {
+            Fluttertoast.showToast(
+            msg: responseData['message']['message'],
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 2,);
-          print('Login successful: $responseData');
-
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setString('api', responseData['message']['api_key']);
-          prefs.setString('secret', responseData['message']['api_secret']);
-          prefs.setString('full_name', responseData['message']['full_name']);
-          prefs.setString('email', responseData['message']['email']);
-
-          print('Session token: ${prefs.getString('api')}');
-          print('Session token: ${prefs.getString('secret')}');
-          print('Full Name: ${prefs.getString('full_name')}');
-          print('email ${prefs.getString('email')}');
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const EFF()),
-          );
-        } else {
-          const ToastComponent(message: "Invalid credentials");
           print('Login failed: ${response.body}');
+          }
         }
       } catch (e) {
         print(e);

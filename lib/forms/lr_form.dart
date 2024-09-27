@@ -1,4 +1,3 @@
-import 'dart:ffi';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
@@ -17,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'package:get/get.dart';
 
 class LrForm extends StatefulWidget {
   const LrForm({super.key});
@@ -37,7 +36,9 @@ class _LrFormState extends State<LrForm> {
   final TextEditingController invoiceNo = TextEditingController();
   final TextEditingController freight = TextEditingController();
   final TextEditingController lrCharge = TextEditingController();
+  final TextEditingController loadingCharges = TextEditingController();
   final TextEditingController itemName = TextEditingController();
+  final TextEditingController manualWeight = TextEditingController();
   final TextEditingController itemWeight = TextEditingController();
   final TextEditingController itemVolume = TextEditingController();
   final TextEditingController itemBarcode = TextEditingController();
@@ -77,6 +78,8 @@ class _LrFormState extends State<LrForm> {
     invoiceNo.dispose();
     freight.dispose();
     lrCharge.dispose();
+    manualWeight.dispose();
+    loadingCharges.dispose();
     remarks.dispose();
     itemBarcode.dispose();
     itemName.dispose();
@@ -194,8 +197,6 @@ class _LrFormState extends State<LrForm> {
       setState(() {
         consigneeDocList = response;
       });
-      print("$consigneeDocList ========================location===========================");
-      // return response;
     }
     catch(e) {
       throw "Fetch Error";
@@ -250,8 +251,6 @@ class _LrFormState extends State<LrForm> {
   
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
-    itemWeight.text = item?['weight'] ?? "";
-    itemVolume.text = item?['volume'] ?? "";
     itemBarcode.text = item?['barcode'] ?? "";
 
     await showDialog<void>(
@@ -324,41 +323,11 @@ class _LrFormState extends State<LrForm> {
                     },
                   ),
                   const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemWeight,
-                    keyboardType: TextInputType.name,
-                    labelText: "Weight",
-                  ),
-                  const SizedBox(height: 10,),
-                  DialogTextField(
-                    controller: itemVolume,
-                    keyboardType: TextInputType.name,
-                    labelText: "Volume",
-                  ),
-                  const SizedBox(height: 10,),
-                  // Row(
-                    // children: [
-                      // Expanded(
                         DialogTextField(
                           controller: itemBarcode,
                           keyboardType: TextInputType.text,
                           labelText: "Barcode",
                         ),
-                      // ),
-                      // const SizedBox(width: 2,),
-                      // Expanded(
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            textStyle: const TextStyle(fontSize: 20)
-                          ),
-                          onPressed: () {
-                            _openBarcodeScanner();
-                          },
-                          child: const Text("Scan")
-                          ),
-                      // )
-                    // ],
-                  // ),
                 ],
               ),
             ),
@@ -386,28 +355,20 @@ class _LrFormState extends State<LrForm> {
                   setState(() {
                   items.add(
                     {"item_code" : itemName.text,
-                     "weight" : itemWeight.text,
-                     "volume" : itemVolume.text,
                      "barcode" : itemBarcode.text,
                      }
                   );
                   });
                   itemName.clear();
-                  itemWeight.clear();
-                  itemVolume.clear();
                   itemBarcode.clear();
                   Navigator.of(context).pop();
                 }
                 else {
                   setState(() {
                     items[index!]["item_code"] = itemName.text;
-                    items[index]["weight"] = itemWeight.text;
-                    items[index]["volume"] = itemVolume.text;
                     items[index]["barcode"] = itemBarcode.text;
                   });
                   itemName.clear();
-                  itemWeight.clear();
-                  itemVolume.clear();
                   itemBarcode.clear();
                   Navigator.of(context).pop();
                 }
@@ -423,7 +384,6 @@ class _LrFormState extends State<LrForm> {
     // if (_formKey.currentState?.saveAndValidate() ?? false) {
       // print(_formKey.currentState?.value);
       final ApiService apiService = ApiService();
-      print(items);
     final body = {
       "lr_type": selectedLrType,
       "logsheet": logsheet.text,
@@ -433,7 +393,9 @@ class _LrFormState extends State<LrForm> {
       "location": destination.text,
       "cross_check_status" : crossCheckStatus,
       "calculation_based_on_lr_level" : calculationBasedOnLRLevel,
+      "manual_weight": manualWeight.text,
       "lr_charge": lrCharge.text,
+      "loading_charges": loadingCharges.text,
       "invoice_number" : invoiceNo.text,
       "remarks" : remarks.text,
       "freight" : freight.text,
@@ -445,12 +407,13 @@ class _LrFormState extends State<LrForm> {
       final response = await apiService.createDocument(ApiEndpoints.authEndpoints.LR, body);
       if(response[0] == 200) {
         Fluttertoast.showToast(msg: "Document Saved Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
-        Navigator.push(context,
-        MaterialPageRoute(builder: (context) => LRView(name: response[1])));
+        if(mounted){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => LRView(name: response[1])));
+        }
       }
     }
     catch (error) {
-      print(error);
       throw "Error: Failed to submit data";
     }
     // } else {
@@ -465,7 +428,20 @@ class _LrFormState extends State<LrForm> {
         builder: (context) => BarcodeScanner(
           onScanResult: (scanResult) {
             setState(() {
-              itemBarcode.text = scanResult;
+              if(items.isEmpty){
+             items.add({
+              'item_code': itemName.text,
+              'barcode': scanResult,
+              });
+              }
+              else{
+                items.add({
+                  'item_code': items[items.length - 1]['item_code'].toString(),
+                  'barcode': scanResult,
+                });
+              }
+      itemName.clear();
+      itemBarcode.clear();
             });
           },
         ),
@@ -512,7 +488,6 @@ class _LrFormState extends State<LrForm> {
                     items: const [
                       'By Collection Request',
                       'By Log Sheet',
-                      'By Manual'
                     ],
                     selectedItem: selectedLrType,
                     onChanged: (String? newValue) {
@@ -633,56 +608,59 @@ class _LrFormState extends State<LrForm> {
                   ),
                   const SizedBox(height: 10),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Row(
                       children: [
                         Checkbox(
-                          value: crossCheckStatus,
-                          onChanged: (newBool) {
-                            setState(() {
-                              crossCheckStatus = newBool;
-                            });
-                          },
-                          activeColor: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text("Cross-Check Status"),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: Row(
-                      children: [                      
-                        Checkbox(
                           value: calculationBasedOnLRLevel,
-                          onChanged: (newBool) {
-                            setState(() {
-                              calculationBasedOnLRLevel = newBool;
-                            });
-                          }, 
-                          activeColor: Colors.black,
+                          onChanged: (value) {
+                            calculationBasedOnLRLevel = value;
+                          },
                         ),
                         const SizedBox(width: 10),
-                        const Text("Calculation Based on LR Level"),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              if(calculationBasedOnLRLevel == false){
+                                calculationBasedOnLRLevel = true;
+                              }
+                              else{
+                                calculationBasedOnLRLevel = false;
+                              }
+                              });
+                          },
+                          child: const Text("Calculation Based On LR Level")),
                       ]
                     ),
                   ),
+                  if(calculationBasedOnLRLevel == true)
+                  FieldText(
+                    controller: manualWeight,
+                    labelText: "Manual Weight",
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 10,),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Row(
-                      children: [                      
+                      children: [
                         Checkbox(
                           value: manualFreightAmount,
-                          onChanged: (newBool) {
-                            setState(() {
-                              manualFreightAmount = newBool;
-                            });
-                          }, 
-                          activeColor: Colors.black,
-                        ),
+                          onChanged: (value) {
+                            manualFreightAmount = value;
+                          },
+                        ),               
                         const SizedBox(width: 10),
-                        const Text("Manual Freight Amount"),
+                        TextButton(onPressed: () {
+                          setState(() {
+                            if(manualFreightAmount == false){
+                              manualFreightAmount = true;
+                            }
+                            else{
+                              manualFreightAmount = false;
+                            }
+                          });
+                        }, child: const Text("Manual Freight Amount")),
                       ]
                     ),
                   ),
@@ -701,6 +679,12 @@ class _LrFormState extends State<LrForm> {
                       keyboardType: TextInputType.number,
                       obscureText: false),
                   const SizedBox(height: 10),
+                  FieldText(
+                      controller: loadingCharges,
+                      labelText: 'Loading Charges',
+                      keyboardType: TextInputType.number,
+                      obscureText: false),
+                  const SizedBox(height: 10),
                   TextArea(
                     controller: remarks,
                     labelText: "Remarks",
@@ -714,12 +698,25 @@ class _LrFormState extends State<LrForm> {
                       children: [
                         // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
                         const Text("Items"),
-                        ElevatedButton(
-                          child: const Icon(Icons.add),
+                        Row(
+                          children:[ ElevatedButton(
+                            child: const Icon(Icons.add),
+                            onPressed: () {
+                              _showItemDialog();
+                            },
+                          ),
+                          TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: const TextStyle(fontSize: 20)
+                          ),
                           onPressed: () {
-                            _showItemDialog();
+                            _openBarcodeScanner();
                           },
+                          child: const Icon(Icons.camera),
+                          ),
+                          ]
                         ),
+                         
                       ],
                     ),
                   ),

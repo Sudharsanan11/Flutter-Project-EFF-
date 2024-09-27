@@ -157,7 +157,7 @@ class AutoComplete extends StatelessWidget {
                 color: isDarkMode ? Colors.white70 : Colors.grey[600],
               ),
               contentPadding:
-                  EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
               // prefixIcon: Icon(
               //   Icons.search,
               //   color: isDarkMode ? Colors.white70 : Colors.grey[600],
@@ -170,7 +170,7 @@ class AutoComplete extends StatelessWidget {
           AutocompleteOnSelected<String> onSelected,
           Iterable<String> options) {
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30.0),
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
           child: Align(
             alignment: Alignment.topLeft,
             child: Material(
@@ -179,7 +179,7 @@ class AutoComplete extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(10.0), color: isDarkMode ? Colors.white : Colors.grey,),
                 child: ListView.builder(
-                  padding: EdgeInsets.symmetric(vertical: 3.0, horizontal: 3.0),
+                  padding: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 3.0),
                   shrinkWrap: true,
                   itemCount: options.length,
                   itemBuilder: (BuildContext context, int index) {
@@ -190,7 +190,7 @@ class AutoComplete extends StatelessWidget {
                         onSelected(option);
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
                         child: Text(
                           option,
                           style: TextStyle(

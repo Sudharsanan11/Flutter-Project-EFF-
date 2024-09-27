@@ -1,10 +1,8 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
-import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
 import 'package:erpnext_logistics_mobile/doc_view/collection_request_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
-import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
@@ -228,7 +226,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                         print('You selected: ${consignor.text}');
                       },
                       options: itemList,
-                    );;
+                    );
                   }
                 },
               ),
@@ -505,10 +503,10 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                   children: [
                     const Text("Items"),
                     ElevatedButton(
-                      child: const Icon(Icons.add),
                       onPressed: isEnabled ? () {
                         _showItemDialog();
                       } : null,
+                      child: const Icon(Icons.add),
                     ),
                   ],
                 ),

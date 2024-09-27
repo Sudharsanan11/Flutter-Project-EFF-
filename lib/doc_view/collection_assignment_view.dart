@@ -9,8 +9,6 @@ import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectionAssignmentView extends StatefulWidget {
   final String name;
@@ -31,6 +29,8 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   final TextEditingController assignedDriver = TextEditingController();
   final TextEditingController assignedAttender = TextEditingController();
   final TextEditingController assignedVehicle = TextEditingController();
+  final TextEditingController routePlaces = TextEditingController();
+  
   final TextEditingController collectionRequest = TextEditingController();
   final TextEditingController status = TextEditingController();
 
@@ -45,15 +45,26 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   List<String> driverList = [];
   List<String> attenderList = [];
   List<String> vehicleList = [];
+  List<String> routeList = [];
   List<String> requestList = [];
   bool isDisabled = true;
   late int docstatus = 0;
+  late Future<List<String>> fetchVehicleFuture;
+late Future<List<String>> fetchAttenderFuture;
+late  Future<List<String>> fetchRequestFuture;
+late Future<List<String>> fetchDriverFuture;
+late Future<List<String>> fetchRoutePlacesFuture;
 
   @override
   void initState () {
     super.initState();
     // fetchStaff();
     fetchCollectionAssignment();
+     
+    fetchAttenderFuture = fetchAttender();
+    fetchVehicleFuture = fetchVehicle();
+    fetchRequestFuture = fetchRequest(routePlaces.text);
+    fetchRoutePlacesFuture = fetchRoutePlaces();
     // fetchDriver();
     // fetchAttender();
     // fetchStaff();
@@ -84,16 +95,17 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
     final ApiService apiService = ApiService();
     final body = {
       "entered_by": enteredBy.text,
-      // "order_via": orderVia,
+      "ordered_via": orderVia.text,
       "aprox_value_of_the_goods": aproxValueOfGoods.text,
       "assigned_driver": assignedDriver.text,
       "assigned_attender": assignedAttender.text,
       "assigned_vehicle": assignedVehicle.text,
+      "route_name": routePlaces.text,
       "collection_req": items,
       "docstatus": 0,
     };
     try {
-      final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.CollectionAssignment + widget.name, body);
+      final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.CollectionAssignment}/${widget.name}', body);
       if(response == "200") {
         Navigator.push(context,
         MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: widget.name)));
@@ -112,12 +124,13 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
       final response = await apiService.getDocument('${ApiEndpoints.authEndpoints.CollectionAssignment}/${widget.name}');
       setState(() {
         enteredBy.text = response['entered_by'];
-        // orderVia = response['order_via'].toString();
+        orderVia.text = response['ordered_via'].toString();
         // orderVia = "Phone";
         aproxValueOfGoods.text = response['aprox_value_of_the_goods'] != 0 ? response['aprox_value_of_the_goods'].toString() : "0";
         assignedDriver.text = response['assigned_driver'] ?? "";
         assignedAttender.text = response['assigned_attender'] ?? "";
         assignedVehicle.text = response['assigned_vehicle'] ?? "";
+        routePlaces.text = response['route_name'] ?? "";
         docstatus = response['docstatus'];
         items = (response['collection_req'] as List).map((item) {
           return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
@@ -153,18 +166,57 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
     }
   }
 
-  Future<List<String>> fetchDriver() async {
+  // Future<List<String>> fetchDriver() async {
+  //   final ApiService apiService = ApiService();
+  //   final body = {
+  //     "doctype" : "Employee",
+  //     "filters" : [["designation","=","Driver"], ["status", "=", "Active"]]
+  //   };
+  //   try {
+  //     final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+  //     print(response);
+  //     return response;
+  //   }
+  //   catch(e) {
+  //     throw "Fetch Error";
+  //   }
+  // }
+  Future<List<String>> fetchDriver(licensetype) async {
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Employee",
-      "filters" : [["designation","=","Driver"], ["status", "=", "Active"]]
+      "doctype": "Driver",
+      "filters": {"driving_license_type": licensetype},
+      "txt": "",
+      "searchfield": "",
+      "start": "",
+      "page_len": "",
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getList(ApiEndpoints.authEndpoints.getDriver, body);
       print(response);
-      return response;
+      print("'''''''''''''''''''''''''''''''''''''''''''''''");
+      setState(() {
+        driverList = response.map((item) {
+          return "${item[0]}";
+        }).toList();
+      });
+      print(driverList);
+      return driverList;
+    } catch (e) {
+      throw "Fetch Error";
     }
-    catch(e) {
+  }
+  Future<List<String>> fetchRoutePlaces() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype": "Route Places",
+      "filters": [["is_active", "=", 1]]
+    };
+    try {
+      final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
+      routeList = response;
+      return response;
+    } catch (e) {
       throw "Fetch Error";
     }
   }
@@ -185,22 +237,73 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
     }
   }
 
-  Future<List<String>> fetchVehicle() async {
+  // Future<List<String>> fetchAttender() async {
+  //   print("Fetchattender");
+  //   final ApiService apiService = ApiService();
+  //   final body = {
+  //     "doctype": "Employee",
+  //     "filters": [["designation", "=", "Attender"], ["status", "=", "Active"]],
+  //     "fields": ['name', 'employee_name']
+  //   };
+  //   try {
+  //     final response = await apiService.getList(ApiEndpoints.authEndpoints.getList, body);
+  //     print("$response ===================================response");
+  //     setState(() {
+  //       // attenderList = response;
+  //       attenderList = response.map((item) {
+  //         return "${item['name'] + "," + item['employee_name']}";
+  //       }).toList();
+  //     });
+  //     print("$attenderList ========================================");
+  //     return attenderList;
+  //   } catch (e) {
+  //     print("fetch error");
+  //     throw "Fetch Error";
+  //   }
+  // }
+
+  // Future<List<String>> fetchVehicle() async {
+  //   final ApiService apiService = ApiService();
+  //   final body = {
+  //     "doctype" : "Vehicle",
+  //     "filters" : [["is_active", "=", 1]]
+  //   };
+  //   try {
+  //     final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+  //     print(response);
+  //     return response;
+  //   }
+  //   catch(e) {
+  //     throw "Fetch Error";
+  //   }
+  // }
+
+   Future<List<String>> fetchVehicle() async {
+    print(":vehicle====================");
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Vehicle",
-      "filters" : [["is_active", "=", 1]]
+      "doctype": "Vehicle",
+      "txt": "",
+      "searchfield": "",
+      "start": "",
+      "page_len": "",
+      "filters": ""
+      // "filters": [["is_active", "=", 1]]
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getList(ApiEndpoints.authEndpoints.getVehicle, body);
       print(response);
-      return response;
-    }
-    catch(e) {
+      print("reposne");
+      setState(() {
+        vehicleList = response.map((item) {
+          return "${item[0]}" ;
+        }).toList();
+      });
+      return vehicleList;
+    } catch (e) {
       throw "Fetch Error";
     }
   }
-
   void submitDoc() async{
     final ApiService apiService = ApiService();
     final body = {
@@ -272,21 +375,47 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   }
 
 
-  Future<List<String>> fetchRequest() async {
+  // Future<List<String>> fetchRequest() async {
+  //   final ApiService apiService = ApiService();
+  //   final body = {
+  //     "doctype" : "Collection Request",
+  //     "filters" : [["status", "=", "Open"]]
+  //   };
+  //   try {
+  //     final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+  //     print(response);
+  //     return response;
+  //   }
+  //   catch(e) {
+  //     throw "Fetch Error";
+  //   }
+  // }
+
+   Future<List<String>> fetchRequest(route_name) async {
+    print(route_name);
     final ApiService apiService = ApiService();
     final body = {
-      "doctype" : "Collection Request",
-      "filters" : [["status", "=", "Open"]]
+      "doctype": "Collection Request",
+      "filters": {"route_name": route_name},
+      "txt": "",
+      "searchfield": "",
+      "start": "",
+      "page_len": 0,
     };
     try {
-      final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
+      final response = await apiService.getList(ApiEndpoints.authEndpoints.getRequest, body);
       print(response);
-      return response;
-    }
-    catch(e) {
+      setState(() {
+        requestList = response.map((item) {
+          return "${item[0]}" ;
+        }).toList();
+      });
+      return requestList;
+    } catch (e) {
       throw "Fetch Error";
     }
   }
+
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     print("item $items");
@@ -298,7 +427,7 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
         return AlertDialog(
           title: Text(item == null ? 'Add Item' : 'Edit Item'),
           content: FutureBuilder<List<String>>(
-                  future: fetchRequest(),
+                  future: fetchRequestFuture,
                   builder: (context, snapshot) {
                     if(snapshot.hasError) {
                       return DialogAutoComplete(
@@ -382,7 +511,7 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
       canPop: false,
@@ -482,6 +611,8 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
                   readOnly: true,
                   keyboardType: TextInputType.name
                 ),
+                const SizedBox(height: 10,),
+                FieldText(controller: orderVia, labelText: "Oredered Via", keyboardType: TextInputType.none, readOnly: true,),
                 // const SizedBox(height: 10,),
                 // // DropDown(
                 // //   labelText: "Order Via",
@@ -509,7 +640,46 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
                 ),
                 const SizedBox(height: 10,),
                 FutureBuilder<List<String>>(
-                    future: fetchDriver(),
+                    future: fetchVehicleFuture,
+                    builder: (context, snapshot) {
+                      if(snapshot.hasError) {
+                        return AutoComplete(
+                          controller: assignedVehicle,
+                          readOnly: true,
+                          hintText: 'Assign Vehicle',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: vehicleList,
+                        );
+                      }
+                      else if (snapshot.hasData) {
+                        vehicleList = snapshot.data!;
+                        return AutoComplete(
+                          controller: assignedVehicle,
+                          readOnly: isDisabled,
+                          hintText: 'Assign Vehicle',
+                          onSelected: (String selection) {
+                            print(selection);
+                          },
+                          options: vehicleList,
+                        );
+                      } else {
+                        return AutoComplete(
+                          controller: assignedVehicle,
+                          readOnly: isDisabled,
+                          hintText: 'Assign Vehicle',
+                          onSelected: (String selection) {
+                            print('You selected: $selection');
+                          },
+                          options: vehicleList,
+                        );
+                      }
+                    },
+                  ),
+                const SizedBox(height: 10,),
+                FutureBuilder<List<String>>(
+                    future: fetchDriverFuture,
                     builder: (context, snapshot) {
                       if(snapshot.hasError) {
                         return AutoComplete(
@@ -548,7 +718,7 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
                   ),
                 const SizedBox(height: 10,),
                 FutureBuilder<List<String>>(
-                    future: fetchAttender(),
+                    future: fetchAttenderFuture,
                     builder: (context, snapshot) {
                       if(snapshot.hasError) {
                         return AutoComplete(
@@ -584,45 +754,43 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
                       }
                     },
                   ),
-                const SizedBox(height: 10,),
+                   const SizedBox(height: 10),
                 FutureBuilder<List<String>>(
-                    future: fetchVehicle(),
-                    builder: (context, snapshot) {
-                      if(snapshot.hasError) {
-                        return AutoComplete(
-                          controller: assignedVehicle,
-                          readOnly: true,
-                          hintText: 'Assign Vehicle',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: vehicleList,
-                        );
-                      }
-                      else if (snapshot.hasData) {
-                        vehicleList = snapshot.data!;
-                        return AutoComplete(
-                          controller: assignedVehicle,
-                          readOnly: isDisabled,
-                          hintText: 'Assign Vehicle',
-                          onSelected: (String selection) {
-                            print(selection);
-                          },
-                          options: vehicleList,
-                        );
-                      } else {
-                        return AutoComplete(
-                          controller: assignedVehicle,
-                          readOnly: isDisabled,
-                          hintText: 'Assign Vehicle',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: vehicleList,
-                        );
-                      }
-                    },
-                  ),
+                  future: fetchRoutePlacesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return AutoComplete(
+                        controller: routePlaces,
+                        hintText: 'Route Name',
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: routeList,
+                      );
+                    } else if (snapshot.hasData) {
+                      routeList = snapshot.data!;
+                      return AutoComplete(
+                        controller: routePlaces,
+                        hintText: 'Route Name',
+                        onSelected: (String selection) {
+                          print(selection);
+
+                          fetchRequestFuture = fetchRequest(selection);
+                        },
+                        options: routeList,
+                      );
+                    } else {
+                      return AutoComplete(
+                        controller: routePlaces,
+                        hintText: 'Route Name',
+                        onSelected: (String selection) {
+                          print('You selected: $selection');
+                        },
+                        options: routeList,
+                      );
+                    }
+                  },
+                ),
                 const SizedBox(height: 10,),
                 FieldText(
                   controller: status,
@@ -654,10 +822,9 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
                       // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
                       const Text("Items"),
                       ElevatedButton(
-                        child: const Icon(Icons.add),
-                        
                         onPressed: docstatus == 0 ? () {
                           _showItemDialog();} : (){},
+                        child: const Icon(Icons.add),
                       ),
                     ],
                   ),

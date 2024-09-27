@@ -1,4 +1,3 @@
-import 'dart:ffi';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
@@ -14,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 
@@ -79,7 +77,6 @@ class _GDMViewState extends State<GDMView> {
     advance.dispose();
     assignedDriver.dispose();
     assignedAttender.dispose();
-    loadingStaffs.dispose();
     vehicleRegisterNo.dispose();
     lrSelected.dispose();
     lr.dispose();
@@ -122,11 +119,14 @@ class _GDMViewState extends State<GDMView> {
         advance.text = response["advance"]?.toString() ?? "0";
         assignedDriver.text = response["driver"] ?? "";
         assignedAttender.text = response["delivery_staff"] ?? "";
-        docstatus = response["doc_status"] ?? 0;
+        docstatus = response["docstatus"] ?? 0;
         print("--------------------------------");
         print(response['loading_staffs']);
         loadingStaffItems = (response["loading_staffs"] as List).map<String>((item) {
           return item['loading_staff'].toString();
+        }).toList();
+        loadingStaffDict = (response["loading_staffs"] as List).map<Map<String, String>>((item){
+          return {"loading_staff": item['loading_staff'].toString()};
         }).toList();
         selectedLoadingStaffs = loadingStaffItems;
         print(loadingStaffItems);
