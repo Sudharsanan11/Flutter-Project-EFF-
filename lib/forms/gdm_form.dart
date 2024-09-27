@@ -394,7 +394,7 @@ class _GdmFormState extends State<GdmForm> {
                     GDMView(name: response[1])));
       }
     } catch (error) {
-      throw "Error: Failed to submit";
+      rethrow;
     }
   }
 
