@@ -1,7 +1,10 @@
 import "package:erpnext_logistics_mobile/doc_list/collection_assignment_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/collection_request_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/gdm_list.dart";
+import "package:erpnext_logistics_mobile/doc_list/loading_details_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/lr_list.dart";
+import "package:erpnext_logistics_mobile/doc_list/unloading_details_list.dart";
+import "package:erpnext_logistics_mobile/doc_list/vehicle_log_list.dart";
 import "package:flutter/material.dart";
 // import "package:erpnext_logistics_mobile/modules/doc_list.dart";
 
@@ -31,7 +34,7 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("Collection Request"),
               leading: const Icon(Icons.file_copy),
               onTap: () {
-                Navigator.pushReplacement(context,
+                Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const CollectionRequestList()));
               },
             ),
@@ -39,15 +42,15 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("Collection Assignment"),
               leading: const Icon(Icons.list),
               onTap: () {
-                Navigator.pushReplacement(context,
+                Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const CollectionAssignmentList()));
               },
             ),
             ListTile(
               title: const Text("LR"),
-              leading: const Icon(Icons.format_list_bulleted),
+              leading: const Icon(Icons.filter_b_and_w),
               onTap: () {
-                Navigator.pushReplacement(context,
+                Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const LRList(),));
               },
             ),
@@ -55,8 +58,32 @@ class _AppDrawerState extends State<AppDrawer> {
               title: const Text("GDM"),
               leading: const Icon(Icons.local_shipping),
               onTap: () {
-                Navigator.pushReplacement(context,
+                Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const GdmList()));
+              },
+            ),
+            ListTile(
+              title: const Text("Vehicle Log"),
+              leading: const Icon(Icons.departure_board_rounded),
+              onTap: () {
+                Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const VehicleLogList()));
+              },
+            ),
+            ListTile(
+              title: const Text("Unloading Details"),
+              leading: const Icon(Icons.receipt_long_rounded),
+              onTap: () {
+                Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const UnloadingDetailsList()));
+              },
+            ),
+            ListTile(
+              title: const Text("Loading Details"),
+              leading: const Icon(Icons.receipt_long_rounded),
+              onTap: () {
+                Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const LoadingDetailsList()));
               },
             ),
           ],

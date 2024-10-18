@@ -99,7 +99,6 @@ class _GdmFormState extends State<GdmForm> {
     attenderList = [];
     lrList = [];
     vehicleList = [];
-    selectedLoadingStaffs = [];
     loadingStaffDict = [];
     selectedLr = [];
     loadingStaffItems = [];
@@ -779,9 +778,6 @@ class _GdmFormState extends State<GdmForm> {
                   ),
                   const SizedBox(
                     height: 15.0,
-                  ),
-                  const SizedBox(
-                    height: 10.0,
                   ),
                   Padding(
                       padding: const EdgeInsets.symmetric(

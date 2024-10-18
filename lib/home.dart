@@ -3,6 +3,7 @@ import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
+import 'package:erpnext_logistics_mobile/push_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +22,13 @@ class _EFFState extends ConsumerState<EFF> {
   void initState() {
     super.initState();
     apiService = ApiService();
+    _initializeNotifications();
     _apicall();
+  }
+
+  Future<void> _initializeNotifications() async {
+    await PushNotifications.init(); // Requests permission
+    await PushNotifications.localNotiInit(); // Initialize local notifications
   }
 
   Future<void> _apicall() async {

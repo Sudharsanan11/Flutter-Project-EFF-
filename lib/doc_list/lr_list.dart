@@ -1,7 +1,4 @@
-import 'package:erpnext_logistics_mobile/api_endpoints.dart';
-import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_view/lr_view.dart';
-import 'package:erpnext_logistics_mobile/forms/lr_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
@@ -53,7 +50,7 @@ class _LRListState extends ConsumerState<LRList> {
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "LRView", ref),
+                      delegate: CustomSearchBar(data, "LRView"),
                     );
                   },
                   loading: () {
@@ -103,7 +100,7 @@ class _LRListState extends ConsumerState<LRList> {
                         subtitle: Text("$consignor"),
                         trailing: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.end, 
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   item['key3'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(item['key3']!)) : 'N/A',
@@ -126,7 +123,7 @@ class _LRListState extends ConsumerState<LRList> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    LRView(name: item['key1']!)),
+                                    LRView(name: item['key1']!, data: const {},)),
                           );
                         },
                       ),
@@ -152,7 +149,7 @@ class _LRListState extends ConsumerState<LRList> {
           ),
           onPressed: () {
             Navigator.push(
-                context, MaterialPageRoute(builder: (context) => const LrForm()));
+                context, MaterialPageRoute(builder: (context) => const LRView(data: {},)));
           },
         ),
         bottomNavigationBar: const BottomNavigation(),

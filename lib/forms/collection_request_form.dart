@@ -92,6 +92,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
     catch (error) {
       print(error);
       isEnabled = true;
+      Fluttertoast.showToast(msg: "$error", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       throw "Error: Failed to submit data";
     }
   }

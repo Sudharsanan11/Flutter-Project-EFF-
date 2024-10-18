@@ -65,7 +65,7 @@ class _CollectionAssignmentListState extends ConsumerState<CollectionAssignmentL
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "CollectionAssignmentView", ref),
+                      delegate: CustomSearchBar(data, "CollectionAssignmentView"),
                     );
                   },
                   loading: () {
@@ -177,7 +177,7 @@ class _CollectionAssignmentListState extends ConsumerState<CollectionAssignmentL
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const CollectionAssignmentForm()));
+                    builder: (context) => const CollectionAssignmentView()));
           },
         ),
         bottomNavigationBar: const BottomNavigation(),

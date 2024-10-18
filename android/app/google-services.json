@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "355083285306",
+    "project_id": "eff-logistics",
+    "storage_bucket": "eff-logistics.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355083285306:android:e5252459a3ea70eb33d603",
+        "android_client_info": {
+          "package_name": "com.eff.erpnext_logistics_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzfj_d7m9KYVhh0NDsVtiClyTL8m6oYTw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

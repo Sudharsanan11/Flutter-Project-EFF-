@@ -48,6 +48,7 @@ late Future<List<String>> fetchAttenderFuture;
 late  Future<List<String>> fetchRequestFuture;
 late Future<List<String>> fetchDriverFuture;
 late Future<List<String>> fetchRoutePlacesFuture;
+late Future<List<String>> fetchSupplierFuture;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ late Future<List<String>> fetchRoutePlacesFuture;
     fetchVehicleFuture = fetchVehicle();
     fetchRequestFuture = fetchRequest("");
     fetchRoutePlacesFuture = fetchRoutePlaces();
+    fetchSupplierFuture = fetchSupplier();
   }
 
   @override
@@ -199,6 +201,20 @@ late Future<List<String>> fetchRoutePlacesFuture;
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
       routeList = response;
+      return response;
+    } catch (e) {
+      throw "Fetch Error";
+    }
+  }
+
+  Future<List<String>> fetchSupplier() async {
+    final ApiService apiService = ApiService();
+    final body = {
+      "doctype": "Supplier",
+      "filters": [["disabled", "=", 0]]
+    };
+    try {
+      final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
       return response;
     } catch (e) {
       throw "Fetch Error";
@@ -564,18 +580,6 @@ late Future<List<String>> fetchRoutePlacesFuture;
                       ),
                     ),
                   ),
-                // DottedBorder(
-                //   color: Colors.black,
-                //   strokeWidth: 1,
-                //   dashPattern: const [5, 5],
-                //   child: ListTile(
-                //     title: const Text('Add Collection Request'),
-                //     trailing: const Icon(Icons.add),
-                //     onTap: () {
-                //       _showItemDialog();
-                //     },
-                //   ),
-                // ),
                 const SizedBox(height: 10),
                 if(items.isEmpty)
                  Padding(

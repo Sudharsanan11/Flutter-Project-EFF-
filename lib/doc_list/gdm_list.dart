@@ -1,5 +1,3 @@
-import 'package:erpnext_logistics_mobile/api_endpoints.dart';
-import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_view/gdm_view.dart';
 import 'package:erpnext_logistics_mobile/forms/gdm_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
@@ -54,7 +52,7 @@ class _GdmListState extends ConsumerState<GdmList> {
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "GDMView", ref),
+                      delegate: CustomSearchBar(data, "GDMView"),
                     );
                   },
                   loading: () {
@@ -154,7 +152,7 @@ class _GdmListState extends ConsumerState<GdmList> {
           ),
           onPressed: () {
             Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const GdmForm()));
+                MaterialPageRoute(builder: (context) => const GDMView()));
           },
         ),
         bottomNavigationBar: const BottomNavigation(),

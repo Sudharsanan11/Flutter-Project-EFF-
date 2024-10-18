@@ -50,7 +50,7 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print(jsonResponse);
+      print('$jsonResponse =====================++++++++++++++++=');
       Map<String, dynamic> data = jsonResponse['data'];
       print("data======================== $data");
       return data;
@@ -89,7 +89,7 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getList(String endpoint, Object body) async{
+  Future<List<Map<String,dynamic>>> getList(String endpoint, Object body) async{
     SharedPreferences manager = await SharedPreferences.getInstance();
     String api = manager.getString("api")!;
     String secret = manager.getString("secret")!;
@@ -103,13 +103,50 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("$jsonResponse=======================================================");
-      List<dynamic> data = jsonResponse['message'];
-      print("$data ============================================================");
+      print('$jsonResponse ===========================++++++++++++++++++++++++++++++++');
+      List<dynamic> res = jsonResponse['message']; 
+      print("$res=======================================================json");
+      List<Map<String,dynamic>> data = List<Map<String,dynamic>>.from(
+        res.map((item) => item as Map<String, dynamic>)
+      );
+      print("$data ============================================================data");
       return data;
     }
     else { 
       throw Exception("Failed to fetch field data");
+    }
+  }
+
+
+  Future<void> storetoken(String token) async{
+    print("storetoken");
+    SharedPreferences manager = await SharedPreferences.getInstance();
+    String api = manager.getString("api")!;
+    String secret = manager.getString("secret")!;
+    String email = manager.getString("email")!;
+    Object body =  {
+      "args" : {
+        "usr": email,
+        "token": token
+      },
+    };
+
+    final endpoint = ApiEndpoints.authEndpoints.storeToken;
+
+    final response = await http.post(
+      Uri.parse(ApiEndpoints.baseUrl + endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'token $api:$secret',
+      },
+      body: json.encode(body),
+    );
+
+    if(response.statusCode == 200){
+      print("Token Stored Successfully!!");
+    }
+    else{
+      throw Exception("Failed to Store Token");
     }
   }
 
@@ -130,8 +167,6 @@ class ApiService {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
       print("$jsonResponse=======================================================");
       Map<String, dynamic> data = jsonResponse['message'];
-      print(data['loading_staffs']);
-      print(data['items']);
       print("$data ============================================================");
       return data;
     }
@@ -140,7 +175,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, Map<String,dynamic>>> fetchFieldData(String endpoint, Object body) async {
+  Future<List<dynamic>> fetchFieldData(String endpoint, Object body) async {
     SharedPreferences manager = await SharedPreferences.getInstance();
     String api = manager.getString("api")!;
     String secret = manager.getString("secret")!;
@@ -155,16 +190,19 @@ class ApiService {
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['message'];
-      Map<String, Map<String, dynamic>> transformData = {};
-      for(var item in data) {
-          var name = item['name'];
-          transformData[name] = item;
-      }
-      print("$transformData transformData=========================");
-      return transformData;
+      // Map<String, Map<String, dynamic>> transformData = {};
+      // for(var item in data) {
+      //     var name = item['name'];
+      //     transformData[name] = item;
+      // }
+      // print("$transformData transformData=========================");
+      // return transformData;
+
+      return data;
+      
     }
     else {
-      throw Exception('Failed to fetch field data');
+      throw Exception('Error Code ${response.statusCode} ${response.body}');
     }
   }
 
@@ -187,7 +225,9 @@ class ApiService {
       return [response.statusCode, data['name'].toString()];
     }
     else {
-      throw Exception('Failed to create document');
+      Map<String, dynamic> errorResponse = jsonDecode(response.body);
+    String exceptionMessage = errorResponse['exception'] ?? 'Unknown error';
+      throw Exception("${response.statusCode}: $exceptionMessage");
     }
   }
 
@@ -213,7 +253,9 @@ class ApiService {
       return response.statusCode.toString();
     }
     else {
-      throw Exception('Failed to update document');
+      Map<String, dynamic> errorResponse = jsonDecode(response.body);
+    String exceptionMessage = errorResponse['exception'] ?? 'Unknown error';
+      throw Exception("${response.statusCode}: $exceptionMessage");
     }
   }
 
@@ -232,7 +274,9 @@ class ApiService {
       return response.statusCode.toString();
     }
     else{
-      return response.statusCode.toString();
+      Map<String, dynamic> errorResponse = jsonDecode(response.body);
+    String exceptionMessage = errorResponse['exception'] ?? 'Unknown error';
+      throw Exception("${response.statusCode}: $exceptionMessage");
     }
   }
 }

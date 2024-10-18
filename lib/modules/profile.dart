@@ -1,5 +1,6 @@
 
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
+import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'navigation_bar.dart';
@@ -106,7 +107,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     onPressed: () {
                       Navigator.of(context).pop();
                       logout();
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const LoginPage()),
@@ -124,135 +125,143 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Colors.white,
-                        backgroundImage:
-                            imageUrl != null ? AssetImage(imageUrl!) : null,
-                        child: imageUrl == null
-                            ? Text(
-                                getInitials(name),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) {return;}
+        Navigator.push(context, 
+        MaterialPageRoute(builder: (context) => const EFF()));
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Profile'),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.white,
+                          backgroundImage:
+                              imageUrl != null ? AssetImage(imageUrl!) : null,
+                          child: imageUrl == null
+                              ? Text(
+                                  getInitials(name),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 20),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Settings section
+                // Padding(
+                //   padding: const EdgeInsets.symmetric(horizontal: 20),
+                //   child: Column(
+                //     children: [
+                //       _buildSettingsTile(
+                //         icon: Icons.dark_mode,
+                //         title: 'Dark mode',
+                //         subtitle: 'Automatic',
+                //         trailing: Consumer<ThemeProvider>(
+                //           builder: (context, themeProvider, child) {
+                //             return Switch(
+                //               value: themeProvider.isDarkMode,
+                //               onChanged: (value) {
+                //                 themeProvider.toggleTheme();
+                //               },
+                //             );
+                //           },
+                //         ),
+                //         onTap: () {},
+                //       ),
+                //       _buildSettingsTile(
+                //         icon: Icons.info,
+                //         title: 'About',
+                //         subtitle: 'Learn more about EFF Logistics',
+                //         onTap: () {
+                //           // Handle tap
+                //         },
+                //       ),
+                //       _buildSettingsTile(
+                //         icon: Icons.feedback,
+                //         title: 'Send Feedback',
+                //         subtitle: 'Let us know how we can make EFF App better',
+                //         onTap: () {
+                //           // Handle tap
+                //         },
+                //       ),
+                //     ],
+                //   ),
+                // ),
+                const SizedBox(height: 20),
+                // Account section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildSettingsTile(
+                        icon: Icons.exit_to_app,
+                        title: 'Sign Out',
+                        onTap: _confirmSignOut,
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.email,
+                        title: 'Change email',
+                        onTap: () {
+                          // Handle tap
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              // Settings section
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 20),
-              //   child: Column(
-              //     children: [
-              //       _buildSettingsTile(
-              //         icon: Icons.dark_mode,
-              //         title: 'Dark mode',
-              //         subtitle: 'Automatic',
-              //         trailing: Consumer<ThemeProvider>(
-              //           builder: (context, themeProvider, child) {
-              //             return Switch(
-              //               value: themeProvider.isDarkMode,
-              //               onChanged: (value) {
-              //                 themeProvider.toggleTheme();
-              //               },
-              //             );
-              //           },
-              //         ),
-              //         onTap: () {},
-              //       ),
-              //       _buildSettingsTile(
-              //         icon: Icons.info,
-              //         title: 'About',
-              //         subtitle: 'Learn more about EFF Logistics',
-              //         onTap: () {
-              //           // Handle tap
-              //         },
-              //       ),
-              //       _buildSettingsTile(
-              //         icon: Icons.feedback,
-              //         title: 'Send Feedback',
-              //         subtitle: 'Let us know how we can make EFF App better',
-              //         onTap: () {
-              //           // Handle tap
-              //         },
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              const SizedBox(height: 20),
-              // Account section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Account',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildSettingsTile(
-                      icon: Icons.exit_to_app,
-                      title: 'Sign Out',
-                      onTap: _confirmSignOut,
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.email,
-                      title: 'Change email',
-                      onTap: () {
-                        // Handle tap
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+        bottomNavigationBar: const BottomNavigation(),
       ),
-      bottomNavigationBar: const BottomNavigation(),
     );
   }
 

@@ -504,7 +504,6 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                     }
                   },
                 ),
-                // const SizedBox(height: 10.0,),
                 const SizedBox(height: 10.0,),
                 Padding(
                   padding: const EdgeInsets.symmetric(

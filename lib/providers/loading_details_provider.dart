@@ -4,14 +4,14 @@ import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
+class LoadingDetailsNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
   final ApiService apiService ;
 
   int _limitStart = 0;
   bool _isFetching = false;
   bool _hasAllData = false;
 
-  CollectionAssignmentNotifier(this.apiService) : super(const AsyncValue.loading()){
+  LoadingDetailsNotifier(this.apiService) : super(const AsyncValue.loading()){
     fetchData();
   }
 
@@ -21,15 +21,12 @@ class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<Str
 
     _isFetching = true;
 
-    String fields = '?fields=["name","assigned_vehicle","date","status"]';
+    String fields = '?fields=["name","vehicle","creation", "status"]';
     String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit=15';
-    if(query != ""){
-      query = '&filters=[["consignor", "like", "$query%"';
-    }
 
     try {
       final data = await apiService.getresources(
-        ApiEndpoints.authEndpoints.CollectionAssignment + fields + paginationQuery,
+        ApiEndpoints.authEndpoints.loadingDetails + fields + paginationQuery,
       );
 
       if (isRefreshing) {
@@ -58,5 +55,5 @@ class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<Str
   }
 }
 
-final CollectionAssignmentProvider = 
-  StateNotifierProvider<CollectionAssignmentNotifier, AsyncValue<List<Map<String, String>>>>((ref) => CollectionAssignmentNotifier(ApiService()),);
+final loadingDetailsProvider = 
+  StateNotifierProvider<LoadingDetailsNotifier, AsyncValue<List<Map<String, String>>>>((ref) => LoadingDetailsNotifier(ApiService()),);

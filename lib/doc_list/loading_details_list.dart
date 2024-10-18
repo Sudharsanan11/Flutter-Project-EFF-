@@ -1,23 +1,22 @@
-import 'package:erpnext_logistics_mobile/doc_view/collection_request_view.dart';
-import 'package:erpnext_logistics_mobile/forms/collection_request_form.dart';
+import 'package:erpnext_logistics_mobile/doc_view/loading_details_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
-import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
-import 'package:erpnext_logistics_mobile/providers/collection_request_provider.dart';
-import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
+import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
+import 'package:erpnext_logistics_mobile/providers/loading_details_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-
-class CollectionRequestList extends ConsumerStatefulWidget {
-  const CollectionRequestList({super.key});
+class LoadingDetailsList extends ConsumerStatefulWidget {
+  const LoadingDetailsList({super.key});
 
   @override
-  ConsumerState<CollectionRequestList> createState() => _CollectionRequestListState();
+  ConsumerState< LoadingDetailsList> createState() =>
+      _LoadingDetailsListState();
 }
 
-class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
+class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -26,35 +25,34 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-        ref.read(collectionRequestProvider.notifier).fetchData();
+        ref.read(loadingDetailsProvider.notifier).fetchData();
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final collectionRequestData = ref.watch(collectionRequestProvider);
-
+    final loadingDetailsData = ref.watch(loadingDetailsProvider);
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
-        if (didPop) return;
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => const EFF()));
+        if(didPop) {return;}
+        Navigator.push(context, 
+        MaterialPageRoute(builder: (context) => const EFF()));
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Collection Request List"),
+          title: const Text("Loading Details List"),
           centerTitle: true,
           actions: [
-            IconButton(
+             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                collectionRequestData.when(
+                loadingDetailsData.when(
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "CollectionRequestView"),
+                      delegate: CustomSearchBar(data, "LoadingDetailsView"),
                     );
                   },
                   loading: () {
@@ -75,17 +73,25 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
         drawer: const AppDrawer(),
         body: RefreshIndicator(
           onRefresh: () async {
-            // Refresh the data (fetch the first page again)
-            await ref.read(collectionRequestProvider.notifier).refreshData();
+           await ref.read(loadingDetailsProvider.notifier).refreshData();
+            // initState();
           },
-          child: collectionRequestData.when(
+          child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - kToolbarHeight - kBottomNavigationBarHeight,
+          ),
+          child: 
+           loadingDetailsData.when(
             data: (data) {
               if (data.isEmpty) {
                 return const Center(child: Text("No Data Found"));
               }
               return ListView.builder(
                 controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: data.length,
                 itemBuilder: (context, index) {
                   if (index == data.length) {
@@ -128,7 +134,7 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    CollectionRequestView(name: item['key1']!)),
+                                    LoadingDetailsForm(name: item['key1']!, data: const {},)),
                           );
                         },
                       ),
@@ -143,26 +149,13 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Error loading data"),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  // Trigger refresh even when there's an error
-                  await ref.read(collectionRequestProvider.notifier).refreshData();
-                },
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-            ),
+            error: (err, _) => const Center(child: Text("Error loading data")),
           ),
         ),
+          )
+        ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.blueGrey,
           child: const Icon(
             Icons.add,
             color: Colors.white,
@@ -171,7 +164,7 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const CollectionRequestForm()));
+                    builder: (context) => const LoadingDetailsForm(data: {},)));
           },
         ),
         bottomNavigationBar: const BottomNavigation(),
