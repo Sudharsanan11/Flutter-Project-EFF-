@@ -28,18 +28,25 @@ class LRNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
       query = '&filters=[["consignor", "like", "$query%"';
     }
 
+     Object body = {
+        "doctype": "LR",
+        // "filters": [["consignor", "like", "$query%"]]
+        "fields": ['name', 'consignor', 'creation', 'status'],
+        "order_by": 'modified desc',
+        "limit_start": _limitStart,
+        "limit_page_length": 15
+      };
+
     try {
-      final data = await apiService.getresources(
-        ApiEndpoints.authEndpoints.LR + fields + paginationQuery,
+      final data = await apiService.getresource(
+        ApiEndpoints.authEndpoints.getList, body
       );
 
       if (isRefreshing) {
         state = AsyncValue.data(data);
       } else {
         final previousData = state.value ?? [];
-        if(previousData.length != data.length){
         state = AsyncValue.data([...previousData, ...data]);
-        }
         if(data.length == 15){
         _limitStart = _limitStart + 15;
         }
@@ -47,13 +54,15 @@ class LRNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
           _hasAllData = true;
           return;
         }
-        // else if(previousData.length != data.length){
-        //   state = AsyncValue.data([...previousData, data[data.length - 1]]);
-        // }
       }
 
     } catch (e) {
-      state = AsyncValue.error(e, StackTrace.empty);
+      if (state.hasValue && isRefreshing == false){
+          return;
+        }
+        else{
+          state = AsyncValue.error(e, StackTrace.empty);
+        }
     }
 
     _isFetching = false;

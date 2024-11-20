@@ -1,12 +1,15 @@
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
+import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_view/lr_view.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
-import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
-import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:erpnext_logistics_mobile/providers/lr_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
+import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
 
 class LRList extends ConsumerStatefulWidget {
   const LRList({super.key});
@@ -18,25 +21,70 @@ class LRList extends ConsumerStatefulWidget {
 class _LRListState extends ConsumerState<LRList> {
   final ScrollController _scrollController = ScrollController();
 
+  bool viewPermission = false;
+  bool createPermission = false;
+
   @override
   void initState() {
     super.initState();
-     _scrollController.addListener(() {
+    checkReadPermission();
+    checkCreatePermission();
+
+    _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         ref.read(lrProvider.notifier).fetchData();
       }
     });
   }
 
+Future<void> checkReadPermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "LR",
+        "perm_type": "read",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        viewPermission = response;
+      });
+      // if(response == true){
+
+      // }
+    }
+    catch (e) {
+      throw e;
+    }
+  }
+
+   Future<void> checkCreatePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "LR",
+        "perm_type": "create",
+      };
+      final response = await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      print(response);
+      setState(() {
+        createPermission = response;
+      });
+    }
+    catch (e) {
+      throw e;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final lrData = ref.watch(lrProvider);
+    final LRData = ref.watch(lrProvider);
+
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
-        if(didPop) {return;}
-        Navigator.push(context, 
-        MaterialPageRoute(builder: (context) => const EFF()));
+        if (didPop) return;
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const EFF()));
       },
       child: Scaffold(
         appBar: AppBar(
@@ -46,7 +94,7 @@ class _LRListState extends ConsumerState<LRList> {
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                lrData.when(
+                LRData.when(
                   data: (data) {
                     showSearch(
                       context: context,
@@ -71,9 +119,10 @@ class _LRListState extends ConsumerState<LRList> {
         drawer: const AppDrawer(),
         body: RefreshIndicator(
           onRefresh: () async {
+            // Refresh the data (fetch the first page again)
             await ref.read(lrProvider.notifier).refreshData();
           },
-          child: lrData.when(
+          child: LRData.when(
             data: (data) {
               if (data.isEmpty) {
                 return const Center(child: Text("No Data Found"));
@@ -110,9 +159,9 @@ class _LRListState extends ConsumerState<LRList> {
                                   ),
                                 ),
                                 Text(
-                                  item['key4'] ?? "N/A",
+                                  item['key4'] ?? "N/A", // Display the status at the bottom right
                                   style: TextStyle(
-                                    color: item['key4'] == 'Delivered' ? Colors.green : Colors.red,
+                                    color: item['key4'] == 'Collected' ? Colors.green : Colors.red, // Change color based on status
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -138,10 +187,27 @@ class _LRListState extends ConsumerState<LRList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => const Center(child: Text("Error loading data")),
+            error: (err, _) {
+              return Center(
+              child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Error loading data"),
+              const SizedBox(height: 20),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 30),
+                  onPressed: () async {
+                    await ref.read(lrProvider.notifier).refreshData();
+                    await checkCreatePermission();
+                    await checkReadPermission();
+                  },
+                ),
+            ],
           ),
-        ),        
-        floatingActionButton: FloatingActionButton(
+            );}
+          ),
+        ),
+        floatingActionButton: createPermission ? FloatingActionButton(
           backgroundColor: Colors.black,
           child: const Icon(
             Icons.add,
@@ -149,9 +215,11 @@ class _LRListState extends ConsumerState<LRList> {
           ),
           onPressed: () {
             Navigator.push(
-                context, MaterialPageRoute(builder: (context) => const LRView(data: {},)));
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const LRView(data: {},)));
           },
-        ),
+        ) : const Text(""),
         bottomNavigationBar: const BottomNavigation(),
       ),
     );

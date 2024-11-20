@@ -1,3 +1,5 @@
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
+import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_view/collection_request_view.dart';
 import 'package:erpnext_logistics_mobile/forms/collection_request_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
@@ -20,15 +22,58 @@ class CollectionRequestList extends ConsumerStatefulWidget {
 class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
   final ScrollController _scrollController = ScrollController();
 
+  bool viewPermission = false;
+  bool createPermission = false;
+
   @override
   void initState() {
     super.initState();
+    checkReadPermission();
+    checkCreatePermission();
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         ref.read(collectionRequestProvider.notifier).fetchData();
       }
     });
+  }
+
+Future<void> checkReadPermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Request",
+        "perm_type": "read",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        viewPermission = response;
+      });
+      // if(response == true){
+
+      // }
+    }
+    catch (e) {
+      throw e;
+    }
+  }
+
+   Future<void> checkCreatePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Request",
+        "perm_type": "create",
+      };
+      final response = await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      print(response);
+      setState(() {
+        createPermission = response;
+      });
+    }
+    catch (e) {
+      throw e;
+    }
   }
 
   @override
@@ -104,11 +149,11 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
                         title: Text(item['key1'] ?? 'N/A'),
                         subtitle: Text("$consignor"),
                         trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround, // Distributes date and status vertically
-                              crossAxisAlignment: CrossAxisAlignment.end, // Aligns content to the right
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  item['key3'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(item['key3']!)) : 'N/A', // Display the date at the top right
+                                  item['key3'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(item['key3']!)) : 'N/A',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
@@ -143,25 +188,27 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(
+            error: (err, _) {
+              return Center(
               child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text("Error loading data"),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  // Trigger refresh even when there's an error
-                  await ref.read(collectionRequestProvider.notifier).refreshData();
-                },
-                child: const Text('Retry'),
-              ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 30),
+                  onPressed: () async {
+                    await ref.read(collectionRequestProvider.notifier).refreshData();
+                    await checkCreatePermission();
+                    await checkReadPermission();
+                  },
+                ),
             ],
           ),
-            ),
+            );}
           ),
         ),
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: createPermission ? FloatingActionButton(
           backgroundColor: Colors.black,
           child: const Icon(
             Icons.add,
@@ -173,7 +220,7 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
                 MaterialPageRoute(
                     builder: (context) => const CollectionRequestForm()));
           },
-        ),
+        ) : const Text(""),
         bottomNavigationBar: const BottomNavigation(),
       ),
     );

@@ -10,6 +10,7 @@ import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
+import 'package:erpnext_logistics_mobile/fields/text_area.dart';
 import 'package:erpnext_logistics_mobile/forms/collection_assignment_form.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
 import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
@@ -42,8 +43,13 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
   final TextEditingController lr = TextEditingController();
   final TextEditingController boxCount = TextEditingController();
   final TextEditingController itemName = TextEditingController();
+  final TextEditingController itemBoxCount = TextEditingController();
   final TextEditingController itemBarcode = TextEditingController();
   final TextEditingController docstatus = TextEditingController();
+  final TextEditingController barcodes = TextEditingController();
+  final TextEditingController misMatchItem = TextEditingController();
+  final TextEditingController misMatchLR = TextEditingController();
+  final TextEditingController misMatchBoxCount = TextEditingController();
 
   List<Map<String, String>> LRItems = [];
   List<String> selectedLoadingStaffs = [];
@@ -51,7 +57,9 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
   List<String> loadingStaffItems = [];
   List<String> itemList = [];
   List<Map<String, String>> items = [];
+  List<Map<String, String>> misMatchItems = [];
   bool isLoading = false;
+  List<String> barcode_list = [];
 
   @override
   void initState() {
@@ -106,6 +114,7 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
         unloadingType.text = response['unloading_type'];
         VehicleType.text = response['vehicle_type'];
         branch.text = response['branch'];
+        barcodes.text = response['barcodes'];
         totalBoxCount.text = response['total_box_count'].toString();
         print(response['unloading_lrs']);
         print(response['unloading_items']);
@@ -123,6 +132,10 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
           return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
             }).toList();
           items = (response['unloading_items'] as List).map((item) {
+          return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
+            }).toList();
+          
+          misMatchItems = (response['mismatched_items'] as List).map((item) {
           return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
             }).toList();
 
@@ -147,7 +160,8 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       "doctype": "Item",
       "filters": [
         ["is_customer_provided_item", "=", 1]
-      ]
+      ],      
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -166,7 +180,8 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
         "filters": [
           ["designation", "=", "Loading Staff"],
           ["status", "=", "Active"]
-        ]
+        ],
+        "limit_page_length": 0,
       };
       try {
         final response = await apiService.getLinkedNames(
@@ -192,8 +207,8 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       "branch" : branch.text,
       "unloading_from": unloadingFrom.text,
       "unloading_type": unloadingType.text,
+      "barcodes": barcodes.text,
       "unloading_lrs": LRItems,
-      "unloading_items": items,
     };
     try {
       if(docstatus.text == "-1"){
@@ -391,41 +406,36 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
               ),
               actions: <Widget>[
                 TextButton(
-                    child: Text(item == null ? 'Cancel' : 'Delete'),
+                    child: const Text('Cancel'),
                     onPressed: () {
-                      if (item == null) {
+                      lr.clear();
+                      boxCount.clear();
                         Navigator.of(context).pop();
-                      } else {
-                        setState(() {
-                          LRItems.remove(item);
-                        });
-                        Navigator.of(context).pop();
-                      }
                     }),
-                TextButton(
-                  child: Text(item == null ? 'Add' : 'Save'),
-                  onPressed: () {
-                    if (item == null) {
-                      setState(() {
-                        LRItems.add({
-                          "lr_no": lr.text,
-                          "box_count": boxCount.text,
-                        });
-                      });
-                      lr.clear();
-                      boxCount.clear();
-                      Navigator.of(context).pop();
-                    } else {
-                      setState(() {
-                        LRItems[index!]["lr_no"] = lr.text;
-                        LRItems[index]["box_count"] = boxCount.text;
-                      });
-                      lr.clear();
-                      boxCount.clear();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                )
+                // TextButton(
+                //   child: Text(item == null ? 'Add' : 'Save'),
+                //   onPressed: () {
+                //     if (item == null) {
+                //       setState(() {
+                //         LRItems.add({
+                //           "lr_no": lr.text,
+                //           "box_count": boxCount.text,
+                //         });
+                //       });
+                //       lr.clear();
+                //       boxCount.clear();
+                //       Navigator.of(context).pop();
+                //     } else {
+                //       setState(() {
+                //         LRItems[index!]["lr_no"] = lr.text;
+                //         LRItems[index]["box_count"] = boxCount.text;
+                //       });
+                //       lr.clear();
+                //       boxCount.clear();
+                //       Navigator.of(context).pop();
+                //     }
+                //   },
+                // )
               ]);
         });
   }
@@ -437,25 +447,27 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
         builder: (context) => BarcodeScanner(
           onScanResult: (scanResult) {
             setState(() {
-              if (items.isNotEmpty && items[items.length - 1]['barcode'] == '') {
-                // items.add({
-                //   'item_code': itemName.text,
-                //   'barcode': scanResult,
-                // });
-                items[items.length - 1]['barcode'] = scanResult;
-              } else if(items.isEmpty){
-                items.add({
-                  'item_code': '',
-                  'barcode': scanResult,
-                });
-              } else {
-                items.add({
-                  'item_code': items[items.length - 1]['item_code'].toString(),
-                  'barcode': scanResult,
-                });
-              }
-              itemName.clear();
-              itemBarcode.clear();
+            //   if (items.isNotEmpty && items[items.length - 1]['barcode'] == '') {
+            //     // items.add({
+            //     //   'item_code': itemName.text,
+            //     //   'barcode': scanResult,
+            //     // });
+            //     items[items.length - 1]['barcode'] = scanResult;
+            //   } else if(items.isEmpty){
+            //     items.add({
+            //       'item_code': '',
+            //       'barcode': scanResult,
+            //     });
+            //   } else {
+            //     items.add({
+            //       'item_code': items[items.length - 1]['item_code'].toString(),
+            //       'barcode': scanResult,
+            //     });
+            //   }
+            //   itemName.clear();
+            //   itemBarcode.clear();
+            barcode_list.add(scanResult);
+            barcodes.text = barcode_list.join(",");
             });
           },
         ),
@@ -465,13 +477,14 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
-    itemBarcode.text = item?['barcode'] ?? "";
+    itemBoxCount.text = item?['box_count'] ?? "";
+    itemBarcode.text = item?['barcodes'] ?? "";
 
     await showDialog<void>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-              title: Text(item == null ? 'Add Item' : 'Edit Item'),
+              title: const Text('Item'),
               content: SizedBox(
                 width: MediaQuery.of(context).size.width * 1.8,
                 child: SingleChildScrollView(
@@ -480,69 +493,67 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                       const SizedBox(
                         height: 10,
                       ),
-                      FutureBuilder<List<String>>(
-                        future: fetchItem(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return DialogAutoComplete(
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Item Is Required";
-                                }
-                                return null;
-                              },
-                              hintText: 'Item Name',
-                              controller: itemName,
-                              onSelected: (String selection) {
-                                print('You selected: $selection');
-                                setState(() {
-                                  print("sele");
-                                  itemName.text = selection;
-                                });
-                              },
-                              options: itemList,
-                            );
-                          } else if (snapshot.hasData) {
-                            itemList = snapshot.data!;
-                            return DialogAutoComplete(
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Item Is Required";
-                                }
-                                return null;
-                              },
-                              controller: itemName,
-                              hintText: 'Item Name',
-                              onSelected: (String selection) {
-                                itemName.text = selection;
-                              },
-                              options: itemList,
-                            );
-                          } else {
-                            return DialogAutoComplete(
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Item Is Required";
-                                }
-                                return null;
-                              },
-                              controller: itemName,
-                              hintText: 'Item Name',
-                              onSelected: (String selection) {
-                                itemName.text = selection;
-                              },
-                              options: itemList,
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      DialogTextField(
-                        controller: itemBarcode,
-                        keyboardType: TextInputType.text,
-                        labelText: "Barcode",
+                      // FutureBuilder<List<String>>(
+                      //   future: fetchItem(),
+                      //   builder: (context, snapshot) {
+                      //     if (snapshot.hasError) {
+                      //       return DialogAutoComplete(
+                      //         validator: (value) {
+                      //           if (value == null || value.isEmpty) {
+                      //             return "Item Is Required";
+                      //           }
+                      //           return null;
+                      //         },
+                      //         hintText: 'Item Name',
+                      //         controller: itemName,
+                      //         onSelected: (String selection) {
+                      //           print('You selected: $selection');
+                      //           setState(() {
+                      //             print("sele");
+                      //             itemName.text = selection;
+                      //           });
+                      //         },
+                      //         options: itemList,
+                      //       );
+                      //     } else if (snapshot.hasData) {
+                      //       itemList = snapshot.data!;
+                      //       return DialogAutoComplete(
+                      //         validator: (value) {
+                      //           if (value == null || value.isEmpty) {
+                      //             return "Item Is Required";
+                      //           }
+                      //           return null;
+                      //         },
+                      //         controller: itemName,
+                      //         hintText: 'Item Name',
+                      //         onSelected: (String selection) {
+                      //           itemName.text = selection;
+                      //         },
+                      //         options: itemList,
+                      //       );
+                      //     } else {
+                      //       return DialogAutoComplete(
+                      //         validator: (value) {
+                      //           if (value == null || value.isEmpty) {
+                      //             return "Item Is Required";
+                      //           }
+                      //           return null;
+                      //         },
+                      //         controller: itemName,
+                      //         hintText: 'Item Name',
+                      //         onSelected: (String selection) {
+                      //           itemName.text = selection;
+                      //         },
+                      //         options: itemList,
+                      //       );
+                      //     }
+                      //   },
+                      // ),
+                      DialogTextField(controller: itemName, labelText: "Item", keyboardType: TextInputType.none, readOnly: true,),
+                      const SizedBox(height: 10,),
+                      DialogTextField(controller: itemBoxCount, keyboardType: TextInputType.none, labelText: "Box Count", readOnly: true,),
+                      const SizedBox(height: 10,),
+                      TextArea(controller: itemBarcode, keyboardType: TextInputType.text, labelText: "Barcode", readOnly: true,
                       ),
                     ],
                   ),
@@ -550,42 +561,61 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
               ),
               actions: <Widget>[
                 TextButton(
-                    child: Text(item == null ? 'Cancel' : 'Delete'),
+                    child: const Text('Cancel'),
                     onPressed: () {
-                      if (item == null) {
-                        Navigator.of(context).pop();
-                      } else {
-                        setState(() {
-                          // items.removeWhere((item) => item.length == index);
-                          items.remove(item);
-                        });
-                        Navigator.of(context).pop();
-                      }
+                      itemName.clear();
+                      itemBoxCount.clear();
+                      itemBarcode.clear();
+                      Navigator.of(context).pop();
                     }),
+              ]);
+        });
+  }
+
+  Future<void> _showMismatchItemDialog({dynamic item, int? index}) async {
+    misMatchLR.text = item?['lr'] ?? "";
+    misMatchBoxCount.text = item?['box_count'] ?? "";
+    misMatchItem.text = item?['item_code'] ?? "";
+
+    await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: const Text('MisMatched Item'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 1.8,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      DialogTextField(controller: misMatchLR, labelText: "LR", keyboardType: TextInputType.none, readOnly: true,),
+                      const SizedBox(height: 10,),
+                      DialogTextField(controller: misMatchItem, labelText: "Item Code", keyboardType: TextInputType.none, readOnly: true,),
+                      const SizedBox(height: 10,),
+                      DialogTextField(controller: misMatchBoxCount, keyboardType: TextInputType.none, labelText: "Box Count", readOnly: true,),
+                      // const SizedBox(
+                      //   height: 10,
+                      // ),
+                      // DialogTextField(
+                      //   controller: itemBarcode,
+                      //   keyboardType: TextInputType.text,
+                      //   labelText: "Barcode",
+                      // ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
                 TextButton(
-                  child: Text(item == null ? 'Add' : 'Save'),
-                  onPressed: () {
-                    if (item == null) {
-                      setState(() {
-                        items.add({
-                          "item_code": itemName.text,
-                          "barcode": itemBarcode.text,
-                        });
-                      });
-                      itemName.clear();
-                      itemBarcode.clear();
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      misMatchItem.clear();
+                      misMatchLR.clear();
+                      misMatchBoxCount.clear();
                       Navigator.of(context).pop();
-                    } else {
-                      setState(() {
-                        items[index!]["item_code"] = itemName.text;
-                        items[index]["barcode"] = itemBarcode.text;
-                      });
-                      itemName.clear();
-                      itemBarcode.clear();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                )
+                    }),
               ]);
         });
   }
@@ -695,6 +725,8 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                 if(VehicleType.text == "For Branch")
                 FieldText(controller: branch, keyboardType: TextInputType.name,labelText: "Branch", readOnly: true,),
                 const SizedBox(height: 10),
+                TextArea(controller: barcodes, labelText: "Barcodes", keyboardType: TextInputType.name, readOnly: docstatus.text != "1" ? false : true,),
+                const SizedBox(height: 10),
               Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 25.0, vertical: 3.0),
@@ -702,15 +734,24 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                          const Text("Items"),
-                          ElevatedButton(
-                            child: const Icon(Icons.add),
-                            onPressed: () {
-                              _showLRItemDialog();
-                            },
-                          ),
+                          const Text("LR Items"),
+                          // ElevatedButton(
+                          //   child: const Icon(Icons.add),
+                          //   onPressed: () {
+                          //     _showLRItemDialog();
+                          //   },
+                          // ),
+                          TextButton(
+                          style: TextButton.styleFrom(
+                              textStyle: const TextStyle(fontSize: 20)),
+                          onPressed: () {
+                            _openBarcodeScanner();
+                          },
+                          child: const Icon(Icons.camera),
+                        ),
                         ],
                       )),
+                // const Text("LR Items"),
                   const SizedBox(height: 10),
                   if (LRItems.isEmpty)
                     Padding(
@@ -771,7 +812,9 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                       ),
                     ),
                   ),
+                  if(docstatus.text != "-1")
                   const SizedBox(height: 10),
+                  if(docstatus.text != "-1")
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 25.0, vertical: 3.0),
@@ -779,27 +822,21 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                      const Text("Items"),
-                      Row(children: [
-                        ElevatedButton(
-                          child: const Icon(Icons.add),
-                          onPressed: () {
-                            _showItemDialog();
-                          },
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                              textStyle: const TextStyle(fontSize: 20)),
-                          onPressed: () {
-                            _openBarcodeScanner();
-                          },
-                          child: const Icon(Icons.camera),
-                        ),
-                      ]),
+                      const Text("Unloading Items"),
+                      // Row(children: [
+                      //   ElevatedButton(
+                      //     child: const Icon(Icons.add),
+                      //     onPressed: () {
+                      //       _showItemDialog();
+                      //     },
+                      //   ),
+                      // ]),
                     ],
                   ),
                 ),
+                  if(docstatus.text != "-1")
                 const SizedBox(height: 10),
+                  if(docstatus.text != "-1")
                 if (items.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -853,6 +890,87 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                                   onTap: () {
                                     _showItemDialog(
                                         item: items[index], index: index);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  if(docstatus.text != "-1")
+                  const SizedBox(height: 10),
+                  if(docstatus.text != "-1")
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 25.0, vertical: 3.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
+                      Text("Mismatched Items"),
+                    ],
+                  ),
+                ),
+                  if(docstatus.text != "-1")
+                const SizedBox(height: 10),
+                  if(docstatus.text != "-1")
+                if (misMatchItems.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25.0, vertical: 3.0),
+                    child: Column(
+                      children: [
+                        DottedBorder(
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12.0),
+                          strokeWidth: 1,
+                          dashPattern: const [8, 4],
+                          color: Colors.black,
+                          child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 25.0, vertical: 20.0),
+                              child: const Center(
+                                child: Text("No Items Found"),
+                              )),
+                        )
+                      ],
+                    ),
+                  ),
+                if (misMatchItems.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 17.0, vertical: 3.0),
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: ListView.builder(
+                          itemCount: misMatchItems.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(width: 1, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                  shape: BoxShape.rectangle,
+                                ),
+                                child: ListTile(
+                                  title: Text(
+                                      misMatchItems[index]["lr"].toString()),
+                                  subtitle: Text(misMatchItems[index]["item_code"].toString()),
+                                  onTap: () {
+                                    _showMismatchItemDialog(
+                                        item: misMatchItems[index], index: index);
                                   },
                                 ),
                               ),

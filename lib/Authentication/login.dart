@@ -49,16 +49,19 @@ class _LoginPageState extends State<LoginPage> {
           if(responseData['message']['message'] == 'Authentication Success'){
 
             SharedPreferences prefs = await SharedPreferences.getInstance();
-            prefs.setString('api', responseData['message']['api_key']);
-            prefs.setString('secret', responseData['message']['api_secret']);
+            // prefs.setString('api', responseData['message']['api_key']);
+            // prefs.setString('secret', responseData['message']['api_secret']);
             prefs.setString('full_name', responseData['message']['full_name']);
+            prefs.setString('sid', responseData['message']['sid']);
             prefs.setString('email', responseData['message']['email']);
+            prefs.setString('cookies', '${response.headers['set-cookie']}');
+            prefs.setString('expires','${response.headers['set-cookie']}');
 
-            print('Session token: ${prefs.getString('api')}');
-            print('Session token: ${prefs.getString('secret')}');
+            // print('Session token: ${prefs.getString('api')}');
+            // print('Session token: ${prefs.getString('secret')}');
             print('Full Name: ${prefs.getString('full_name')}');
             print('email ${prefs.getString('email')}');
-
+            print('Full Name: ${prefs.getString('cookies')}');
             print(responseData);
 
             // if(mounted){

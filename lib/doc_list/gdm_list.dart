@@ -1,5 +1,4 @@
 import 'package:erpnext_logistics_mobile/doc_view/gdm_view.dart';
-import 'package:erpnext_logistics_mobile/forms/gdm_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
@@ -9,20 +8,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class GdmList extends ConsumerStatefulWidget {
-  const GdmList({super.key});
+class GDMList extends ConsumerStatefulWidget {
+  const GDMList({super.key});
 
   @override
-  ConsumerState<GdmList> createState() => _GdmListState();
+  ConsumerState<GDMList> createState() =>
+      _GDMListState();
 }
 
-class _GdmListState extends ConsumerState<GdmList> {
+class _GDMListState extends ConsumerState<GDMList> {
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    
+
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         ref.read(gdmProvider.notifier).fetchData();
@@ -30,9 +30,21 @@ class _GdmListState extends ConsumerState<GdmList> {
     });
   }
 
+  // Future<List<Map<String, String>>> fetchData() async {
+  //   final ApiService apiService = ApiService();
+  //   String fields = '?fields=["name","status"]';
+
+  //   try {
+  //     return await apiService.getresources(
+  //         ApiEndpoints.authEndpoints.GDM + fields);
+  //   } catch (e) {
+  //     throw ('Error $e');
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
-    final gdmData = ref.watch(gdmProvider);
+    final GDMData = ref.watch(gdmProvider);
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
@@ -45,10 +57,10 @@ class _GdmListState extends ConsumerState<GdmList> {
           title: const Text("GDM List"),
           centerTitle: true,
           actions: [
-            IconButton(
+             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
-                gdmData.when(
+                GDMData.when(
                   data: (data) {
                     showSearch(
                       context: context,
@@ -73,17 +85,25 @@ class _GdmListState extends ConsumerState<GdmList> {
         drawer: const AppDrawer(),
         body: RefreshIndicator(
           onRefresh: () async {
-            // Refresh the data (fetch the first page again)
-            await ref.read(gdmProvider.notifier).refreshData();
+           await ref.read(gdmProvider.notifier).refreshData();
+            // initState();
           },
-          child: gdmData.when(
+          child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - kToolbarHeight - kBottomNavigationBarHeight,
+          ),
+          child: 
+           GDMData.when(
             data: (data) {
               if (data.isEmpty) {
                 return const Center(child: Text("No Data Found"));
               }
               return ListView.builder(
                 controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: data.length,
                 itemBuilder: (context, index) {
                   if (index == data.length) {
@@ -94,19 +114,19 @@ class _GdmListState extends ConsumerState<GdmList> {
                   }
 
                   var item = data[index];
-                  // var consignor = item['key2']!.length >= 20 ? "${item['key2']!.substring(0, 20)}......" : item['key2'];
+                  var consignor = item['key2']!.length >= 20 ? "${item['key2']!.substring(0, 20)}......" : item['key2'];
                   return Column(
                     children:[
                       ListTile(
                         leading: const Icon(Icons.file_open_rounded),
                         title: Text(item['key1'] ?? 'N/A'),
-                        subtitle: Text(item['key2'] ?? 'N/A'),
+                        subtitle: Text("$consignor"),
                         trailing: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceAround, // Distributes date and status vertically
                               crossAxisAlignment: CrossAxisAlignment.end, // Aligns content to the right
                               children: [
                                 Text(
-                                  item['key3'] != null ? DateFormat('dd-MM-yyyy').format(DateTime.parse(item['key3']!)) : 'N/A', // Display the date at the top right
+                                  item['key3'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(item['key3']!)) : 'N/A', // Display the date at the top right
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
@@ -141,18 +161,26 @@ class _GdmListState extends ConsumerState<GdmList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => const Center(child: Text("Error loading data")),
+            // error: (err, _) => const Center(child: Text("Error loading data")),
+            error: (error, stackTrace) {
+              print(error);
+              return const Center(child: Text("No data Found"));
+            },
           ),
         ),
+          )
+        ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.blueGrey,
           child: const Icon(
             Icons.add,
             color: Colors.white,
           ),
           onPressed: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const GDMView()));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const GDMView()));
           },
         ),
         bottomNavigationBar: const BottomNavigation(),

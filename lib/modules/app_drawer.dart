@@ -59,7 +59,7 @@ class _AppDrawerState extends State<AppDrawer> {
               leading: const Icon(Icons.local_shipping),
               onTap: () {
                 Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const GdmList()));
+                MaterialPageRoute(builder: (context) => const GDMList()));
               },
             ),
             ListTile(

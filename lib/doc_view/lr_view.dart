@@ -5,6 +5,7 @@ import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
+import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text_area.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
@@ -60,6 +61,7 @@ class _LRViewState extends State<LRView> {
   late Map<String, Map<String, dynamic>> CR;
   late Map<String, Map<String, dynamic>> consigneeDocList;
   List<Map<String, String>> items = [];
+  List<Map<String, String>> itemsCount = [];
   bool isLoading = false;
 
   List<String> requestList = [];
@@ -67,7 +69,9 @@ class _LRViewState extends State<LRView> {
   List<String> consignorList = [];
   List<String> consigneeList = [];
   List<String> destinationList = [];
+  List<String> selectedItems = [];
   List<String> itemList = [];
+  List<String> searchItemList = [];
   bool isDisabled = false;
   String documentStatus = "";
   bool? crossCheckStatus = false;
@@ -144,7 +148,7 @@ late Future<List<String>> fetchConsigneeFuture;
     collectionRequest.text = data["collection_request"]?? "";
     consignor.text = data["consignor"]?? "";
 
-    fetchConsignee();
+    fetchConsigneeFuture  = fetchConsignee();
   }
 
   Future<List<String>> fetchRequest() async {
@@ -152,8 +156,9 @@ late Future<List<String>> fetchConsigneeFuture;
     final body = {
       "doctype": "Collection Request",
       "filters": [
-        ["status", "=", "Assigned"]
-      ]
+        ["status", "=", "Ready to Load"]
+      ],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -173,8 +178,8 @@ late Future<List<String>> fetchConsigneeFuture;
       final response = await apiService
           .getDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}');
       setState(() {
+        print(response['items_count']);
         date.text = response["date"] ?? "";
-        lrType.text = response['lr_type'] ?? "";
         collectionRequest.text = response["collection_request"] ?? "";
         logsheet.text = response["logsheet"] ?? "";
         consignor.text = response["consignor"] ?? "";
@@ -219,6 +224,12 @@ late Future<List<String>> fetchConsigneeFuture;
           return (item as Map<String, dynamic>)
               .map((key, value) => MapEntry(key, value.toString()));
         }).toList();
+        if(response['items_count'].length > 0){
+          itemsCount = (response['items_count'] as List).map((item) {
+            return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
+          }).toList();
+        }
+        print('$itemsCount =========================================');
         if (response['docstatus'] != 0) {
           isDisabled = true;
         }
@@ -241,8 +252,9 @@ late Future<List<String>> fetchConsigneeFuture;
         "doctype": "Collection Request",
         "fields": ['*'],
         "filters": [
-          ['status', '=', 'Assigned']
-        ]
+          ['status', '=', 'Ready to Load']
+        ],
+        "limit_page_length": 0,
       };
       final response = await apiService.fetchFieldData(
           ApiEndpoints.authEndpoints.getList, body);
@@ -255,6 +267,7 @@ late Future<List<String>> fetchConsigneeFuture;
           var name = item['name'];
           transformData[name] = item;
       }
+      print(transformData);
         CR = transformData;
       });
       print("consignorList $consignorList");
@@ -271,7 +284,9 @@ late Future<List<String>> fetchConsigneeFuture;
       "doctype": "Item",
       "filters": [
         ["customer", "=", consignor.text]
-      ]
+      ],
+      // "fields": ['name', ]
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -289,7 +304,8 @@ late Future<List<String>> fetchConsigneeFuture;
       "doctype": "Logsheet",
       "filters": [
         ["status", "=", "0"]
-      ]
+      ],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -306,7 +322,8 @@ late Future<List<String>> fetchConsigneeFuture;
       "doctype": "Customer",
       "filters": [
         ["custom_party_type", "=", "Consignor"]
-      ]
+      ],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -336,6 +353,7 @@ late Future<List<String>> fetchConsigneeFuture;
         consigneeList =
             response.map((item) => item['parent'].toString()).toList();
       });
+      print(consigneeList);
       return consigneeList;
     } catch (e) {
       throw "Fetch Error";
@@ -349,7 +367,8 @@ late Future<List<String>> fetchConsigneeFuture;
       "filters": [
         ["custom_party_type", "=", "Consignee"]
       ],
-      "fields": ['name', 'custom_location']
+      "fields": ['name', 'custom_location'],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.fetchFieldData(
@@ -417,8 +436,11 @@ late Future<List<String>> fetchConsigneeFuture;
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 2);
       }
-    } catch (e) {
-      rethrow;
+    } catch (error) {
+       Fluttertoast.showToast(
+            msg: "Failed to delete document $error",
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 2);
     }
   }
 
@@ -443,13 +465,17 @@ late Future<List<String>> fetchConsigneeFuture;
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 2);
       }
-    } catch (e) {
-      rethrow;
+    } catch (error) {
+      Fluttertoast.showToast(
+            msg: "Failed to cancel document $error",
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 2);
     }
   }
 
   Future<void> _showItemDialog({dynamic item, int? index}) async {
     itemName.text = item?['item_code'] ?? "";
+    itemWeight.text = item?['weight'] ?? "";
     itemBarcode.text = item?['barcode'] ?? "";
 
     await showDialog<void>(
@@ -529,9 +555,14 @@ late Future<List<String>> fetchConsigneeFuture;
                           }
                         },
                       ),
-                      const SizedBox(
-                        height: 10,
+                      const SizedBox(height: 10,),
+                      DialogTextField(
+                        controller: itemWeight,
+                        keyboardType: TextInputType.number,
+                        readOnly: isDisabled,
+                        labelText: "Weight",
                       ),
+                      const SizedBox(height: 10,),
                       DialogTextField(
                         controller: itemBarcode,
                         keyboardType: TextInputType.text,
@@ -563,18 +594,22 @@ late Future<List<String>> fetchConsigneeFuture;
                       setState(() {
                         items.add({
                           "item_code": itemName.text,
+                          "weight": itemWeight.text,
                           "barcode": itemBarcode.text,
                         });
                       });
                       itemName.clear();
+                      itemWeight.clear();
                       itemBarcode.clear();
                       Navigator.of(context).pop();
                     } else {
                       setState(() {
                         items[index!]["item_code"] = itemName.text;
+                        items[index]["weight"] = itemName.text;
                         items[index]["barcode"] = itemBarcode.text;
                       });
                       itemName.clear();
+                      itemWeight.clear();
                       itemBarcode.clear();
                       Navigator.of(context).pop();
                     }
@@ -584,13 +619,84 @@ late Future<List<String>> fetchConsigneeFuture;
         });
   }
 
+  void _showItems(BuildContext context){
+    TextEditingController searchController = TextEditingController();
+    List<String> filteredItems = searchItemList;
+
+
+    fetchItem()
+      .then((response) => {
+      setState(() {
+        searchItemList = [];
+        searchItemList = response;
+        filteredItems = searchItemList;
+      })
+    }).catchError((onError) => {throw "Error: " + onError});
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context){
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text("Selecting Items"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search......',
+                  suffixIcon: IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() {
+                            filteredItems = searchItemList;
+                          });
+                        },
+                      ),
+                      ),
+                      onChanged: (value) {
+                      setState(() {
+                        filteredItems = searchItemList
+                            .where((item) => item
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                ),
+                const SizedBox(height: 10),
+                  MultiSelect(
+                    items: filteredItems,
+                    selectedItems: selectedItems,
+                    onSelectedItemsListChanged:
+                        (List<String> newSelectedItems) {
+                      setState(() {
+                        selectedItems = newSelectedItems;
+                        // loadingStaffs.text = selectedLoadingStaffs.join(', ');
+                        // loadingStaffDict = selectedLoadingStaffs.map((staff) {
+                        //   return {
+                        //     'loading_staff': staff,
+                        //   };
+                        // }).toList();
+                        selectedItems.map((item) {
+                          items.add({"item_code": item});
+                        });
+                      });
+                    },
+                  ),
+              ],),
+          );
+        });
+    });
+  }
+
   Future<void> submitData() async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final ApiService apiService = ApiService();
       final body = {
         "date": date.text,
-        "lr_type": lrType.text,
-        "logsheet": logsheet.text,
         "collection_request": collectionRequest.text,
         "consignor": consignor.text,
         "consignee": consignee.text,
@@ -654,7 +760,10 @@ late Future<List<String>> fetchConsigneeFuture;
       }
         }
       } catch (error) {
-        throw "Error: Failed to submit data";
+        Fluttertoast.showToast(
+            msg: "Failed to Save $error",
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 5);
       }
     } else {
       return;
@@ -828,42 +937,46 @@ late Future<List<String>> fetchConsigneeFuture;
                         labelText: "Date",
                         readOnly: true,
                         keyboardType: TextInputType.none),
-                    if (docstatus.text == "-1" && widget.data.isEmpty) const SizedBox(height: 5),
-                    if (docstatus.text == "-1" && widget.data.isEmpty)
-                      DropDown(
-                        labelText: 'LR Type',
-                        // controller: ,
-                        items: const [
-                          'By Collection Request',
-                          'By Log Sheet',
-                        ],
-                        selectedItem: selectedLrType,
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            selectedLrType = newValue;
-                            lrType.text = newValue.toString();
-                          });
-                        },
-                      ),
-                    if (docstatus.text != "-1" || widget.data.isNotEmpty) const SizedBox(height: 5),
-                    if (docstatus.text != "-1" || widget.data.isNotEmpty)
-                      FieldText(
-                          controller: lrType,
-                          labelText: "LR Type",
-                          readOnly: true,
-                          keyboardType: TextInputType.none),
-                    if (lrType.text == "By Collection Request" && widget.data.isNotEmpty)
+                    // if (docstatus.text == "-1" && widget.data.isEmpty) const SizedBox(height: 5),
+                    // if (docstatus.text == "-1" && widget.data.isEmpty)
+                    //   DropDown(
+                    //     labelText: 'LR Type',
+                    //     // controller: ,
+                    //     items: const [
+                    //       'By Collection Request',
+                    //       'By Log Sheet',
+                    //     ],
+                    //     selectedItem: selectedLrType,
+                    //     onChanged: (String? newValue) {
+                    //       setState(() {
+                    //         selectedLrType = newValue;
+                    //         lrType.text = newValue.toString();
+                    //       });
+                    //     },
+                    //   ),
+                    // if (docstatus.text != "-1" || widget.data.isNotEmpty) const SizedBox(height: 5),
+                    // if (docstatus.text != "-1" || widget.data.isNotEmpty)
+                    //   FieldText(
+                    //       controller: lrType,
+                    //       labelText: "LR Type",
+                    //       readOnly: true,
+                    //       keyboardType: TextInputType.none),
+                    // if (lrType.text == "By Collection Request" && widget.data.isNotEmpty)
+                    if (widget.data.isNotEmpty || docstatus.text != "-1")
                     const SizedBox(height: 15),
-                    if (lrType.text == "By Collection Request" && widget.data.isNotEmpty)
+                    // if (lrType.text == "By Collection Request" && widget.data.isNotEmpty)
+                    if (widget.data.isNotEmpty || docstatus.text != "-1")
                     FieldText(
                       controller: collectionRequest,
                       labelText: "Collection Request",
                       keyboardType: TextInputType.none,
                       readOnly: true,
                     ),
-                    if (selectedLrType == "By Collection Request" && docstatus.text == "-1" && widget.data.isEmpty)
+                    // if (selectedLrType == "By Collection Request" && docstatus.text == "-1" && widget.data.isEmpty)
+                    if(docstatus.text == "-1" && widget.data.isEmpty)
                   const SizedBox(height: 25),
-                if (selectedLrType == "By Collection Request" && docstatus.text == "-1" && widget.data.isEmpty)
+                // if (selectedLrType == "By Collection Request" && docstatus.text == "-1" && widget.data.isEmpty)
+                    if(docstatus.text == "-1" && widget.data.isEmpty)
                   FutureBuilder<List<String>>(
                     future: fetchRequest(),
                     builder: (context, snapshot) {
@@ -881,24 +994,25 @@ late Future<List<String>> fetchConsigneeFuture;
                           hintText: 'Collection Request',
                           onSelected: (String selection) {
                             print(selection);
-                            // setState(() {
-                            int index = consignorList.indexOf(selection);
-                            print("index: $index");
+                            // // setState(() {
+                            // int index = consignorList.indexOf(selection);
+                            // print("index: $index");
                             consignor.text =
-                                CR[selection]!['consignor'].toString();
+                                CR[selection]!['consignor'] ?? "";
                             fetchConsigneeFuture = fetchConsignee();
                           },
                           options: requestList,
                         );
                       } else {
-                        return AutoComplete(
-                          controller: collectionRequest,
-                          hintText: 'Collection Request',
-                          onSelected: (String selection) {
-                            print('You selected: $selection');
-                          },
-                          options: requestList,
-                        );
+                        // return AutoComplete(
+                        //   controller: collectionRequest,
+                        //   hintText: 'Collection Request',
+                        //   onSelected: (String selection) {
+                        //     print('You selected: $selection');
+                        //   },
+                        //   options: requestList,
+                        // );
+                        return const CircularProgressIndicator();
                       }
                     },
                   ),
@@ -964,7 +1078,8 @@ late Future<List<String>> fetchConsigneeFuture;
                           options: consigneeList,
                         );
                       } else {
-                        return FieldText(controller: consignee, labelText: "Consignee", keyboardType: TextInputType.none, readOnly: false,);
+                        // return FieldText(controller: consignee, labelText: "Consignee", keyboardType: TextInputType.none, readOnly: false,);
+                        return const CircularProgressIndicator();
                       }
                     },
                   ),
@@ -1036,48 +1151,45 @@ late Future<List<String>> fetchConsigneeFuture;
                     const SizedBox(
                       height: 10,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(children: [
-                        Checkbox(
-                          value: manualFreightAmount,
-                          onChanged: (newBool) {
-                            if (isDisabled == false) {
-                              setState(() {
-                                manualFreightAmount = newBool;
-                                freight.text = "";
-                              });
-                            }
-                          },
-                          activeColor: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text("Manual Freight Amount"),
-                      ]),
-                    ),
+                    // Padding(
+                    //   padding: const EdgeInsets.symmetric(horizontal: 15),
+                    //   child: Row(children: [
+                        // Checkbox(
+                        //   value: manualFreightAmount,
+                        //   onChanged: (newBool) {
+                        //     if (isDisabled == false) {
+                        //       setState(() {
+                        //         manualFreightAmount = newBool;
+                        //         freight.text = "";
+                        //       });
+                        //     }
+                        //   },
+                        //   activeColor: Colors.black,
+                        // ),
+                        // const SizedBox(width: 10),
+                        // const Text("Manual Freight Amount"),
+                      // ]),
+                    // ),
                     const SizedBox(height: 10),
                     FieldText(
                         controller: freight,
                         labelText: 'Freight',
                         keyboardType: TextInputType.number,
-                        readOnly:
-                            isDisabled != true && manualFreightAmount != true
-                                ? true
-                                : false,
-                        obscureText: false),
+                        readOnly: true),
                     if(docstatus.text != "-1")
                     const SizedBox(height: 25),
                     if(docstatus.text != "-1")
                     FieldText(
                         controller: lrCharge,
                         labelText: 'LR Charge',
-                        readOnly: isDisabled,
+                        readOnly: true,
                         keyboardType: TextInputType.number,
                         obscureText: false),
                     const SizedBox(height: 25),
                     FieldText(
                         controller: loadingCharges,
                         labelText: 'Loading Charges',
+                        readOnly: true,
                         keyboardType: TextInputType.number,
                         obscureText: false),
                     if(docstatus.text != "-1")
@@ -1092,85 +1204,85 @@ late Future<List<String>> fetchConsigneeFuture;
                         if(docstatus.text != "-1")
                     const SizedBox(height: 10),
                         if(docstatus.text != "-1")
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(children: [
-                        Checkbox(
-                          value: holdLR,
-                          onChanged: (newBool) {
-                            if (isDisabled == false) {
-                              setState(() {
-                                holdLR = newBool;
-                              });
-                            }
-                          },
-                          activeColor: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text("Hold LR"),
-                      ]),
-                    ),
-                    if (holdLR == true)
-                      const SizedBox(
-                        height: 10.0,
-                      ),
-                    if (holdLR == true)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 25.0, vertical: 3.0),
-                        child: TextFormField(
-                          controller: releaseDate,
-                          keyboardType: TextInputType.datetime,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              if (holdLR == true) {
-                                return "Date is required";
-                              }
-                            }
-                            return null;
-                          },
-                          readOnly: isDisabled,
-                          decoration: InputDecoration(
-                            enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Colors.black),
-                                borderRadius: BorderRadius.circular(10)),
-                            focusedBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black),
-                            ),
-                            fillColor: Colors.white,
-                            filled: true,
-                            labelText: "Release Date",
-                            labelStyle: const TextStyle(color: Colors.black),
-                          ),
-                          onTap: () {
-                            _showDatePicket(context);
-                          },
-                        ),
-                      ),
-                    if (holdLR == true)
-                      const SizedBox(
-                        height: 10,
-                      ),
-                    if (holdLR == true)
-                      TextArea(
-                        controller: reasonForHold,
-                        labelText: "Reason For the Hold",
-                        keyboardType: TextInputType.multiline,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            if (holdLR == true) {
-                              return "Date is required";
-                            }
-                          }
-                          return null;
-                        },
-                        readOnly: isDisabled,
-                      ),
-                      if(deliveredOn.text != "")
-                    const SizedBox(
-                      height: 10,
-                    ),
+                    // Padding(
+                    //   padding: const EdgeInsets.symmetric(horizontal: 15),
+                    //   child: Row(children: [
+                    //     Checkbox(
+                    //       value: holdLR,
+                    //       onChanged: (newBool) {
+                    //         if (isDisabled == false) {
+                    //           setState(() {
+                    //             holdLR = newBool;
+                    //           });
+                    //         }
+                    //       },
+                    //       activeColor: Colors.black,
+                    //     ),
+                    //     const SizedBox(width: 10),
+                    //     const Text("Hold LR"),
+                    //   ]),
+                    // ),
+                    // if (holdLR == true)
+                    //   const SizedBox(
+                    //     height: 10.0,
+                    //   ),
+                    // if (holdLR == true)
+                    //   Padding(
+                    //     padding: const EdgeInsets.symmetric(
+                    //         horizontal: 25.0, vertical: 3.0),
+                    //     child: TextFormField(
+                    //       controller: releaseDate,
+                    //       keyboardType: TextInputType.datetime,
+                    //       validator: (value) {
+                    //         if (value == null || value.isEmpty) {
+                    //           if (holdLR == true) {
+                    //             return "Date is required";
+                    //           }
+                    //         }
+                    //         return null;
+                    //       },
+                    //       readOnly: isDisabled,
+                    //       decoration: InputDecoration(
+                    //         enabledBorder: OutlineInputBorder(
+                    //             borderSide:
+                    //                 const BorderSide(color: Colors.black),
+                    //             borderRadius: BorderRadius.circular(10)),
+                    //         focusedBorder: const OutlineInputBorder(
+                    //           borderSide: BorderSide(color: Colors.black),
+                    //         ),
+                    //         fillColor: Colors.white,
+                    //         filled: true,
+                    //         labelText: "Release Date",
+                    //         labelStyle: const TextStyle(color: Colors.black),
+                    //       ),
+                    //       onTap: () {
+                    //         _showDatePicket(context);
+                    //       },
+                    //     ),
+                    //   ),
+                    // if (holdLR == true)
+                    //   const SizedBox(
+                    //     height: 10,
+                    //   ),
+                    // if (holdLR == true)
+                    //   TextArea(
+                    //     controller: reasonForHold,
+                    //     labelText: "Reason For the Hold",
+                    //     keyboardType: TextInputType.multiline,
+                    //     validator: (value) {
+                    //       if (value == null || value.isEmpty) {
+                    //         if (holdLR == true) {
+                    //           return "Date is required";
+                    //         }
+                    //       }
+                    //       return null;
+                    //     },
+                    //     readOnly: isDisabled,
+                    //   ),
+                    //   if(deliveredOn.text != "")
+                    // const SizedBox(
+                    //   height: 10,
+                    // ),
                     if(deliveredOn.text != "")
                     TextArea(
                         controller: deliveredOn,
@@ -1197,6 +1309,59 @@ late Future<List<String>> fetchConsigneeFuture;
                     if(docstatus.text == "1")
                     FieldText(controller: totalWeight, labelText: "Total Weight", keyboardType: TextInputType.none, readOnly: true,),
                     const SizedBox(height: 25),
+                    if(itemsCount.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 25.0, vertical: 3.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text("Items Count"),
+                        ],
+                      ),
+                    ),
+                    if(itemsCount.isNotEmpty)
+                   Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 17.0, vertical: 3.0),
+                        child: Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: ListView.builder(
+                              itemCount: itemsCount.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          width: 1, color: Colors.black),
+                                      borderRadius: BorderRadius.circular(10),
+                                      shape: BoxShape.rectangle,
+                                    ),
+                                    child: ListTile(
+                                      leading: Text("${index + 1}."),
+                                      trailing: Text("${itemsCount[index]['count']}"),
+                                      title: Text(
+                                          '${itemsCount[index]["item_code"]}'),
+                                      // onTap: () {setState(() {
+                                      //   itemsCount[index]['count'] = "${(itemsCount[index]['count']) + 1}";
+                                      // });},
+                                      onTap: null,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 25.0, vertical: 3.0),
@@ -1214,9 +1379,9 @@ late Future<List<String>> fetchConsigneeFuture;
                             TextButton(
                               style: TextButton.styleFrom(
                                   textStyle: const TextStyle(fontSize: 20)),
-                              onPressed: () {
+                              onPressed: items.isNotEmpty ? () {
                                 _openBarcodeScanner();
-                              },
+                              }: null,
                               child: const Icon(Icons.camera),
                             ),
                           ]),

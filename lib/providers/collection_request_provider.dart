@@ -1,104 +1,3 @@
-
-// import 'dart:convert';
-
-// import 'package:erpnext_logistics_mobile/api_endpoints.dart';
-// import 'package:erpnext_logistics_mobile/api_service.dart';
-// import 'package:erpnext_logistics_mobile/doc_list/collection_request_list.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-
-// class CollectionRequestState {
-//   final List<Map<String, String>> collectionRequest;
-//   final bool isLoading;
-//   final bool hasError;
-
-//   CollectionRequestState({
-//     required this.collectionRequest,
-//     required this.isLoading,
-//     required this.hasError,
-//   });
-
-//   CollectionRequestState copyWith({
-//     List<Map<String, String>>? collectionRequest,
-//     bool? isLoading,
-//     bool? hasError,
-//   }) {
-//     return CollectionRequestState(
-//       collectionRequest: collectionRequest ?? this.collectionRequest,
-//       isLoading: isLoading ?? this.isLoading,
-//       hasError: hasError ?? this.hasError
-//     );
-//   }
-// }
-
-
-// class CollectionRequestNotifier extends StateNotifier<CollectionRequestState>{
-//   CollectionRequestNotifier() : super(CollectionRequestState(
-//     collectionRequest: [],
-//     isLoading: false,
-//     hasError: false
-//   ));
-
-//   final ApiService apiService = ApiService();
-
-//   Future<void> fetchCollectionRequest() async{
-//     state = state.copyWith(isLoading: true, hasError: false);
-
-//     String fields = '?fields=["name", "consignor"]';
-
-//     try{
-//       final response = await apiService.getresources(ApiEndpoints.authEndpoints.CollectionRequest + fields);
-//         state = state.copyWith(collectionRequest: response, isLoading: false);
-//     }
-//     catch(e){
-//         state = state.copyWith(isLoading: false, hasError: true);
-//       throw "Date Fetch Error";
-//     }
-//   }
-
-//   void clearRequest(){
-//     state = state.copyWith(collectionRequest: []);
-//   }
-// }
-
-// final CollectionRequestProvider = StateNotifierProvider<CollectionRequestNotifier, CollectionRequestState>((ref) {
-//   return CollectionRequestNotifier();
-// });
-
-// import 'package:erpnext_logistics_mobile/api_endpoints.dart';
-// import 'package:erpnext_logistics_mobile/api_service.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-
-// class CollectionRequestNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
-//   final ApiService apiService;
-//   CollectionRequestNotifier(this.apiService) : super(const AsyncValue.loading()) {
-//     fetchData();
-//   }
-
-//   Future<void> fetchData() async {
-//     String fields = '?fields=["name","consignor"]';
-//     try {
-//       final data = await apiService.getresources(ApiEndpoints.authEndpoints.CollectionRequest + fields);
-//       state = AsyncValue.data(data);
-//     } catch (e) {
-//       state = AsyncValue.error(e, StackTrace.empty);
-//     }
-//   }
-
-//   // Future<void> refreshData() async {
-//   //   state = const AsyncValue.loading();
-//   //   await fetchData();,
-//   // }
-// }
-
-
-// final collectionRequestProvider =
-//     StateNotifierProvider<CollectionRequestNotifier, AsyncValue<List<Map<String, String>>>>(
-//   (ref) => CollectionRequestNotifier(ApiService()),
-// );
-
-
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,23 +22,38 @@ class CollectionRequestNotifier extends StateNotifier<AsyncValue<List<Map<String
 
 
     String fields = '?fields=["name","consignor","date", "status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit=15';
+    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit_page_length=15';
     if(query != ""){
       query = '&filters=[["consignor", "like", "$query%"';
     }
 
+    Object body = {
+        "doctype": "Collection Request",
+        // "filters": [["consignor", "like", "$query%"]]
+        "fields": ['name', 'consignor', 'vehicle_required_date', 'status'],
+        "order_by": 'modified desc',
+        "limit_start": _limitStart,
+        // "filters": [['']]
+        "limit_page_length": 15
+        // "limit": 15
+      };
+
     try {
-      final data = await apiService.getresources(
-        ApiEndpoints.authEndpoints.CollectionRequest + fields + paginationQuery,
-      );
+      // final data = await apiService.getresources(
+      //   ApiEndpoints.authEndpoints.CollectionRequest + fields + paginationQuery,
+      // );
+      final data = await apiService.getresource(ApiEndpoints.authEndpoints.getList, body);
+      for(var i in data){
+        print(i);
+      }
 
       if (isRefreshing) {
         state = AsyncValue.data(data);
       } else {
         final previousData = state.value ?? [];
-        if(previousData.length != data.length){
+        // if(previousData.length != data.length){
         state = AsyncValue.data([...previousData, ...data]);
-        }
+        // }
         if(data.length == 15){
         _limitStart = _limitStart + 15;
         }
@@ -150,7 +64,12 @@ class CollectionRequestNotifier extends StateNotifier<AsyncValue<List<Map<String
       }
 
     } catch (e) {
-      state = AsyncValue.error(e, StackTrace.empty);
+       if (state.hasValue && isRefreshing == false){
+          return;
+        }
+        else{
+          state = AsyncValue.error(e, StackTrace.empty);
+        }
     }
 
     _isFetching = false;

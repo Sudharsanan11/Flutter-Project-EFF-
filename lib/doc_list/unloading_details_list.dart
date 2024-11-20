@@ -149,24 +149,28 @@ class _UnloadingDetailsListState extends ConsumerState<UnloadingDetailsList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => const Center(child: Text("Error loading data")),
+            // error: (err, _) => const Center(child: Text("Error loading data")),
+            error: (error, stackTrace) {
+              print(error);
+              return const Center(child: Text("No data Found"));
+            },
           ),
         ),
           )
         ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.blueGrey,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const UnloadingDetailsForm(data: {},)));
-          },
-        ),
+        // floatingActionButton: FloatingActionButton(
+        //   backgroundColor: Colors.blueGrey,
+        //   child: const Icon(
+        //     Icons.add,
+        //     color: Colors.white,
+        //   ),
+        //   onPressed: () {
+        //     Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //             builder: (context) => const UnloadingDetailsForm(data: {},)));
+        //   },
+        // ),
         bottomNavigationBar: const BottomNavigation(),
       ),
     );

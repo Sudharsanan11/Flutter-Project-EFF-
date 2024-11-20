@@ -103,7 +103,8 @@ class _LoadingDetailsFormState extends State<LoadingDetailsForm> {
       "filters": [
         ["designation", "=", "Loading Staff"],
         ["status", "=", "Active"]
-      ]
+      ],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -122,7 +123,8 @@ class _LoadingDetailsFormState extends State<LoadingDetailsForm> {
       "doctype": "Item",
       "filters": [
         ["is_customer_provided_item", "=", 1]
-      ]
+      ],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -597,7 +599,7 @@ class _LoadingDetailsFormState extends State<LoadingDetailsForm> {
       onPopInvoked: (didPop) {
         if (didPop) {return;}
         Navigator.push(context,
-        MaterialPageRoute(builder: (context) => const GdmList()));
+        MaterialPageRoute(builder: (context) => const LoadingDetailsList()));
       },
       child: Scaffold(
         appBar: AppBar(

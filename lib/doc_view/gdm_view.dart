@@ -326,7 +326,8 @@ late Future<List<String>> fetchTargetBranchFuture;
       "filters": [
         ["designation", "=", "Loading Staff"],
         ["status", "=", "Active"]
-      ]
+      ],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(
@@ -394,7 +395,8 @@ late Future<List<String>> fetchTargetBranchFuture;
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Route Places",
-      "filters": [["is_active", "=", 1]]
+      "filters": [["is_active", "=", 1]],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -409,7 +411,8 @@ late Future<List<String>> fetchTargetBranchFuture;
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Supplier",
-      "filters": [["disabled", "=", 0]]
+      "filters": [["disabled", "=", 0]],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -423,6 +426,7 @@ late Future<List<String>> fetchTargetBranchFuture;
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Branch",
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -467,7 +471,8 @@ late Future<List<String>> fetchTargetBranchFuture;
     final body = {
       "doctype": "Employee",
       "filters": [["designation", "=", "Attender"], ["status", "=", "Active"]],
-      "fields": ['name', 'employee_name']
+      "fields": ['name', 'employee_name'],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getList(ApiEndpoints.authEndpoints.getList, body);
@@ -808,7 +813,7 @@ late Future<List<String>> fetchTargetBranchFuture;
         Fluttertoast.showToast(msg: "Document deleted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const GdmList()));
+          MaterialPageRoute(builder: (context) => const GDMList()));
         }
       }
       else {
@@ -833,7 +838,7 @@ late Future<List<String>> fetchTargetBranchFuture;
         Fluttertoast.showToast(msg: "Document Canceled successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const GdmList()));
+          MaterialPageRoute(builder: (context) => const GDMList()));
         }
       }
       else {
@@ -1260,7 +1265,7 @@ late Future<List<String>> fetchTargetBranchFuture;
               setState(() {
                 loadingStaffItems = [];
                 loadingStaffItems = response;
-                // filteredItems = loadingStaffItems;
+                filteredItems = loadingStaffItems;
               })
             })
         .catchError((error) => {throw "Error: $error"});
@@ -1510,7 +1515,7 @@ late Future<List<String>> fetchTargetBranchFuture;
       onPopInvoked: (didPop) {
         if(didPop) {return;}
         Navigator.push(context, 
-        MaterialPageRoute(builder: (context) => const GdmList()));
+        MaterialPageRoute(builder: (context) => const GDMList()));
       },
       child: Scaffold(
         appBar: AppBar(

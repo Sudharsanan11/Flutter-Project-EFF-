@@ -447,7 +447,7 @@ class _CollectionRequestFormState extends State<CollectionRequestForm> {
                     ),
                     fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     filled: true,
-                    labelText: "Vehicle Date",
+                    labelText: "Vehicle Required Date",
                     labelStyle: TextStyle(
                         color: isDarkMode ? Colors.white70 : Colors.grey[600]),
                   ),

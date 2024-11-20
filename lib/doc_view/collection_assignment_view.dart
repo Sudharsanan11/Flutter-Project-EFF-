@@ -1,6 +1,12 @@
 // import 'dart:ffi';
 // import 'dart:nativewrappers/_internal/vm/lib/ffi_native_type_patch.dart';
 
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
@@ -11,12 +17,17 @@ import 'package:erpnext_logistics_mobile/doc_view/vehicle_log_form.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
+import 'package:erpnext_logistics_mobile/fields/text_area.dart';
 import 'package:erpnext_logistics_mobile/forms/vehicle_log.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
+import 'package:erpnext_logistics_mobile/modules/file_picker.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectionAssignmentView extends StatefulWidget {
@@ -61,6 +72,7 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   final TextEditingController currentLoadInVehicle = TextEditingController();
   final TextEditingController noOfPickUpsPending = TextEditingController();
   final TextEditingController totalKMtoReachBackDepo = TextEditingController();
+  final TextEditingController issueDescription = TextEditingController();
 
   // PM Fields
   bool PMChecked = false;
@@ -84,7 +96,8 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   bool pallet = false;
   bool scanner = false;
   bool isIssue = false;
-  String issueDescription = "";
+  // String issueDescription = "";
+  PlatformFile? selectedFile;
 
 
   // String? orderVia;
@@ -110,6 +123,8 @@ late Future<List<String>> fetchDriverFuture;
 late Future<List<String>> fetchRoutePlacesFuture;
 late Future<List<String>> fetchSupplierFuture;
 late Future<List<String>> fetchBranchFuture;
+
+Uint8List? fileContent;
 
   @override
   void initState () {
@@ -302,7 +317,7 @@ late Future<List<String>> fetchBranchFuture;
           pallet = check_list[0]['pallet'] == 1? true : false;
           scanner = check_list[0]['scanner'] == 1? true : false;
           isIssue = check_list[0]['is_issue'] == 1? true : false;
-          issueDescription = check_list[0]['issue_description']?? "";
+          issueDescription.text = check_list[0]['issue_description'] ?? "";
         }
 
         isLoading = false;
@@ -318,11 +333,77 @@ late Future<List<String>> fetchBranchFuture;
     }
   }
 
+  Future<Position> _getCurrentLocation() async {
+    // bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    // if(permission == LocationPermission.denied){
+    //   permission = await Geolocator.requestPermission();
+    //   return Future.error("Location permission denied");
+    // }
+    permission = await Geolocator.requestPermission();
+
+    print(permission);
+
+    return Geolocator.getCurrentPosition();
+  }
+
+  Future<void> locationUpdate(item) async {
+    setState(() {
+      isLoading = true;
+    });
+
+  try{
+    var value = await _getCurrentLocation();
+       String lat = '${value.latitude}';
+      String long = '${value.longitude}';
+
+      print("$lat $long");
+        ApiService apiService = ApiService();
+
+        Object body = {
+          "args": {
+            "lat": lat,
+            "long": long,
+            "doctype": "Collection Assignment",
+            "docname": widget.name,
+            "item" : item,
+          }
+        };
+
+        final response = await apiService.updateLocation(ApiEndpoints.authEndpoints.updateLocation, body);
+        print(response);
+        Fluttertoast.showToast(msg: "${response['message']}", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+
+        if(response['message'] == "Location Checked Successfully"){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: widget.name),));
+        }
+
+        setState(() {
+          isLoading = false;
+        });
+
+        print(response);
+        
+      }
+      catch(e){
+        print(e);
+        Fluttertoast.showToast(msg: "${e}", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        setState(() {
+          isLoading = false;
+        });
+
+      }
+  }
+
   Future<List<String>> fetchStaff() async {
     final ApiService apiService = ApiService();
     final body = {
       "doctype" : "Employee",
-      "filters" : [["designation","=","Staff"], ["status", "=", "Active"]]
+      "filters" : [["designation","=","Staff"], ["status", "=", "Active"]],
+      "limit_page_length": 0,
     };
     try {
       final response =  await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList , body);
@@ -360,7 +441,8 @@ late Future<List<String>> fetchBranchFuture;
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Route Places",
-      "filters": [["is_active", "=", 1]]
+      "filters": [["is_active", "=", 1]],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -377,7 +459,8 @@ late Future<List<String>> fetchBranchFuture;
     final body = {
       "doctype": "Employee",
       "filters": [["designation", "=", "Attender"], ["status", "=", "Active"]],
-      "fields": ['name', 'employee_name']
+      "fields": ['name', 'employee_name'],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getList(ApiEndpoints.authEndpoints.getList, body);
@@ -400,7 +483,8 @@ late Future<List<String>> fetchBranchFuture;
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Supplier",
-      "filters": [["disabled", "=", 0]]
+      "filters": [["disabled", "=", 0]],
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -414,6 +498,7 @@ late Future<List<String>> fetchBranchFuture;
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Branch",
+      "limit_page_length": 0,
     };
     try {
       final response = await apiService.getLinkedNames(ApiEndpoints.authEndpoints.getList, body);
@@ -530,6 +615,42 @@ void setEnterBy() async {
     }
   }
 
+  Future<void> updateCollectionStatus(item) async {
+    setState(() {
+      isLoading = true;
+    });
+    final ApiService apiService = ApiService();
+    Object body = {
+          "args": {
+            "doctype": "Collection Assignment",
+            "docname": widget.name,
+            "item" : item,
+          }
+        };
+    try {
+      final response = await apiService.updateStatus('${ApiEndpoints.authEndpoints.updateStatus}/${widget.name}', body);
+      print(response);
+      if(response == "Ok") {
+        Fluttertoast.showToast(msg: "Collection Status Updated successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        Navigator.push(context,
+        MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: widget.name,)));
+      }
+      else {
+        Fluttertoast.showToast(msg: "Failed to update collection status", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+      }
+      setState(() {
+        isLoading = false;
+      });
+      print(response);
+    }
+    catch(e) {
+      print(e);
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
    Future<List<String>> fetchRequest(route_name) async {
     print(route_name);
     final ApiService apiService = ApiService();
@@ -619,40 +740,51 @@ void setEnterBy() async {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(item == null ? 'Add Item' : 'Edit Item'),
-          content: FutureBuilder<List<String>>(
-                  future: fetchRequestFuture,
-                  builder: (BuildContext context, snapshot) {
-                    if(snapshot.hasError) {
-                      return DialogAutoComplete(
-                        controller: collectionRequest,
-                        readOnly: isDisabled,
-                        hintText: 'Collection Request',
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
+          content: SizedBox(
+              width: MediaQuery.of(context).size.width * 1.8,
+            child: SingleChildScrollView(
+              child: Column(
+                children:[ FutureBuilder<List<String>>(
+                        future: fetchRequestFuture,
+                        builder: (BuildContext context, snapshot) {
+                          if(snapshot.hasError) {
+                            return DialogAutoComplete(
+                              controller: collectionRequest,
+                              readOnly: isDisabled,
+                              hintText: 'Collection Request',
+                              onSelected: (String selection) {
+                                print('You selected: $selection');
+                              },
+                              options: requestList,
+                            );
+                          }
+                          else if (snapshot.hasData) {
+                            requestList = snapshot.data!;
+                            return DialogAutoComplete(
+                              controller: collectionRequest,
+                              readOnly: isDisabled,
+                              hintText: 'Collection Request',
+                              onSelected: (String selection) {
+                                print(selection);
+                              },
+                              options: requestList,
+                            );
+                          } else {
+                            return DialogAutoComplete(controller: collectionRequest, readOnly: isDisabled, hintText: 'Collection Request', options: requestList,
+                              onSelected: (String selection) {
+                                print('You selected: $selection');
+                              },
+                            );
+                          }
                         },
-                        options: requestList,
-                      );
-                    }
-                    else if (snapshot.hasData) {
-                      requestList = snapshot.data!;
-                      return DialogAutoComplete(
-                        controller: collectionRequest,
-                        readOnly: isDisabled,
-                        hintText: 'Collection Request',
-                        onSelected: (String selection) {
-                          print(selection);
-                        },
-                        options: requestList,
-                      );
-                    } else {
-                      return DialogAutoComplete(controller: collectionRequest, readOnly: isDisabled, hintText: 'Collection Request', options: requestList,
-                        onSelected: (String selection) {
-                          print('You selected: $selection');
-                        },
-                      );
-                    }
-                  },
-                ),
+                      ),
+                      if(docstatus.text != "-1" && item['reached'] == "1" && item['status'] != "1")
+                      TextButton(onPressed: (){Navigator.of(context).pop(); updateCollectionStatus(item);}, child: const Text("Collection Completed"))
+                      // Row(children:[ Checkbox(value: collectionCompleted, onChanged: (bool? value){ setState(() {collectionCompleted = value!;});}), const Text("Collection Completed")])
+                    ]
+              ),
+            ),
+          ),
           actions: <Widget>[
             if(docstatus.text == "-1")
             TextButton(
@@ -703,6 +835,19 @@ void setEnterBy() async {
     );
   }
 
+  void selectfile() async{
+    final result = await FilePicker.platform.pickFiles();
+    
+    if(result == null) return;
+
+    setState(() async {
+      selectedFile = result.files.first;
+      final file = File("${selectedFile!.path}");
+      fileContent = await file.readAsBytes();
+      print("${file.readAsBytes().asStream()}=====================================");
+    });
+  }
+
   void createLR(item){
     item['lr_type'] = "By Collection Request";
    Navigator.push(context,
@@ -717,9 +862,7 @@ void setEnterBy() async {
         builder: (BuildContext context, StateSetter setState) {
           return AlertDialog(
             title: const Text("PM Checklist"),
-            content: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
-              child: SingleChildScrollView(
+            content: SingleChildScrollView(
                 child: Column(
                   children: [
                     const SizedBox(height: 3),
@@ -1048,10 +1191,63 @@ void setEnterBy() async {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 3),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: isIssue,
+                            onChanged: PMChecked == false ? (bool? newBool) {
+                              setState(() {
+                                  isIssue = newBool!;
+                              });
+                            } : null,
+                          ),
+                          const Text("Is Issue",),
+                        ],
+                      ),
+                    ),
+                    // if(isIssue == true)
+                    if(isIssue == true)
+                    const SizedBox(height: 3),
+                    if(isIssue == true)
+                          TextArea(
+                          controller: issueDescription,
+                          labelText: "Issue Description",
+                          readOnly: PMChecked,
+                          keyboardType: TextInputType.multiline
+                        ),
+                    if(isIssue == true)
+                    const SizedBox(height: 5),
+                    if(isIssue == true)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Row(
+                        children: [
+                          // FilePickerFormField(
+                          //   validator: (file) {
+                          //     if(file == null){
+                          //       return "Please select a file";
+                          //     }
+                          //     return null;
+                          //   },
+                          //   onSaved: (file) {
+                          //     print("$file ++++++++++++++++++++++++++++++++++++;.;;;;;;;;;;;;;;;;;;;;;;;;;;");
+                          //     setState(() {
+                          //       selectedFile = File(file!.path);
+                          //     });
+                          //   },
+                          // ),
+                          ElevatedButton(onPressed: () {
+                            selectfile();
+                          }, child: const Text("Select File"))
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
             actions: [
               TextButton(
                 child: const Text("Cancel"),
@@ -1063,7 +1259,14 @@ void setEnterBy() async {
               TextButton(
                 child: const Text("Save"),
                 onPressed: () async {
+                  Navigator.pop(context);
                   ApiService apiService = ApiService();
+
+                  // Object image = {
+                  //   "path": selectedFile!.path,
+                  //   "name": selectedFile!.name,
+                  //   ""
+                  // };
                   Object body = {
                     "args" : {
                       "doctype": "Collection Assignment",
@@ -1087,9 +1290,20 @@ void setEnterBy() async {
                       "other_accessories": otherAccessories,
                       "pallet": pallet,
                       "scanner": scanner,
+                      "is_issue": isIssue,
+                      "issue_description": issueDescription.text,
+                      // "image": {
+                      //   "path": selectedFile!.path,
+                      //   "name": selectedFile!.name,
+                      //   "type": selectedFile!.extension,
+                      //   "hashcode": selectedFile!.hashCode,
+                      //   "size": selectedFile!.readStream,
+                      //   "content": fileContent
+                      // },
                     }
                   };
                   try {
+                    print("$body     ============-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
                     final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.setPMChecklist, body);
                     print(response);
                     Navigator.push(context, 
@@ -1097,10 +1311,10 @@ void setEnterBy() async {
                     Fluttertoast.showToast(msg: "PM Checklist Successfully Updated", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
                   }
                   catch (e) {
-                    Fluttertoast.showToast(msg: "$e", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+                    Fluttertoast.showToast(msg: "$e", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 5);
                     print('Error: $e');
                   }
-                  Navigator.pop(context);
+                  // Navigator.pop(context);
                 },
               ),
             ],
@@ -1545,13 +1759,28 @@ void setEnterBy() async {
                                   leading: Text("${index + 1}"),
                                   title: Text("${items[index]['collection_request']}"),
                                   subtitle: Text("${items[index]['consignor'] ?? ""}"),
-                                  trailing: IconButton(
-                                              icon: const Icon(Icons.post_add_rounded),
-                                              onPressed: () {
-                                                // Add your desired action here
-                                                createLR(items[index]);
-                                              },
-                                            ),
+                                  trailing: docstatus.text == "1" && (items[index]['reached'] == "0" && (index == 0 || items[index - 1]['status'] == "1")) && (status.text == "Collection Started" || status.text == "Partially Collected")
+                                  ? TextButton(
+                                    onPressed: () {locationUpdate(items[index]);},
+                                    child: const Text("Reached")) 
+                                  : (status.text == "Collection Started" || status.text == "Partially Collected") && items[index]['reached'] == "1" && (items[index]['status'] != "1")
+                                    ? IconButton(
+                                          icon: const Icon(Icons.post_add_rounded),
+                                          onPressed: () {
+                                            createLR(items[index]);
+                                          },
+                                        )
+                                    // Row(
+                                    //   children:[ IconButton(
+                                    //       icon: const Icon(Icons.post_add_rounded),
+                                    //       onPressed: () {
+                                    //         createLR(items[index]);
+                                    //       },
+                                    //     ),
+                                    //     IconButton(onPressed: (){}, icon: const Icon(Icons.check_box))
+                                    //   ]
+                                    // ) 
+                                    : const Text(""),
                                   onTap: () {
                                     _showItemDialog(item: items[index], index: index);
                                   },

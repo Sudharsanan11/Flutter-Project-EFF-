@@ -5,7 +5,7 @@ import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LoadingDetailsNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
-  final ApiService apiService ;
+  final ApiService apiService;
 
   int _limitStart = 0;
   bool _isFetching = false;
@@ -28,6 +28,8 @@ class LoadingDetailsNotifier extends StateNotifier<AsyncValue<List<Map<String, S
       final data = await apiService.getresources(
         ApiEndpoints.authEndpoints.loadingDetails + fields + paginationQuery,
       );
+
+      print(data);
 
       if (isRefreshing) {
         state = AsyncValue.data(data);

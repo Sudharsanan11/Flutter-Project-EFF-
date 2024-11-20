@@ -1,5 +1,3 @@
-
-
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,23 +20,33 @@ class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<Str
     _isFetching = true;
 
     String fields = '?fields=["name","assigned_vehicle","date","status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit=15';
-    if(query != ""){
-      query = '&filters=[["consignor", "like", "$query%"';
-    }
-
+    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit_page_length=15';
+    // if(query != ""){
+    //   query = '&filters=[["consignor", "like", "$query%"';
+    // }
+     Object body = {
+        "doctype": "Collection Assignment",
+        // "filters": [["consignor", "like", "$query%"]]
+        "fields": ['name', 'assigned_vehicle', 'date', 'status'],
+        "order_by": 'modified desc',
+        "limit_start": _limitStart,
+        "limit_page_length": 15
+      };
     try {
-      final data = await apiService.getresources(
-        ApiEndpoints.authEndpoints.CollectionAssignment + fields + paginationQuery,
-      );
+     
+      final data = await apiService.getresource(ApiEndpoints.authEndpoints.getList, body);
+      for(var i in data){
+        print(i);
+      }
 
+      print('$data --------------00000000000000000000000-0-0-00-0-0-0-0-0');
       if (isRefreshing) {
         state = AsyncValue.data(data);
       } else {
         final previousData = state.value ?? [];
-        if(previousData.length != data.length){
+        // if(previousData.length != data.length){
         state = AsyncValue.data([...previousData, ...data]);
-        }
+        // }
         if(data.length == 15){
         _limitStart = _limitStart + 15;
         }
@@ -47,7 +55,12 @@ class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<Str
           return;
         }
       }} catch (e) {
-      state = AsyncValue.error(e, StackTrace.empty);
+        if (state.hasValue && isRefreshing == false){
+          return;
+        }
+        else{
+          state = AsyncValue.error(e, StackTrace.empty);
+        }
     }
 
     _isFetching = false;

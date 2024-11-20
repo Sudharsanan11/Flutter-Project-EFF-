@@ -44,6 +44,7 @@ class PushNotifications {
       }
     }
   }
+    print(token);
 
     // await storeToken(token);
     final ApiService apiService = ApiService();

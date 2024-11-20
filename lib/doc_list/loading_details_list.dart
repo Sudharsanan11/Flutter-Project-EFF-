@@ -6,6 +6,7 @@ import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:erpnext_logistics_mobile/providers/loading_details_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/utils.dart';
 import 'package:intl/intl.dart';
 
 class LoadingDetailsList extends ConsumerStatefulWidget {
@@ -149,24 +150,28 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => const Center(child: Text("Error loading data")),
+            // error: (err, _) => const Center(child: Text("No Data Found: ${}")),
+            error: (error, stackTrace) {
+              print(error);
+              return const Center(child: Text("No data Found"));
+            },
           ),
         ),
           )
         ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.blueGrey,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const LoadingDetailsForm(data: {},)));
-          },
-        ),
+        // floatingActionButton: FloatingActionButton(
+        //   backgroundColor: Colors.blueGrey,
+        //   child: const Icon(
+        //     Icons.add,
+        //     color: Colors.white,
+        //   ),
+        //   onPressed: () {
+        //     Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //             builder: (context) => const LoadingDetailsForm(data: {},)));
+        //   },
+        // ),
         bottomNavigationBar: const BottomNavigation(),
       ),
     );

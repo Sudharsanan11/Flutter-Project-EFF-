@@ -66,7 +66,8 @@ final RemoteMessage? message =
 //   }
 // });
 
-  var api = manager.getString("api");
+  var api = manager.getString("sid");
+  var cookies = manager.getString("cookies");
   
   bool isLoggedIn = api != null ? true : false;
   runApp(
