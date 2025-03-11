@@ -1,7 +1,7 @@
 class ApiEndpoints {
-  static const String baseUrl = "https://eff.4csolutions.in";
-  // static const String baseUrl = "http://192.168.1.54:8000";
-  // static const String baseUrl = "http://192.168.246.25:8000";
+  // static const String baseUrl = "https://eff.4csolutions.in";
+  // static const String baseUrl = "http://192.168.31.208:8000";
+  static const String baseUrl = "http://192.168.1.13:8000";
   static _AuthEndPoints authEndpoints = _AuthEndPoints();
 }
 
@@ -24,20 +24,24 @@ class _AuthEndPoints {
   final String CollectionAssignment = '/api/resource/Collection Assignment';
   final String LR = '/api/resource/LR';
   final String GDM = '/api/resource/GDM';
+  final String customer = '/api/resource/Customer';
+  final String inwardItems = 'api/resource/Inward CFA Items';
+  final String outwardItems = 'api/resource/Outward CFA Items';
   final String getSession = '/api/method/logistics.api.get_session';
   final String vehicleLog = '/api/resource/Vehicle Log';
   final String tripLog = '/api/method/logistics.pms.doctype.collection_assignment.collection_assignment.make_vehicle_log';
   final String gdmTripLog = '/api/method/logistics.pms.doctype.gdm.gdm.make_trip_log';
-  final String gdmloadingDetails = '/api/method/logistics.pms.doctype.gdm.gdm.create_loading_deatils';
+  final String gdmloadingDetails = '/api/method/logistics.pms.doctype.gdm.gdm.get_loading_deatils';
   final String returnLog = '/api/method/logistics.pms.doctype.collection_assignment.collection_assignment.make_vehicle_return';
   final String loadingDetails = '/api/resource/Loading Details';
-  final String gdmDelivery = '/api/method/logistics.pms.doctype.gdm.gdm.make_deliveries';
+  final String gdmDelivery = '/api/method/logistics.pms.doctype.gdm.gdm.get_delivery_details';
   final String gdmReturnLog = '/api/method/logistics.pms.doctype.gdm.gdm.make_vehicle_return';
-  final String branchDelivery = '/api/method/logistics.pms.doctype.gdm.gdm.make_branch_delivery';
+  final String branchDelivery = '/api/method/logistics.pms.doctype.gdm.gdm.get_branch_delivery_details';
   final String getUnloadingDetails = '/api/method/logistics.pms.doctype.collection_assignment.collection_assignment.make_unloading_details';
   final String fetchLR = '/api/method/logistics.pms.doctype.gdm.gdm.get_lrs';
   final String setPMChecklist = '/api/method/logistics.api.update_pm_checklist';
   final String unLoadingDetails = '/api/resource/Unloading Details';
   final String getLastMonthData = '/api/method/logistics.api.get_last_month_data';
   final String updateLocation = '/api/method/logistics.api.update_location';
+  final String updateCustomerLocation = '/api/method/logistics.api.update_customer_location';
 }
