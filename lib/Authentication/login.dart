@@ -42,9 +42,7 @@ class _LoginPageState extends State<LoginPage> {
         );
 
         if (response.statusCode == 200) {
-          print(response);
           final responseData = jsonDecode(response.body);
-          print(responseData);
 
           if(responseData['message']['message'] == 'Authentication Success'){
 
@@ -56,13 +54,6 @@ class _LoginPageState extends State<LoginPage> {
             prefs.setString('email', responseData['message']['email']);
             prefs.setString('cookies', '${response.headers['set-cookie']}');
             prefs.setString('expires','${response.headers['set-cookie']}');
-
-            // print('Session token: ${prefs.getString('api')}');
-            // print('Session token: ${prefs.getString('secret')}');
-            print('Full Name: ${prefs.getString('full_name')}');
-            print('email ${prefs.getString('email')}');
-            print('Full Name: ${prefs.getString('cookies')}');
-            print(responseData);
 
             // if(mounted){
               // ignore: use_build_context_synchronously
@@ -80,7 +71,6 @@ class _LoginPageState extends State<LoginPage> {
             msg: responseData['message']['message'],
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 2,);
-          print('Login failed: ${response.body}');
           }
         }
       } catch (e) {
