@@ -37,14 +37,12 @@ class PushNotifications {
    try {
       token = await _firebaseMessaging.getToken();
     } catch (e) {
-      print('Error fetching token: $e');
       retries--;
       if (retries > 0) {
         await Future.delayed(const Duration(seconds: 1)); // Retry delay
       }
     }
   }
-    print(token);
 
     // await storeToken(token);
     final ApiService apiService = ApiService();
@@ -94,7 +92,6 @@ class PushNotifications {
         }
 
        static Future manageNotification(response) async{
-          print("Manage notification");
           Map payload = {};
           if(response is RemoteMessage){
             payload = response.data;
@@ -104,14 +101,10 @@ class PushNotifications {
             payload = jsonDecode(response.payload!);
           }
 
-          print(payload);
-          print("oijoinubnklbhubhjnhgvuhjng uhjnguvhjkguvh");
           if(payload['doctype'] == "Collection Assignment"){
-            print("if condition");
             navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: payload['docname'])));
           }
           else if(payload['doctype'] == "GDM"){
-            print("if condition");
             navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => GDMView(name: payload['docname'])));
           }
         }
