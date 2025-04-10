@@ -1,5 +1,6 @@
 import "package:erpnext_logistics_mobile/doc_list/collection_assignment_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/collection_request_list.dart";
+import "package:erpnext_logistics_mobile/doc_list/customer_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/gdm_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/loading_details_list.dart";
 import "package:erpnext_logistics_mobile/doc_list/lr_list.dart";
@@ -29,6 +30,14 @@ class _AppDrawerState extends State<AppDrawer> {
               accountName: Text(""),
               accountEmail: Text("EFF Logistics", style: TextStyle(fontSize: 25), textAlign: TextAlign.end,),
               decoration: BoxDecoration(color: Colors.grey,),
+            ),
+            ListTile(
+              title: const Text("Customer"),
+              leading: const Icon(Icons.supervised_user_circle_rounded),
+              onTap: () {
+                Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const CustomerList()));
+              },
             ),
             ListTile(
               title: const Text("Collection Request"),
