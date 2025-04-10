@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_endpoints.dart';
@@ -11,7 +12,6 @@ class ApiService {
     SharedPreferences manager = await SharedPreferences.getInstance();
     String sid = manager.getString("sid")!;
     String cookies = manager.getString("cookies")!;
-    print(sid);
     final response = await http.get(
       Uri.parse(ApiEndpoints.baseUrl+resource),
       headers: {
@@ -21,12 +21,8 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print('$jsonResponse 000000000000000000000000000000000');
       List<dynamic> data = jsonResponse['data'];
-      print("dynamic");
-      print(data);
       List<String> keys = data.first.keys.toList();
-      print(keys[0]);
       return data.map((item) => {
         'key1' : item[keys[0]].toString(),
         'key2' : item[keys[1]].toString(),
@@ -43,7 +39,6 @@ class ApiService {
     SharedPreferences manager = await SharedPreferences.getInstance();
     String sid = manager.getString("sid")!;
     String cookies = manager.getString("cookies")!;
-    print(sid);
     final response = await http.post(
       Uri.parse(ApiEndpoints.baseUrl+resource),
       headers: {
@@ -54,12 +49,8 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print('$jsonResponse 000000000000000000000000000000000');
       List<dynamic> data = jsonResponse['message'];
-      print("dynamic");
-      print(data);
       List<String> keys = data.first.keys.toList();
-      print(keys[0]);
       return data.map((item) => {
         'key1' : item[keys[0]].toString(),
         'key2' : item[keys[1]].toString(),
@@ -85,9 +76,7 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print('$jsonResponse =====================++++++++++++++++=');
       Map<String, dynamic> data = jsonResponse['data'];
-      print("data======================== $data");
       return data;
     }
     else {
@@ -96,8 +85,6 @@ class ApiService {
   }
 
   Future<List<String>> getLinkedNames(String resource, Object body) async {
-    print(resource);
-    print(body);
     SharedPreferences manager = await SharedPreferences.getInstance();
     String sid = manager.getString("sid")!;
     String cookies = manager.getString("cookies")!;
@@ -112,11 +99,7 @@ class ApiService {
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['message'];
-      print("Consignor");
-      print(data);
       List<String> list = data.map((item) => item['name'].toString()).toList();
-      print("list");
-      print(list);
       return list;
     }
     else {
@@ -138,13 +121,10 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print('$jsonResponse ===========================++++++++++++++++++++++++++++++++');
-      List<dynamic> res = jsonResponse['message']; 
-      print("$res=======================================================json");
+      List<dynamic> res = jsonResponse['message'];
       List<Map<String,dynamic>> data = List<Map<String,dynamic>>.from(
         res.map((item) => item as Map<String, dynamic>)
       );
-      print("$data ============================================================data");
       return data;
     }
     else { 
@@ -154,10 +134,7 @@ class ApiService {
 
 
   Future<void> storetoken(String token) async{
-    print("storetoken");
     SharedPreferences manager = await SharedPreferences.getInstance();
-    // String api = manager.getString("api")!;
-    // String secret = manager.getString("secret")!;
     String sid = manager.getString("sid")!;
     String cookies = manager.getString("cookies")!;
     String email = manager.getString("email")!;
@@ -181,10 +158,10 @@ class ApiService {
     );
 
     if(response.statusCode == 200){
-      print("Token Stored Successfully!!");
+      Fluttertoast.showToast(msg: "Notification Enabled Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
     }
     else{
-      throw Exception("Failed to Store Token");
+      Fluttertoast.showToast(msg: "Unable to Store Token", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
     }
   }
 
@@ -200,17 +177,14 @@ class ApiService {
       },
       body: json.encode(body),
     );
-    print("reponse +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ $response");
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("$jsonResponse=======================================================");
       Map<String, dynamic> data = jsonResponse['message'];
-      print("$data ============================================================");
       return data;
     }
     else {
-      print(response);
-      throw Exception('Failed to fetch document');
+      Fluttertoast.showToast(msg: "Failed to Fetch Document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+      throw "${response.body}";
     }
   }
   
@@ -228,12 +202,11 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("jsonResponse");
-      print(jsonResponse);
       return jsonResponse['message'];
     }
     else {
-      throw Exception('Failed to check permission');
+      Fluttertoast.showToast(msg: "Failed to Check Permission", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+      throw Exception('Failed to check permission ${response.body}');
     }
   }
 
@@ -252,18 +225,11 @@ class ApiService {
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['message'];
-      // Map<String, Map<String, dynamic>> transformData = {};
-      // for(var item in data) {
-      //     var name = item['name'];
-      //     transformData[name] = item;
-      // }
-      // print("$transformData transformData=========================");
-      // return transformData;
-
       return data;
       
     }
     else {
+      Fluttertoast.showToast(msg: "Notification Enabled Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       throw Exception('Error Code ${response.statusCode} ${response.body}');
     }
   }
@@ -311,7 +277,6 @@ class ApiService {
     else {
       Map<String, dynamic> errorResponse = jsonDecode(response.body);
     String exceptionMessage = errorResponse['exception'] ?? 'Unknown error';
-    print("$errorResponse errrrrrrrrrrrrrrrrrrrrrrrrrrrorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
       throw Exception("${response.statusCode}: $exceptionMessage");
     }
   }
@@ -335,7 +300,6 @@ class ApiService {
     else {
       Map<String, dynamic> errorResponse = jsonDecode(response.body);
     String exceptionMessage = errorResponse['exception'] ?? 'Unknown error';
-    print("$errorResponse errrrrrrrrrrrrrrrrrrrrrrrrrrrorrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
       throw Exception("${response.statusCode}: $exceptionMessage");
     }
   }
@@ -378,13 +342,11 @@ class ApiService {
 
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("$jsonResponse=======================================================");
       Map<String, dynamic> data = jsonResponse['message'];
-      print("$data ============================================================");
       return data;
     }
     else {
-      throw "$response";
+      throw "${response.body}";
     }
   }
    Future<Map<String, dynamic>> get_session(String endpoint) async {
@@ -405,12 +367,7 @@ class ApiService {
 
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      print("$jsonResponse=======================================================");
       String? cookies = response.headers['set-cookie'];
-    print('Cookies: $cookies');
-      // Map<String, dynamic> data = jsonResponse['message'];
-      // print("$data ============================================================");
-      // return data;
       return jsonResponse;
     }
     else {
