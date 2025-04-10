@@ -350,7 +350,7 @@
 
 
 import 'package:flutter/material.dart';
-import 'dart:math'; // For using the min function
+// For using the min function
 
 class AutoComplete extends StatelessWidget {
   final List<String> options;
@@ -493,6 +493,8 @@ class MyApp extends StatelessWidget {
   final TextEditingController _controller = TextEditingController();
   final List<String> _options = List.generate(100, (index) => 'Option $index');
 
+  MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -502,7 +504,7 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Autocomplete with Scrollable Dropdown'),
+          title: const Text('Autocomplete with Scrollable Dropdown'),
         ),
         body: Center(
           child: AutoComplete(
