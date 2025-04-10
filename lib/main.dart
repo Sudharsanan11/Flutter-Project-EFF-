@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
 import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
-import 'package:erpnext_logistics_mobile/message.dart';
 import 'package:erpnext_logistics_mobile/push_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -15,7 +14,6 @@ import 'firebase_options.dart';
 final navigatorKey = GlobalKey<NavigatorState>();
 
 Future _firebaseBackgroundMessage(RemoteMessage message) async{
-  print(message);
   if(message.notification != null){
     print("Some notification Received: ");
   }
@@ -31,16 +29,6 @@ void main() async{
 FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessage);
 
 FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  // print('Received a message while in the foreground: ${message.messageId}');
-  // print(message.from);
-  // print(message.data);
-  // print(message.notification!.android);
-  // print(message.notification!.title.toString());
-  // print(message.notification!.body.toString());
-  // print(message.notification!..toString());
-  // if (message.notification != null) {
-  //   print('Message also contained a notification: ${message.notification!.title.toString()}');
-  // }
   String payloadData = jsonEncode(message.data);
   if (message.notification != null) {
     PushNotifications.showSimpleNotification(title: message.notification!.title, body: message.notification!.body, payload: payloadData);

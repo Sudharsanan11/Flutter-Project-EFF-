@@ -25,14 +25,24 @@ class _EFFState extends ConsumerState<EFF> {
   void initState() {
     super.initState();
     apiService = ApiService();
-    _initializeNotifications();
-    _apicall();
+    _checkAndInitializeNotifications();
+    // _apicall();
     // _get_session();
   }
 
-  Future<void> _initializeNotifications() async {
-    await PushNotifications.init(); // Requests permission
-    await PushNotifications.localNotiInit(); // Initialize local notifications
+  Future<void> _checkAndInitializeNotifications() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstRun = prefs.getBool('isFirstRun') ?? true;
+
+    if (isFirstRun) {
+      await PushNotifications.init(); // Requests permission
+      await PushNotifications.localNotiInit(); // Initialize local notifications
+      // Set the flag to false after first run
+      await prefs.setBool('isFirstRun', false);
+    } else {
+      // Just initialize local notifications without requesting permission
+      await PushNotifications.localNotiInit();
+    }
   }
 
   Future<void> _apicall() async {
@@ -42,28 +52,6 @@ class _EFFState extends ConsumerState<EFF> {
       setState(() {
         value = response.toString();
       });
-    } catch (e) {
-      setState(() {
-        value = e.toString();
-      });
-    }
-  }
-
-  Future<void> _get_session() async {
-    print("sesssssssssssssss");
-    try {
-      final response = await apiService.get_session(ApiEndpoints.authEndpoints.getSession);
-      print(response['Expires']);
-      bool validateSession = validateSessionDate(response['Expires']);
-      // List cookies = response;
-      if(validateSession == true){
-        print("sessssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss");
-        _logoutUser();
-      }
-      else{
-        print("sesssssssssssssssssssssssssssssssssiomnnmmmmmmmmmmmmmmmmmmmmmmmm");
-      }
-
     } catch (e) {
       setState(() {
         value = e.toString();
@@ -95,22 +83,6 @@ class _EFFState extends ConsumerState<EFF> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                // Expanded(
-                //   child: TextButton(
-                //     style: TextButton.styleFrom(
-                //       foregroundColor: Colors.blue,
-                //       shape: const RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.only(
-                //           bottomLeft: Radius.circular(5),
-                //         ),
-                //       ),
-                //     ),
-                //     child: const Text('Cancel'),
-                //     onPressed: () {
-                //       Navigator.of(context).pop();
-                //     },
-                //   ),
-                // ),
                 Expanded(
                   child: TextButton(
                     style: TextButton.styleFrom(
@@ -141,19 +113,23 @@ class _EFFState extends ConsumerState<EFF> {
     );
   }
 
-   Future<void> logout () async {
+  Future<void> logout() async {
     SharedPreferences manager = await SharedPreferences.getInstance();
     manager.clear();
   }
 
-  bool validateSessionDate(String expiryDate){
-    final paresedDate = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUTC(expiryDate).toLocal();
+  bool validateSessionDate(String expiryDate) {
+    final paresedDate = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
+        .parseUTC(expiryDate)
+        .toLocal();
 
-      final dayBefore = paresedDate.subtract(const Duration(days: 1));
-
-      final today = DateTime.now();
-      final stringOfToday = DateTime(today.year, today.month, today.day);
-    return dayBefore.year == stringOfToday.year && dayBefore.month == stringOfToday.month && dayBefore.day != stringOfToday.day;
+    final dayBefore = paresedDate.subtract(const Duration(days: 1));
+    final today = DateTime.now();
+    final stringOfToday = DateTime(today.year, today.month, today.day);
+    
+    return dayBefore.year == stringOfToday.year &&
+        dayBefore.month == stringOfToday.month &&
+        dayBefore.day != stringOfToday.day;
   }
 
   @override
