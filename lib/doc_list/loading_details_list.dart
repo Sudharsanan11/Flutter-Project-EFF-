@@ -1,12 +1,12 @@
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/doc_view/loading_details_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
-import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:erpnext_logistics_mobile/providers/loading_details_provider.dart';
+import 'package:erpnext_logistics_mobile/search_link.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/utils.dart';
 import 'package:intl/intl.dart';
 
 class LoadingDetailsList extends ConsumerStatefulWidget {
@@ -53,7 +53,19 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "LoadingDetailsView"),
+                      delegate: SearchLink(
+                        endpoint: ApiEndpoints.authEndpoints.getList,
+                        baseBody: {
+                          "doctype": "Loading Details",
+                          "fields": ["name","vehicle","creation", "status"]
+                        },
+                        searchFields: ['name', 'vehicle'],
+                        ref: ref,
+                        onSelected: (selectedItem){
+                          Navigator.push(context,  
+                          MaterialPageRoute(builder: (context) => LoadingDetailsForm(name: selectedItem['key1'],data: const {})));
+                        },
+                      ),
                     );
                   },
                   loading: () {
@@ -75,7 +87,6 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
         body: RefreshIndicator(
           onRefresh: () async {
            await ref.read(loadingDetailsProvider.notifier).refreshData();
-            // initState();
           },
           child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -83,7 +94,7 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height - kToolbarHeight - kBottomNavigationBarHeight,
           ),
-          child: 
+          child:
            loadingDetailsData.when(
             data: (data) {
               if (data.isEmpty) {
@@ -93,7 +104,7 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
                 controller: _scrollController,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: data.length,
+                itemCount: data.length + 1,
                 itemBuilder: (context, index) {
                   if (index == data.length) {
                     return const Padding(
@@ -111,20 +122,20 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
                         title: Text(item['key1'] ?? 'N/A'),
                         subtitle: Text("$consignor"),
                         trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround, // Distributes date and status vertically
-                              crossAxisAlignment: CrossAxisAlignment.end, // Aligns content to the right
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  item['key3'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(item['key3']!)) : 'N/A', // Display the date at the top right
+                                  item['key3'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(item['key3']!)) : 'N/A',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
                                   ),
                                 ),
                                 Text(
-                                  item['key4'] ?? "N/A", // Display the status at the bottom right
+                                  item['key4'] ?? "N/A",
                                   style: TextStyle(
-                                    color: item['key4'] == 'Collected' ? Colors.green : Colors.red, // Change color based on status
+                                    color: item['key4'] == 'Collected' ? Colors.green : Colors.red,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -135,7 +146,7 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    LoadingDetailsForm(name: item['key1']!, data: const {},)),
+                                LoadingDetailsForm(name: item['key1']!, data: const {},)),
                           );
                         },
                       ),
@@ -150,9 +161,7 @@ class _LoadingDetailsListState extends ConsumerState<LoadingDetailsList> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            // error: (err, _) => const Center(child: Text("No Data Found: ${}")),
             error: (error, stackTrace) {
-              print(error);
               return const Center(child: Text("No data Found"));
             },
           ),

@@ -1,9 +1,10 @@
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/doc_view/unloading_details_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
-import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:erpnext_logistics_mobile/providers/unloading_details_provider.dart';
+import 'package:erpnext_logistics_mobile/search_link.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -52,7 +53,19 @@ class _UnloadingDetailsListState extends ConsumerState<UnloadingDetailsList> {
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "UnloadingDetailsView"),
+                      delegate: SearchLink(
+                        endpoint: ApiEndpoints.authEndpoints.getList,
+                        baseBody: {
+                          "doctype": "Unloading Details",
+                          "fields": ["name","vehicle","creation", "status"]
+                        },
+                        searchFields: ['name', 'vehicle'],
+                        ref: ref,
+                        onSelected: (selectedItem){
+                          Navigator.push(context,  
+                          MaterialPageRoute(builder: (context) => UnloadingDetailsForm(name: selectedItem['key1'],data: const {})));
+                        },
+                      ),
                     );
                   },
                   loading: () {
@@ -92,7 +105,7 @@ class _UnloadingDetailsListState extends ConsumerState<UnloadingDetailsList> {
                 controller: _scrollController,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: data.length,
+                itemCount: data.length + 1,
                 itemBuilder: (context, index) {
                   if (index == data.length) {
                     return const Padding(

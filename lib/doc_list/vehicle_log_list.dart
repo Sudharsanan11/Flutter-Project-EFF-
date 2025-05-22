@@ -1,11 +1,13 @@
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/doc_view/vehicle_log_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
-import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:erpnext_logistics_mobile/providers/vehicle_log_provider.dart';
+import 'package:erpnext_logistics_mobile/search_link.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 
 class VehicleLogList extends ConsumerStatefulWidget {
@@ -18,16 +20,26 @@ class VehicleLogList extends ConsumerStatefulWidget {
 
 class _VehicleLogListState extends ConsumerState<VehicleLogList> {
   final ScrollController _scrollController = ScrollController();
+  bool viewPermission = false;
 
   @override
   void initState() {
     super.initState();
+    _get_permissions();
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         ref.read(VehicleLogProvider.notifier).fetchData();
       }
     });
+  }
+
+  Future<void> _get_permissions() async {
+    final Box permissions = Hive.box("permissions");
+      final perm = Map<String, dynamic>.from(permissions.get("perm"));
+      setState(() {
+        viewPermission = perm["Vehicle Log"]["read"] ?? false;
+      });
   }
 
   @override
@@ -52,7 +64,19 @@ class _VehicleLogListState extends ConsumerState<VehicleLogList> {
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "VehicleLogView"),
+                      delegate: SearchLink(
+                        endpoint: ApiEndpoints.authEndpoints.getList,
+                        baseBody: {
+                          "doctype": "Loading Details",
+                          "fields": ["name", "license_plate", "date", "custom_vehicle_status"]
+                        },
+                        searchFields: ['name', 'license_plate'],
+                        ref: ref,
+                        onSelected: (selectedItem){
+                          Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => VehicleLogForm(name: selectedItem['key1'],data: const {})));
+                        },
+                      ),
                     );
                   },
                   loading: () {
@@ -92,7 +116,7 @@ class _VehicleLogListState extends ConsumerState<VehicleLogList> {
                 controller: _scrollController,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: data.length,
+                itemCount: data.length + 1,
                 itemBuilder: (context, index) {
                   if (index == data.length) {
                     return const Padding(
