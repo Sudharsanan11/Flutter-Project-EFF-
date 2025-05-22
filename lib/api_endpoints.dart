@@ -1,7 +1,7 @@
 class ApiEndpoints {
-  static const String baseUrl = "https://eff.4csolutions.in";
+  static const String baseUrl = "https://eff.4csolutions.in"; 
   // static const String baseUrl = "http://192.168.31.208:8000";
-  // static const String baseUrl = "http://192.168.1.2:8000";
+  // static const String baseUrl = "http://192.168.133.25:8000";
   static _AuthEndPoints authEndpoints = _AuthEndPoints();
 }
 
@@ -10,6 +10,7 @@ class _AuthEndPoints {
   final String loginEmail = '/api/method/logistics.api.login';
   final String session = '/api/method/logistics.api.session';
   final String login = '/api/method/login';
+  final String doctype_permissions = '/api/method/logistics.mobile_api.get_doctype_permissions';
   final String employee = '/api/resource/Employee';
   final String getList = '/api/method/frappe.client.get_list';
   final String get = '/api/method/frappe.client.get';
@@ -23,6 +24,7 @@ class _AuthEndPoints {
   final String CollectionRequest = '/api/resource/Collection Request';
   final String CollectionAssignment = '/api/resource/Collection Assignment';
   final String LR = '/api/resource/LR';
+  // final String LR = '/api/method/logistics.api.create_doc';
   final String GDM = '/api/resource/GDM';
   final String customer = '/api/resource/Customer';
   final String inwardItems = 'api/resource/Inward CFA Items';
