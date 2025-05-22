@@ -43,23 +43,19 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
   List<String> itemList = [];
   List<Map<String, String>> items = [];
   bool isDisabled = true;
+  bool writePermission = true;
+  bool deletePermission = true;
   int docstatus = 0;
   // final response = "";
 
   @override
   void initState () {
     super.initState();
-    print("===============================");
-    print(widget.name);
     fetchCollectionRequest();
     fetchConsignor();
     fetchLocation();
-    // fetchItem();
-    print("fetch Consignor------------------------------------ ${fetchConsignor()}");
-    // print(fetchConsignor());
-    // setState(() {
-    //   // consignorList = fetchConsignor();
-    // });
+    checkWritePermission();
+    checkdeletePermission();
   }
 
   @override
@@ -134,6 +130,40 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
     catch (error) {
       print(error);
       return "Error: Failed to submit data";
+    }
+  }
+
+   Future<void> checkWritePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Assignment",
+        "perm_type": "write",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        writePermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkdeletePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Assignment",
+        "perm_type": "delete",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        deletePermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
     }
   }
 
@@ -396,7 +426,7 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
             child: PopupMenuButton(
               itemBuilder: (context) => [
                 
-                if(status.text == "Open")
+                if(status.text == "Open" && deletePermission)
                 const PopupMenuItem(
                   value: 0,
                   child: Text('Delete'),
@@ -662,8 +692,8 @@ class _CollectionRequestViewState extends State<CollectionRequestView> {
                   const SizedBox(height: 15.0),
                 if (items.isNotEmpty)
                   MyButton(
-                    onTap: isDisabled ? (){Fluttertoast.showToast(msg: "Can't able to save", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);} : submitData,
-                    name: "Save",                    
+                    onTap: isDisabled && deletePermission ? (){Fluttertoast.showToast(msg: "Can't able to save", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);} : submitData,
+                    name: "Save",              
                   ),
               ]
             ),

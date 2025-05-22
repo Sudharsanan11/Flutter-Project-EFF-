@@ -1,19 +1,18 @@
-import 'dart:ffi';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
-import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/doc_list/unloading_details_list.dart';
-import 'package:erpnext_logistics_mobile/doc_view/collection_assignment_view.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
 import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/fields/text_area.dart';
-import 'package:erpnext_logistics_mobile/forms/collection_assignment_form.dart';
+import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
-import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
+import 'package:erpnext_logistics_mobile/modules/mobile_scanner.dart';
+import 'package:erpnext_logistics_mobile/modules/scanner.dart';
+import 'package:erpnext_logistics_mobile/modules/test_scan.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -58,6 +57,8 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
   List<String> itemList = [];
   List<Map<String, String>> items = [];
   List<Map<String, String>> misMatchItems = [];
+  List<String> existingBarcodes = [];
+  List<Map<String, Map<String, List<String>>>> allowedBarcodes = [];
   bool isLoading = false;
   List<String> barcode_list = [];
 
@@ -75,6 +76,8 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
   }
 
   void setData() {
+    try{
+
     setState(() {
         Map data = widget.data;
         supervisor.text = data["supervisor"] ?? "";
@@ -86,12 +89,29 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
         unloadingType.text = data['unloading_type'] ?? "";
         VehicleType.text = data['vehicle_type'] ?? "";
         branch.text = data['branch'] ?? "";
-        // LRItems = widget.data['LRItems'];
+       allowedBarcodes = (data['allowed_barcodes'] as List<dynamic>?)
+        ?.map((e) => e is Map<String, dynamic>
+            ? e.map((key, value) => MapEntry(
+                key,
+                (value as Map<String, dynamic>).map((itemKey, itemValue) => MapEntry(
+                      itemKey,
+                      List<String>.from(itemValue as List<dynamic>),
+                    )),
+              ))
+            : <String, Map<String, List<String>>>{})
+        .toList() ??
+    [];
+    print("$allowedBarcodes , alloweddddddddddddddddddddm nabaaaaaaaaaaaaa");
 
+        print(data);
         LRItems = (data['unloading_lrs'] as List).map((item) {
           return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
             }).toList();
     });
+    }
+    catch(e){
+      throw "$e";
+    };
   }
 
   Future<void> fetchData() async {
@@ -116,8 +136,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
         branch.text = response['branch'];
         barcodes.text = response['barcodes'];
         totalBoxCount.text = response['total_box_count'].toString();
-        print(response['unloading_lrs']);
-        print(response['unloading_items']);
         setState(() {
         loadingStaffItems = (response["unloading_staffs"] as List).map<String>((item) {
           return item['loading_staff'].toString();
@@ -126,7 +144,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
           return {"loading_staff": item['loading_staff'].toString()};
         }).toList();
         selectedLoadingStaffs = loadingStaffItems;
-        print(loadingStaffItems);
         loadingStaffs.text = loadingStaffItems.join(', ').toString();
           LRItems = (response['unloading_lrs'] as List).map((item) {
           return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
@@ -139,22 +156,54 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
           return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
             }).toList();
 
-            print(loadingStaffs);
-            print(LRItems);
-            print(items);
+          existingBarcodes = (response['barcodes'] as String).split(",");
             isLoading = false;
         });
+        if(gdm.text.isNotEmpty){
+          fetch_allowed_barcodes(gdm.text);
+        }
+        else{
+          fetch_allowed_barcodes(collectionAssignment.text);
+        }
     }
     catch(error){
       setState(() {
         isLoading = false;
-        print("$error");
+        throw "$error";
       });
     }
   }
 
+  Future<void> fetch_allowed_barcodes(source_name) async{
+    try{
+      final ApiService apiService = ApiService();
+      final body = {
+        "source_name": source_name,
+      };
+
+      final response = await apiService.getDoc(ApiEndpoints.authEndpoints.getUnloadingDetails, body);
+
+        setState(() {
+          allowedBarcodes = (response['allowed_barcodes'] as List<dynamic>?)
+              ?.map((e) => e is Map<String, dynamic>
+                  ? e.map((key, value) => MapEntry(
+                        key,
+                        (value as Map<String, dynamic>).map((itemKey, itemValue) => MapEntry(
+                              itemKey,
+                              List<String>.from(itemValue as List<dynamic>),
+                            )),
+                      ))
+                  : <String, Map<String, List<String>>>{})
+              .toList() ??
+          [];
+        });
+    }
+    catch(e){
+      Fluttertoast.showToast(msg: "Failed to fetch allowed barcodes", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+    }
+  }
+
   Future<List<String>> fetchItem() async {
-    // print("date ${date.text}");
     final ApiService apiService = ApiService();
     final body = {
       "doctype": "Item",
@@ -166,7 +215,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
     try {
       final response = await apiService.getLinkedNames(
           ApiEndpoints.authEndpoints.getList, body);
-      print(response);
       return response;
     } catch (e) {
       throw "Fetch Error";
@@ -186,7 +234,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       try {
         final response = await apiService.getLinkedNames(
             ApiEndpoints.authEndpoints.getList, body);
-        print(response);
         return response;
       } catch (e) {
         throw "Fetch Error";
@@ -194,8 +241,10 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
     }
 
      Future<void> saveData () async{
+      setState(() {
+      isLoading = true;
+    });
     final ApiService apiService = ApiService();
-    print(loadingStaffDict);
     final body = {
       "supervisor" : supervisor.text,
       "unloading_staffs" : loadingStaffDict,
@@ -213,7 +262,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
     try {
       if(docstatus.text == "-1"){
         final response = await apiService.createDocument(ApiEndpoints.authEndpoints.unLoadingDetails, body);
-        print(response);
         if(response[0] == 200) {
           Fluttertoast.showToast(msg: "Document saved successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
           Navigator.push(context, 
@@ -222,7 +270,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       }
       else if(docstatus.text == "0") {
         final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.unLoadingDetails}/${widget.name}', body);
-        print(response);
         if(response == "200") {
           Fluttertoast.showToast(msg: "Document updated successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
           Navigator.push(context, 
@@ -231,6 +278,9 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       }
     }
     catch(error) {
+      setState(() {
+      isLoading = false;
+    });
        Fluttertoast.showToast(msg: "Failed to save document $error", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
     }
   }
@@ -242,7 +292,6 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
     };
     try {
       final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.unLoadingDetails}/${widget.name}', body);
-      print(response);
       if(response == "200") {
         Fluttertoast.showToast(msg: "Document Submitted successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         if(mounted){
@@ -253,10 +302,9 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       else {
         Fluttertoast.showToast(msg: "Failed to submit document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
-      print(response);
     }
     catch(e) {
-      print(e);
+      throw e;
     }
   }
 
@@ -274,10 +322,9 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       else {
         Fluttertoast.showToast(msg: "Failed to delete document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
-      print(response);
     }
     catch(e) {
-      print(e);
+      throw e;
     }
   }
 
@@ -298,10 +345,9 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
       else {
         Fluttertoast.showToast(msg: "Failed to cancel document", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       }
-      print(response);
     }
     catch(e) {
-      print(e);
+      throw e;
     }
   }
 
@@ -440,38 +486,105 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
         });
   }
 
-  void _openBarcodeScanner() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BarcodeScanner(
-          onScanResult: (scanResult) {
-            setState(() {
-            //   if (items.isNotEmpty && items[items.length - 1]['barcode'] == '') {
-            //     // items.add({
-            //     //   'item_code': itemName.text,
-            //     //   'barcode': scanResult,
-            //     // });
-            //     items[items.length - 1]['barcode'] = scanResult;
-            //   } else if(items.isEmpty){
-            //     items.add({
-            //       'item_code': '',
-            //       'barcode': scanResult,
-            //     });
-            //   } else {
-            //     items.add({
-            //       'item_code': items[items.length - 1]['item_code'].toString(),
-            //       'barcode': scanResult,
-            //     });
-            //   }
-            //   itemName.clear();
-            //   itemBarcode.clear();
-            barcode_list.add(scanResult);
-            barcodes.text = barcode_list.join(",");
-            });
-          },
-        ),
-      ),
+  void _handleScannedBarcodes(List<String> barcode_list) {
+    print(barcode_list);
+    print("barocdessssssssssssssssssssssssssssssssssssssssssssssssssssssss");
+    setState(() {
+      if(barcodes.text.isNotEmpty){
+        barcodes.text = "${barcodes.text},${barcode_list.join(",")}";
+      }
+      else{
+        barcodes.text = barcode_list.join(",");
+      }
+        existingBarcodes = barcodes.text.split(",");
+    });
+    print(existingBarcodes);
+    print("existinggggggggggggggggggggggggg");
+  }
+
+  void _openBarcodeScanner() async{
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          title: const Text(
+            'Scan Barcodes',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Choose a Scanning Device'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(5),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Mobile Scanner'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MobileScanner(
+                          doctype: "Unloading Details",
+                          allowedBarcodes: allowedBarcodes,
+                          existingBarcodes: existingBarcodes,
+                          onSaveBarcodes: (barcodes) => _handleScannedBarcodes(barcodes),
+                        ),
+                      ),
+                    );
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(5),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Bluetooth Scanner'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BluetoothBarcodeScanner(
+                          allowedBarcodes: allowedBarcodes,
+                          doctype: "Unloading Details",
+                          existingBarcodes: existingBarcodes,
+                          onSaveBarcodes: _handleScannedBarcodes,
+                        ),
+                      ),
+                    );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -725,7 +838,7 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                 if(VehicleType.text == "For Branch")
                 FieldText(controller: branch, keyboardType: TextInputType.name,labelText: "Branch", readOnly: true,),
                 const SizedBox(height: 10),
-                TextArea(controller: barcodes, labelText: "Barcodes", keyboardType: TextInputType.name, readOnly: docstatus.text != "1" ? false : true,),
+                TextArea(controller: barcodes, labelText: "Barcodes", keyboardType: TextInputType.name, readOnly: true,),
                 const SizedBox(height: 10),
               Padding(
                       padding: const EdgeInsets.symmetric(
@@ -815,14 +928,14 @@ class _UnloadingDetailsFormState extends State<UnloadingDetailsForm> {
                   if(docstatus.text != "-1")
                   const SizedBox(height: 10),
                   if(docstatus.text != "-1")
-                Padding(
-                  padding: const EdgeInsets.symmetric(
+                const Padding(
+                  padding: EdgeInsets.symmetric(
                       horizontal: 25.0, vertical: 3.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Padding(padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0)),
-                      const Text("Unloading Items"),
+                      Text("Unloading Items"),
                       // Row(children: [
                       //   ElevatedButton(
                       //     child: const Icon(Icons.add),

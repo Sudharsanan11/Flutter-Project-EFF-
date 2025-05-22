@@ -20,8 +20,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 import 'package:intl/intl.dart';
-import 'package:day_night_time_picker/day_night_time_picker.dart';
 
 class GDMView extends StatefulWidget {
   final String name;
@@ -69,6 +70,8 @@ class _GDMViewState extends State<GDMView> {
   final TextEditingController timePicker =TextEditingController();
   final TextEditingController totalBoxCount = TextEditingController();
   final TextEditingController branchLr = TextEditingController();
+  // final TextEditingController reached = TextEditingController();
+  final TextEditingController deliveryCompleted = TextEditingController();
 
   //Trip Details
   final TextEditingController noOfDeliveries = TextEditingController();
@@ -90,6 +93,7 @@ class _GDMViewState extends State<GDMView> {
   List<String> branchList = [];
   List<String> targetBranchList = [];
   bool isPaid = false;
+  bool reached = false;
   bool isLoading = false;
   String? isBranchLr;
   bool isDelivered = false;
@@ -246,6 +250,7 @@ late Future<List<String>> fetchTargetBranchFuture;
         toPayTotal.text = response["topay_total"]?.toString() ?? "0";
         totalWeight.text = response["total_weight"]?.toString() ?? "0";
         totalVOG.text = response["total_vog"]?.toString() ?? "0";
+        deliveryCompleted.text = response['all_final_delivery_is_done'].toString();
 
         status.text = response["status"] ?? "";
         loadingStaffItems = (response["loading_staffs"] as List).map<String>((item) {
@@ -546,6 +551,12 @@ late Future<List<String>> fetchTargetBranchFuture;
     else if(lrDict[lr]!['payment_type'] == "Paid"){
       isPaid = true;
     }
+    if (lrDict[lr]!['reached'] == "0"){
+      reached = false;
+    }
+    else{
+      reached = true;
+    }
     });
   }
 
@@ -622,6 +633,13 @@ late Future<List<String>> fetchTargetBranchFuture;
                           Checkbox(value: isPaid, onChanged: null,),
                           const Text("Is Paid"),
                           ],),
+                          // Row(children: [
+                          // Checkbox(value: reached, onChanged: (bool? newBool) {
+                          //   setState(() {
+                          //   reached = true;
+                          // });},),
+                          // const Text("Reached"),
+                          // ],),
                           const SizedBox(height: 10,),
                           DialogTextField(controller: VOG, keyboardType: TextInputType.number, readOnly: true, labelText: "Value of Goods",),
                           const SizedBox(height: 10,),
@@ -673,6 +691,7 @@ late Future<List<String>> fetchTargetBranchFuture;
                           "value_of_goods": VOG.text,
                           "box_count": boxCount.text,
                           "is_branch_lr": branchLr.text,
+                          "reached": reached == true ? "1" : "0",
                         });
                         itemsDict.add({"lr_no": lr.text.split(",")[0], "account_pay": accountPay.text, "to_pay": toPay.text, "is_paid": isPaid, "is_branch_lr": branchLr.text});
                       });
@@ -702,6 +721,7 @@ late Future<List<String>> fetchTargetBranchFuture;
                         itemsDict[index]["to_pay"] = toPay.text;
                         itemsDict[index]["is_paid"] = isPaid;
                         itemsDict[index]["is_branch_lr"] = branchLr.text;
+                        itemsDict[index]["reached"] = reached == true ? "1" : "0";
                         });
                       lr.clear();
                       consignor.clear();
@@ -721,6 +741,9 @@ late Future<List<String>> fetchTargetBranchFuture;
   }
 
   Future<void> saveData() async {
+    setState(() {
+      isLoading = true;
+    });
     print("update");
     final ApiService apiService = ApiService();
     final body = {
@@ -773,6 +796,9 @@ late Future<List<String>> fetchTargetBranchFuture;
             timeInSecForIosWeb: 2);
       }
     } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
       // throw "Error: Failed to submit";
       print("Exception: $error");
        Fluttertoast.showToast(
@@ -852,8 +878,8 @@ late Future<List<String>> fetchTargetBranchFuture;
     }
   }
 
-  Future<void> showPMChecklistDialog(BuildContext context) async {
-  await showDialog(
+  Future<void> showPMChecklistDialog() async {
+  await showDialog<void>(
     context: context,
     builder: (BuildContext context) {
       return StatefulBuilder(
@@ -1237,8 +1263,14 @@ late Future<List<String>> fetchTargetBranchFuture;
                   try {
                     final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.setPMChecklist, body);
                     print(response);
-                    Navigator.push(context, 
-                    MaterialPageRoute(builder: (context) => GDMView(name: widget.name)));
+                    if(mounted) {
+                    // ignore: use_build_context_synchronously
+                    Navigator.of(context).pop();
+                    // ignore: use_build_context_synchronously
+                    Navigator.push(context,
+                    // MaterialPageRoute(builder: (context) => GDMView(name: widget.name)));
+                    MaterialPageRoute(builder: (context) => const GDMList()));
+                    }
                     Fluttertoast.showToast(msg: "PM Checklist Successfully Updated", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
                   }
                   catch (e) {
@@ -1382,6 +1414,112 @@ late Future<List<String>> fetchTargetBranchFuture;
     }
   }
 
+  Future<Position> _getCurrentLocation() async {
+    // bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    // if(permission == LocationPermission.denied){
+    //   permission = await Geolocator.requestPermission();
+    //   return Future.error("Location permission denied");
+    // }
+    permission = await Geolocator.requestPermission();
+
+    print(permission);
+
+    return Geolocator.getCurrentPosition();
+  }
+
+  Future<void> trackDeliveryLocation(item) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try{
+      var value = await _getCurrentLocation();
+       String lat = '${value.latitude}';
+      String long = '${value.longitude}';
+
+      print("$lat $long");
+        ApiService apiService = ApiService();
+
+        Object body = {
+          "args": {
+            "lat": lat,
+            "long": long,
+            "doctype": "GDM",
+            "docname": widget.name,
+            "delivery_type": dt.text,
+            "item": item
+          }
+        };
+
+        final response = await apiService.updateLocation(ApiEndpoints.authEndpoints.updateLocation, body);
+        print(response);
+        Fluttertoast.showToast(msg: "${response['message']}", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+
+        if(response['message'] == "Location Checked Successfully"){
+          Navigator.push(context,
+          MaterialPageRoute(builder: (context) => GDMView(name: widget.name),));
+        }
+
+        setState(() {
+          isLoading = false;
+        });
+
+        print(response);
+        
+      }
+      catch(e){
+        print(e);
+        Fluttertoast.showToast(msg: "$e", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        setState(() {
+          isLoading = false;
+        });
+    }
+  }
+
+  Future<void> trackBranchLocation() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try{
+      var value = await _getCurrentLocation();
+       String lat = '${value.latitude}';
+      String long = '${value.longitude}';
+
+      print("$lat $long");
+        ApiService apiService = ApiService();
+
+        Object body = {
+          "args": {
+            "lat": lat,
+            "long": long,
+            "doctype": "GDM",
+            "docname": widget.name,
+            "delivery_type": dt.text,
+          }
+        };
+
+        final response = await apiService.updateLocation(ApiEndpoints.authEndpoints.updateLocation, body);
+        print(response);
+        Fluttertoast.showToast(msg: "${response['message']}", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+
+        if(response['message'] == "Location Verified Successfully"){
+          createBranchDelivery();
+        }
+        
+      }
+      catch(e){
+        print(e);
+        Fluttertoast.showToast(msg: "$e", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        setState(() {
+          isLoading = false;
+        });
+    }
+  }
+
   Future<void> createBranchDelivery() async{
     ApiService apiService = ApiService();
 
@@ -1391,7 +1529,9 @@ late Future<List<String>> fetchTargetBranchFuture;
 
     try{
       final response = await apiService.getDoc(ApiEndpoints.authEndpoints.branchDelivery, body);
-
+      setState(() {
+          isLoading = false;
+        });
       Navigator.push(context, 
       MaterialPageRoute(builder: (context) => UnloadingDetailsForm(data: response,)));
     }
@@ -1557,10 +1697,10 @@ late Future<List<String>> fetchTargetBranchFuture;
                 const PopupMenuItem(
                   value: 6,
                   child: Text("Vehicle Return")),
-                  if((status.text == 'Delivered Started' || status.text == "Partially Delivered") && dt.text != 'Final Delivery')
-                const PopupMenuItem(
-                  value: 7,
-                  child: Text("Branch Delivery")),
+                //   if((status.text == 'Delivered Started' || status.text == "Partially Delivered") && dt.text != 'Final Delivery')
+                // const PopupMenuItem(
+                //   value: 7,
+                //   child: Text("Branch Delivery")),
                 ],
                 onSelected: (value) {
                   setState(() {
@@ -1574,7 +1714,7 @@ late Future<List<String>> fetchTargetBranchFuture;
                       cancelDoc();
                     }
                     else if(value == 3){
-                      showPMChecklistDialog(context);
+                      showPMChecklistDialog();
                     }
                     else if(value == 4){
                       createLoadingDetails();
@@ -1834,7 +1974,6 @@ late Future<List<String>> fetchTargetBranchFuture;
                     if (snapshot.hasError) {
                       return AutoComplete(controller: routePlaces, hintText: 'Route Name', options: routeList,
                         onSelected: (String selection) {
-                          print('You selected: $selection');
                         },
                       );
                     } else if (snapshot.hasData) {
@@ -1842,7 +1981,6 @@ late Future<List<String>> fetchTargetBranchFuture;
                       return AutoComplete(controller: routePlaces, hintText: 'Route Name', options: routeList,
                         onSelected: (String selection) {
                           fetchLRList = fetchLR();
-                          print(selection);
 
                           // fetchRequestFuture = fetchRequest(selection.split(",")[0]);
                         },
@@ -2047,7 +2185,10 @@ late Future<List<String>> fetchTargetBranchFuture;
                                 child: ListTile(
                                   leading: Text("${index + 1}."),
                                   title: Text(items[index]["lr_no"].toString()),
-                                  trailing: (status.text == "Delivery Started" || status.text == "Paterially Delivered") && (items[index]['is_branch_lr'] == "No" || items[index]['is_branch_lr'] == "") && items[index]['is_delivered'] == "0" ? IconButton(icon: const Icon(Icons.task_alt_rounded), onPressed: () => createDelivery(items[index]),): const Text(""),
+                                  trailing: 
+                                  // (status.text == "Delivery Started" || status.text == "Partially Collected") && (items[index]['is_branch_lr'] == "No" || items[index]['is_branch_lr'] == "") && (items[index]['reached'] == "0") ? IconButton(onPressed: () => {trackDeliveryLocation(items[index])}, icon: const Icon(Icons.local_shipping)) :
+                                  // (status.text == "Delivery Started" || status.text == "Paterially Delivered") && (items[index]['is_branch_lr'] == "No" || items[index]['is_branch_lr'] == "") && items[index]['is_delivered'] == "0" ? IconButton(icon: const Icon(Icons.task_alt_rounded), onPressed: () => createDelivery(items[index]),): const Text(""),
+                                  (status.text == "Delivery Started" || status.text == "Paterially Delivered") && (items[index]['is_branch_lr'] == "No" || items[index]['is_branch_lr'] == "") && items[index]['is_delivered'] == "0" ? IconButton(icon: const Icon(Icons.task_alt_rounded), onPressed: () => createDelivery(items[index]),) : const Text(""),
                                   onTap: () {
                                     _showItemDialog(item: items[index], index: index);
                                   },
@@ -2059,6 +2200,10 @@ late Future<List<String>> fetchTargetBranchFuture;
                       ),
                     ),
                   ),
+                  if(deliveryType != "Final Delivery")
+                  const SizedBox(height: 15.0,),
+                  if(deliveryType != "Final Delivery")
+                  MyButton(name: "Reached the Branch", onTap: (deliveryCompleted.text == "1" || dt.text == "Branch Delivery") ? trackBranchLocation :(){},),
                     const SizedBox(
                       height: 15.0,
                     ),

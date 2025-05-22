@@ -3,7 +3,6 @@
 
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -18,16 +17,13 @@ import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
 import 'package:erpnext_logistics_mobile/fields/text_area.dart';
-import 'package:erpnext_logistics_mobile/forms/vehicle_log.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
-import 'package:erpnext_logistics_mobile/modules/file_picker.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectionAssignmentView extends StatefulWidget {
@@ -116,6 +112,10 @@ class _CollectionAssignmentViewState extends State<CollectionAssignmentView> {
   List<String> requestList = [];
   bool isDisabled = true;
   bool isLoading = false;
+  bool writePermission = false;
+  bool cancelPermission = false;
+  bool deletePermission = false;
+  bool submitPermission = false;
   late Future<List<String>> fetchVehicleFuture;
 late Future<List<String>> fetchAttenderFuture;
 late  Future<List<String>> fetchRequestFuture;
@@ -139,6 +139,10 @@ Uint8List? fileContent;
         setState(() {
           docstatus.text = "-1";
           isDisabled = false;
+          checkCancelPermission();
+          checkSubmitPermission();
+          checkWritePermission();
+          checkdeletePermission();
         });
       }
      fetchDriverFuture = fetchDriver("");
@@ -188,11 +192,13 @@ Uint8List? fileContent;
       setState(() {
         isLoading = false;
       });
-      print(error);
     }
   }
 
   Future<String> saveData() async{
+    setState(() {
+      isLoading = true;
+    });
     final ApiService apiService = ApiService();
     final body = {
       "entered_by": enteredBy.text,
@@ -221,7 +227,7 @@ Uint8List? fileContent;
         }
         }
       }
-      if(docstatus.text == "0"){
+      if(docstatus.text == "0" && writePermission){
         final response = await apiService.updateDocument('${ApiEndpoints.authEndpoints.CollectionAssignment}/${widget.name}', body);
         if(response == "200") {
         Fluttertoast.showToast(msg: "Document Updated Successfully", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
@@ -234,7 +240,9 @@ Uint8List? fileContent;
       return "";
     }
     catch (error) {
-      print(error);
+      setState(() {
+        isLoading =false;
+      });
         Fluttertoast.showToast(msg: "$error", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
       return "Error: Failed to submit data";
     }
@@ -301,23 +309,23 @@ Uint8List? fileContent;
           bs6Oil = check_list[0]['bs6_oil'] == 1 ? true : false;
           tyrePressure = check_list[0]['tyre_pressure'] == 1 ? true : false;
           brakes = check_list[0]['brakes'] == 1 ? true : false;
-          mirrors = check_list[0]['mirrors'] == 1? true : false;
-          jacky = check_list[0]['jacky'] == 1? true : false;
-          wavc = check_list[0]['wavc'] == 1? true : false;
-          lights = check_list[0]['lights'] == 1? true : false;
-          wiper = check_list[0]['wiper'] == 1? true : false;
-          horn = check_list[0]['horn'] == 1? true : false;
-          stepney = check_list[0]['stepney'] == 1? true : false;
-          wheelspanner = check_list[0]['wheel_spanner'] == 1? true : false;
-          jackyLiver = check_list[0]['jacky_liver'] == 1? true : false;
-          allTools = check_list[0]['all_tools'] == 1? true : false;
-          tarpolin = check_list[0]['tarpolin'] == 1? true : false;
-          rope = check_list[0]['rope'] == 1? true : false;
-          otherAccessories = check_list[0]['other_accessories'] == 1? true : false;
-          pallet = check_list[0]['pallet'] == 1? true : false;
-          scanner = check_list[0]['scanner'] == 1? true : false;
-          isIssue = check_list[0]['is_issue'] == 1? true : false;
-          issueDescription.text = check_list[0]['issue_description'] ?? "";
+          mirrors = check_list[0]['mirrors'] == 1 ? true : false;
+          jacky = check_list[0]['jacky'] == 1 ? true : false;
+          wavc = check_list[0]['wavc'] == 1 ? true : false;
+          lights = check_list[0]['lights'] == 1 ? true : false;
+          wiper = check_list[0]['wiper'] == 1 ? true : false;
+          horn = check_list[0]['horn'] == 1 ? true : false;
+          stepney = check_list[0]['stepney'] == 1 ? true : false;
+          wheelspanner = check_list[0]['wheel_spanner'] == 1 ? true : false;
+          jackyLiver = check_list[0]['jacky_liver'] == 1 ? true : false;
+          allTools = check_list[0]['all_tools'] == 1 ? true : false;
+          tarpolin = check_list[0]['tarpolin'] == 1 ? true : false;
+          rope = check_list[0]['rope'] == 1 ? true : false;
+          otherAccessories = check_list[0]['other_accessories'] == 1 ? true : false;
+          pallet = check_list[0]['pallet'] == 1 ? true : false;
+          scanner = check_list[0]['scanner'] == 1 ? true : false;
+          isIssue = check_list[0]['is_issue'] == 1 ? true : false;
+          // issueDescription.text = check_list[0]['issue_description'] ?? "";
         }
 
         isLoading = false;
@@ -330,6 +338,80 @@ Uint8List? fileContent;
       isLoading = false;
       });
       throw "$e";
+    }
+  }
+
+  Future<void> checkWritePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Assignment",
+        "perm_type": "write",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        writePermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkdeletePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Assignment",
+        "perm_type": "delete",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        deletePermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkCancelPermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Assignment",
+        "perm_type": "cancel",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        cancelPermission = response;
+      });
+      // if(response == true){
+
+      // }
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkSubmitPermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "Collection Assignment",
+        "perm_type": "write",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        submitPermission = response;
+      });
+      // if(response == true){
+
+      // }
+    }
+    catch (e) {
+      rethrow;
     }
   }
 
@@ -390,7 +472,7 @@ Uint8List? fileContent;
       }
       catch(e){
         print(e);
-        Fluttertoast.showToast(msg: "${e}", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
+        Fluttertoast.showToast(msg: "$e", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
         setState(() {
           isLoading = false;
         });
@@ -1291,7 +1373,7 @@ void setEnterBy() async {
                       "pallet": pallet,
                       "scanner": scanner,
                       "is_issue": isIssue,
-                      "issue_description": issueDescription.text,
+                      // "issue_description": issueDescription.text,
                       // "image": {
                       //   "path": selectedFile!.path,
                       //   "name": selectedFile!.name,
@@ -1305,8 +1387,9 @@ void setEnterBy() async {
                   try {
                     print("$body     ============-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
                     final response = await apiService.updateDocument(ApiEndpoints.authEndpoints.setPMChecklist, body);
-                    print(response);
-                    Navigator.push(context, 
+                    print("$response reposssssssssssssssss");
+                    print("${widget.name}");
+                    Navigator.push(context,
                     MaterialPageRoute(builder: (context) => CollectionAssignmentView(name: widget.name)));
                     Fluttertoast.showToast(msg: "PM Checklist Successfully Updated", gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 2);
                   }
@@ -1344,17 +1427,17 @@ void setEnterBy() async {
             Padding(padding: const EdgeInsets.only(right: 20),
             child: PopupMenuButton(
               itemBuilder: (context) => [
-                if(docstatus.text == "0")
+                if(docstatus.text == "0" && submitPermission)
                 const PopupMenuItem(
                   value: 1,
                   child: Text('Submit', style: TextStyle(),),
                 ),
-                if(docstatus.text == "0")
+                if(docstatus.text == "0" && deletePermission)
                 const PopupMenuItem(
                   value: 0,
                   child: Text('Delete'),
                 ),
-                if(docstatus.text == "1")
+                if(docstatus.text == "1" && cancelPermission)
                 const PopupMenuItem(
                   value: 2,
                   child: Text('Cancel'),

@@ -4,14 +4,15 @@ import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/fields/button.dart';
 import 'package:erpnext_logistics_mobile/fields/dialog_text.dart';
-import 'package:erpnext_logistics_mobile/fields/drop_down.dart';
 import 'package:erpnext_logistics_mobile/fields/multi_select.dart';
 import 'package:erpnext_logistics_mobile/fields/text_area.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:erpnext_logistics_mobile/modules/auto_complete.dart';
 import 'package:erpnext_logistics_mobile/modules/barcode_scanner.dart';
 import 'package:erpnext_logistics_mobile/modules/dialog_auto_complete.dart';
+import 'package:erpnext_logistics_mobile/modules/mobile_scanner.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
+import 'package:erpnext_logistics_mobile/modules/scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:erpnext_logistics_mobile/fields/text.dart';
@@ -78,6 +79,11 @@ class _LRViewState extends State<LRView> {
   bool? calculationBasedOnLRLevel = false;
   bool? manualFreightAmount = false;
   bool? holdLR = false;
+  List<String> existingBarcodes = [];
+  bool writePermission = false;
+  bool cancelPermission = false;
+  bool deletePermission = false;
+  bool submitPermission = false;
 late Future<List<String>> fetchConsigneeFuture;
 
   @override
@@ -85,10 +91,13 @@ late Future<List<String>> fetchConsigneeFuture;
     super.initState();
     setConsignor();
     fetchLocation();
+    checkCancelPermission();
+    checkSubmitPermission();
+    checkWritePermission();
+    checkdeletePermission();
     docstatus.text = "-1";
     fetchConsigneeFuture = fetchConsignee();
     if (widget.name != "" && widget.data.isEmpty) {
-      print("not aaaaaaaaaaaaaaaaaaaaaaaaaaaaa new docuuuuuuuuuuuuuuuuuuuuuuuuuuuuument");
       fetchLR();
       setState(() {
         documentStatus = "Not Saved";
@@ -151,6 +160,74 @@ late Future<List<String>> fetchConsigneeFuture;
     fetchConsigneeFuture  = fetchConsignee();
   }
 
+   Future<void> checkWritePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "LR",
+        "perm_type": "write",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        writePermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkdeletePermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "LR",
+        "perm_type": "delete",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        deletePermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkCancelPermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "LR",
+        "perm_type": "cancel",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        cancelPermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> checkSubmitPermission() async {
+    ApiService apiService = ApiService();
+    try {
+      Object body = {
+        "doctype": "LR",
+        "perm_type": "write",
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
+      setState(() {
+        submitPermission = response;
+      });
+    }
+    catch (e) {
+      rethrow;
+    }
+  }
+
   Future<List<String>> fetchRequest() async {
     final ApiService apiService = ApiService();
     final body = {
@@ -178,7 +255,6 @@ late Future<List<String>> fetchConsigneeFuture;
       final response = await apiService
           .getDocument('${ApiEndpoints.authEndpoints.LR}/${widget.name}');
       setState(() {
-        print(response['items_count']);
         date.text = response["date"] ?? "";
         collectionRequest.text = response["collection_request"] ?? "";
         logsheet.text = response["logsheet"] ?? "";
@@ -211,7 +287,6 @@ late Future<List<String>> fetchConsigneeFuture;
         releaseDate.text = response["release_date"] ?? "";
         reasonForHold.text = response["reason_for_the_hold"] ?? "";
         deliveredOn.text = response["delivered_on"] ?? "";
-        // boxDelivered.text = response["box_delivered"] != 0 ? response["box_delivered"].toString() : "0";
         totalItems.text = response["total_items"] != 0
             ? response["total_items"].toString()
             : "0";
@@ -229,7 +304,6 @@ late Future<List<String>> fetchConsigneeFuture;
             return (item as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()));
           }).toList();
         }
-        print('$itemsCount =========================================');
         if (response['docstatus'] != 0) {
           isDisabled = true;
         }
@@ -258,9 +332,6 @@ late Future<List<String>> fetchConsigneeFuture;
       };
       final response = await apiService.fetchFieldData(
           ApiEndpoints.authEndpoints.getList, body);
-      print("response start");
-      print(response);
-      print("response end");
       setState(() {
          Map<String, Map<String, dynamic>> transformData = {};
       for(var item in response) {
@@ -279,7 +350,6 @@ late Future<List<String>> fetchConsigneeFuture;
   Future<List<String>> fetchItem() async {
     // print("date ${date.text}");
     final ApiService apiService = ApiService();
-    print("COnsignor================= ${consignor.text}");
     final body = {
       "doctype": "Item",
       "filters": [
@@ -291,7 +361,6 @@ late Future<List<String>> fetchConsigneeFuture;
     try {
       final response = await apiService.getLinkedNames(
           ApiEndpoints.authEndpoints.getList, body);
-      print(response);
       return response;
     } catch (e) {
       throw "Fetch Error";
@@ -583,6 +652,7 @@ late Future<List<String>> fetchConsigneeFuture;
                         setState(() {
                           // items.removeWhere((item) => item.length == index);
                           items.remove(item);
+                          existingBarcodes.remove(itemBarcode.text);
                         });
                         Navigator.of(context).pop();
                       }
@@ -693,9 +763,12 @@ late Future<List<String>> fetchConsigneeFuture;
   }
 
   Future<void> submitData() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
+      setState(() {
+        isLoading = true;
+      });
       final ApiService apiService = ApiService();
       final body = {
+        "doctype": "LR",
         "date": date.text,
         "collection_request": collectionRequest.text,
         "consignor": consignor.text,
@@ -755,19 +828,19 @@ late Future<List<String>> fetchConsigneeFuture;
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => LRView(name: response[1], data: const {},)));
+                  builder: (context) => LRView(data: {"collection_request": collectionRequest.text, "consignor": consignor.text},)));
         }
-      }
+        }
         }
       } catch (error) {
+        setState(() {
+          isLoading = false;
+        });
         Fluttertoast.showToast(
             msg: "Failed to Save $error",
             gravity: ToastGravity.BOTTOM,
             timeInSecForIosWeb: 5);
       }
-    } else {
-      return;
-    }
   }
 
   // void _openBarcodeScanner() {
@@ -796,37 +869,161 @@ late Future<List<String>> fetchConsigneeFuture;
   //     ),
   //   );
   // }
-  void _openBarcodeScanner() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BarcodeScanner(
-          onScanResult: (scanResult) {
-            setState(() {
-              if (items.isNotEmpty && items[items.length - 1]['barcode'] == '') {
-                // items.add({
-                //   'item_code': itemName.text,
-                //   'barcode': scanResult,
-                // });
-                items[items.length - 1]['barcode'] = scanResult;
-              } else if(items.isEmpty){
-                items.add({
-                  'item_code': '',
-                  'barcode': scanResult,
-                });
+  // void _openBarcodeScanner() {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => BarcodeScanner(
+  //         onScanResult: (scanResult) {
+  //           print("$scanResult scanresult: ");
+  //           setState(() {
+  //             if (items.isNotEmpty && items[items.length - 1]['barcode'] == '') {
+  //               // items.add({
+  //               //   'item_code': itemName.text,
+  //               //   'barcode': scanResult,
+  //               // });
+  //               items[items.length - 1]['barcode'] = scanResult;
+  //             } else if(items.isEmpty){
+  //               items.add({
+  //                 'item_code': '',
+  //                 'weight': '',
+  //                 'barcode': scanResult,
+  //               });
+  //             } else {
+  //               items.add({
+  //                 'item_code': items[items.length - 1]['item_code'].toString(),
+  //                 'weight': items[items.length - 1]['weight'].toString(),
+  //                 'barcode': scanResult,
+  //               });
+  //             }
+  //             itemName.clear();
+  //             itemBarcode.clear();
+  //           });
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  void _handleScannedBarcodes(List<String> barcodes) {
+    setState(() {
+      for (String barcode in barcodes) {
+          setState(() {
+            existingBarcodes.add(barcode);
+          });
+        // items.add({
+        //   'item_code': '', // Placeholder for item code
+        //   'barcode': barcode, // Add the scanned barcode
+        // });
+        if (items.isNotEmpty && items[items.length - 1]['barcode'] == '') {
+                items[items.length - 1]['barcode'] = barcode;
               } else {
                 items.add({
                   'item_code': items[items.length - 1]['item_code'].toString(),
-                  'barcode': scanResult,
+                  'barcode': barcode,
                 });
               }
               itemName.clear();
               itemBarcode.clear();
-            });
-          },
-        ),
-      ),
+      }
+    });
+  }
+
+  void _openBarcodeScanner() async{
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          title: const Text(
+            'Scan Barcodes',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Choose a Scanning Device'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(5),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Mobile Scanner'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MobileScanner(
+                          allowedBarcodes: [],
+                          doctype: "LR",
+                          existingBarcodes: existingBarcodes,
+                          onSaveBarcodes: (barcodes) => _handleScannedBarcodes(barcodes),
+                        ),
+                      ),
+                    );
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(5),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Bluetooth Scanner'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BluetoothBarcodeScanner(
+                          doctype: "LR",
+                          existingBarcodes: existingBarcodes,
+                          allowedBarcodes: [],
+                          onSaveBarcodes: _handleScannedBarcodes,
+                        ),
+                      ),
+                    );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
+    
+    
+    
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => BluetoothBarcodeScanner(
+    //       onSaveBarcodes: _handleScannedBarcodes,
+    //     ),
+    //   ),
+    // );
   }
 
 
@@ -879,7 +1076,7 @@ late Future<List<String>> fetchConsigneeFuture;
               padding: const EdgeInsets.only(right: 20),
               child: PopupMenuButton(
                 itemBuilder: (context) => [
-                  if (docstatus.text =="0")
+                  if (docstatus.text =="0" && submitPermission)
                     const PopupMenuItem(
                       value: 1,
                       child: Text(
@@ -887,12 +1084,12 @@ late Future<List<String>> fetchConsigneeFuture;
                         style: TextStyle(),
                       ),
                     ),
-                  if (docstatus.text =="0")
+                  if (docstatus.text =="0" && deletePermission)
                     const PopupMenuItem(
                       value: 0,
                       child: Text('Delete'),
                     ),
-                  if (docstatus.text ==  "1")
+                  if (docstatus.text ==  "1" && cancelPermission)
                     const PopupMenuItem(
                       value: 2,
                       child: Text('Cancel'),
@@ -917,7 +1114,6 @@ late Future<List<String>> fetchConsigneeFuture;
             ),
           ],
           // flexibleSpace: SafeArea(child: Text(documentStatus, style: TextStyle(color: Colors.red),Align(alignment: Alignment.centerLeft,),),left: false,),
-
         ),
         drawer: const AppDrawer(),
         backgroundColor: Colors.white,
@@ -1065,7 +1261,6 @@ late Future<List<String>> fetchConsigneeFuture;
                         );
                       } else if (snapshot.hasData) {
                         consigneeList = snapshot.data!;
-                        print('$consigneeList ================================');
                         return AutoComplete(
                           controller: consignee,
                           hintText: "Consignee",
@@ -1122,25 +1317,6 @@ late Future<List<String>> fetchConsigneeFuture;
                       ],
                     ),
                     const SizedBox(height: 15),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(children: [
-                        Checkbox(
-                          value: calculationBasedOnLRLevel,
-                          onChanged: (newBool) {
-                            if (isDisabled == false) {
-                              setState(() {
-                                calculationBasedOnLRLevel = newBool;
-                              });
-                            }
-                          },
-                          activeColor: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text("Calculation Based on LR Level"),
-                      ]),
-                    ),
                     if (calculationBasedOnLRLevel == true)
                       FieldText(
                         controller: manualWeight,
@@ -1170,28 +1346,15 @@ late Future<List<String>> fetchConsigneeFuture;
                         // const Text("Manual Freight Amount"),
                       // ]),
                     // ),
-                    const SizedBox(height: 10),
-                    FieldText(
-                        controller: freight,
-                        labelText: 'Freight',
-                        keyboardType: TextInputType.number,
-                        readOnly: true),
-                    if(docstatus.text != "-1")
-                    const SizedBox(height: 25),
-                    if(docstatus.text != "-1")
-                    FieldText(
-                        controller: lrCharge,
-                        labelText: 'LR Charge',
-                        readOnly: true,
-                        keyboardType: TextInputType.number,
-                        obscureText: false),
-                    const SizedBox(height: 25),
-                    FieldText(
-                        controller: loadingCharges,
-                        labelText: 'Loading Charges',
-                        readOnly: true,
-                        keyboardType: TextInputType.number,
-                        obscureText: false),
+                    // if(docstatus.text != "-1")
+                    // const SizedBox(height: 25),
+                    // if(docstatus.text != "-1")
+                    // FieldText(
+                    //     controller: lrCharge,
+                    //     labelText: 'LR Charge',
+                    //     readOnly: true,
+                    //     keyboardType: TextInputType.number,
+                    //     obscureText: false),
                     if(docstatus.text != "-1")
                     const SizedBox(height: 10),
                     if(docstatus.text != "-1")
@@ -1204,104 +1367,12 @@ late Future<List<String>> fetchConsigneeFuture;
                         if(docstatus.text != "-1")
                     const SizedBox(height: 10),
                         if(docstatus.text != "-1")
-                    // Padding(
-                    //   padding: const EdgeInsets.symmetric(horizontal: 15),
-                    //   child: Row(children: [
-                    //     Checkbox(
-                    //       value: holdLR,
-                    //       onChanged: (newBool) {
-                    //         if (isDisabled == false) {
-                    //           setState(() {
-                    //             holdLR = newBool;
-                    //           });
-                    //         }
-                    //       },
-                    //       activeColor: Colors.black,
-                    //     ),
-                    //     const SizedBox(width: 10),
-                    //     const Text("Hold LR"),
-                    //   ]),
-                    // ),
-                    // if (holdLR == true)
-                    //   const SizedBox(
-                    //     height: 10.0,
-                    //   ),
-                    // if (holdLR == true)
-                    //   Padding(
-                    //     padding: const EdgeInsets.symmetric(
-                    //         horizontal: 25.0, vertical: 3.0),
-                    //     child: TextFormField(
-                    //       controller: releaseDate,
-                    //       keyboardType: TextInputType.datetime,
-                    //       validator: (value) {
-                    //         if (value == null || value.isEmpty) {
-                    //           if (holdLR == true) {
-                    //             return "Date is required";
-                    //           }
-                    //         }
-                    //         return null;
-                    //       },
-                    //       readOnly: isDisabled,
-                    //       decoration: InputDecoration(
-                    //         enabledBorder: OutlineInputBorder(
-                    //             borderSide:
-                    //                 const BorderSide(color: Colors.black),
-                    //             borderRadius: BorderRadius.circular(10)),
-                    //         focusedBorder: const OutlineInputBorder(
-                    //           borderSide: BorderSide(color: Colors.black),
-                    //         ),
-                    //         fillColor: Colors.white,
-                    //         filled: true,
-                    //         labelText: "Release Date",
-                    //         labelStyle: const TextStyle(color: Colors.black),
-                    //       ),
-                    //       onTap: () {
-                    //         _showDatePicket(context);
-                    //       },
-                    //     ),
-                    //   ),
-                    // if (holdLR == true)
-                    //   const SizedBox(
-                    //     height: 10,
-                    //   ),
-                    // if (holdLR == true)
-                    //   TextArea(
-                    //     controller: reasonForHold,
-                    //     labelText: "Reason For the Hold",
-                    //     keyboardType: TextInputType.multiline,
-                    //     validator: (value) {
-                    //       if (value == null || value.isEmpty) {
-                    //         if (holdLR == true) {
-                    //           return "Date is required";
-                    //         }
-                    //       }
-                    //       return null;
-                    //     },
-                    //     readOnly: isDisabled,
-                    //   ),
-                    //   if(deliveredOn.text != "")
-                    // const SizedBox(
-                    //   height: 10,
-                    // ),
                     if(deliveredOn.text != "")
                     TextArea(
                         controller: deliveredOn,
                         readOnly: true,
                         labelText: "Delivered On",
                         keyboardType: TextInputType.datetime),
-                    // const SizedBox(height: 10),
-                    // TextArea(
-                    //   controller: boxDelivered,
-                    //   labelText: "Box Delivered",
-                    //   readOnly: true,
-                    //   keyboardType: TextInputType.number
-                    // ),
-                    const SizedBox(height: 10),
-                    TextArea(
-                        controller: remarks,
-                        labelText: "Remarks",
-                        readOnly: isDisabled,
-                        keyboardType: TextInputType.multiline),
                     const SizedBox(height: 10,),
                     FieldText(controller: totalVG, labelText: "Total Value of the Goods", keyboardType: TextInputType.number, readOnly: isDisabled,),
                     if(docstatus.text == "1")
@@ -1453,7 +1524,7 @@ late Future<List<String>> fetchConsigneeFuture;
                         ),
                       ),
                     MyButton(
-                        onTap: isDisabled
+                        onTap: isDisabled && writePermission
                             ? () {
                                 Fluttertoast.showToast(
                                     msg: "Can't able to save",
