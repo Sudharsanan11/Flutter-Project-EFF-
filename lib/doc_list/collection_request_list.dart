@@ -5,10 +5,11 @@ import 'package:erpnext_logistics_mobile/forms/collection_request_form.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:erpnext_logistics_mobile/providers/collection_request_provider.dart';
+import 'package:erpnext_logistics_mobile/search_link.dart';
 import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
-import 'package:erpnext_logistics_mobile/modules/search_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 
 
@@ -28,14 +29,24 @@ class _CollectionRequestListState extends ConsumerState<CollectionRequestList> {
   @override
   void initState() {
     super.initState();
-    checkReadPermission();
-    checkCreatePermission();
+    // checkReadPermission();
+    // checkCreatePermission();
+    _get_permissions();
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         ref.read(collectionRequestProvider.notifier).fetchData();
       }
     });
+  }
+
+  Future<void> _get_permissions() async {
+    final Box permissions = Hive.box("permissions");
+      final perm = Map<String, dynamic>.from(permissions.get("perm"));
+      setState(() {
+        viewPermission = perm["Collection Request"]["read"] ?? false;
+        createPermission = perm["Collection Request"]["create"] ?? false;
+      });
   }
 
 Future<void> checkReadPermission() async {
@@ -54,7 +65,7 @@ Future<void> checkReadPermission() async {
       // }
     }
     catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -66,13 +77,12 @@ Future<void> checkReadPermission() async {
         "perm_type": "create",
       };
       final response = await apiService.checkPermission(ApiEndpoints.authEndpoints.hasPermission, body);
-      print(response);
       setState(() {
         createPermission = response;
       });
     }
     catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -99,7 +109,22 @@ Future<void> checkReadPermission() async {
                   data: (data) {
                     showSearch(
                       context: context,
-                      delegate: CustomSearchBar(data, "CollectionRequestView"),
+                      delegate: SearchLink(
+                        endpoint: ApiEndpoints.authEndpoints.getList, 
+                        baseBody: {
+                          "doctype": "Collection Request",
+                          "fields": ['name', 'consignor', 'vehicle_required_date', 'status'],
+                        },
+                        searchFields: ['name', 'consignor'],
+                        ref: ref,
+                        onSelected: (selectedItem){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CollectionRequestView(name: selectedItem["key1"]),
+                            ),
+                          );
+                        }),
                     );
                   },
                   loading: () {
@@ -130,8 +155,8 @@ Future<void> checkReadPermission() async {
               }
               return ListView.builder(
                 controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: data.length,
+                // physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: data.length + 1,
                 itemBuilder: (context, index) {
                   if (index == data.length) {
                     return const Padding(
