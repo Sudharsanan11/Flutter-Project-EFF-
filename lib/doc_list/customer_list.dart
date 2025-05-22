@@ -7,6 +7,7 @@ import 'package:erpnext_logistics_mobile/search_link.dart';
 import 'package:flutter/material.dart';
 import 'package:erpnext_logistics_mobile/modules/app_drawer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 
 class CustomerList extends ConsumerStatefulWidget {
   const CustomerList({super.key});
@@ -18,6 +19,14 @@ class CustomerList extends ConsumerStatefulWidget {
 class _CustomerListState extends ConsumerState<CustomerList> {
   final ScrollController _scrollController = ScrollController();
   bool viewPermission = false;
+
+  Future<void> _get_permissions() async {
+    final Box permissions = Hive.box("permissions");
+      final perm = Map<String, dynamic>.from(permissions.get("perm"));
+      setState(() {
+        viewPermission = perm["Customer"]["read"] ?? false;
+      });
+  }
 
   Future<void> checkReadPermission() async {
     ApiService apiService = ApiService();
@@ -155,7 +164,7 @@ class _CustomerListState extends ConsumerState<CustomerList> {
                   icon: const Icon(Icons.refresh, size: 30),
                   onPressed: () async {
                     await ref.read(CollectionAssignmentProvider.notifier).refreshData();
-                    await checkReadPermission();
+                    await _get_permissions();
                   },
                 ),
             ],
