@@ -188,7 +188,7 @@ class ApiService {
     }
   }
   
-  Future<bool> checkPermission(String endpoint, Object body) async {
+  Future<dynamic> checkPermission(String endpoint, Object body) async {
     SharedPreferences manager = await SharedPreferences.getInstance();
     String sid = manager.getString("sid")!;
     String cookies = manager.getString("cookies")!;
@@ -202,6 +202,7 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print(jsonResponse);
       return jsonResponse['message'];
     }
     else {
@@ -248,6 +249,7 @@ class ApiService {
     );
     if(response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      print("$response ==============================");
       Map<String, dynamic> data = jsonResponse['data'];
 
       return [response.statusCode, data['name'].toString()];
