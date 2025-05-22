@@ -17,13 +17,19 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+  String loginStatus = 'Sign In';
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
   Future<void> signUserIn(BuildContext context) async {
+    setState(() {
+      loginStatus = 'Verifying...';
+    });
     if (_formKey.currentState?.validate() ?? false) {
       final String username = usernameController.text;
       final String password = passwordController.text;
+      print(username);
+      print(password);
 
       final String url =
           ApiEndpoints.baseUrl + ApiEndpoints.authEndpoints.loginEmail;
@@ -42,6 +48,9 @@ class _LoginPageState extends State<LoginPage> {
         );
 
         if (response.statusCode == 200) {
+          setState(() {
+            loginStatus = "Success! Signing In...";
+          });
           final responseData = jsonDecode(response.body);
 
           if(responseData['message']['message'] == 'Authentication Success'){
@@ -54,6 +63,8 @@ class _LoginPageState extends State<LoginPage> {
             prefs.setString('email', responseData['message']['email']);
             prefs.setString('cookies', '${response.headers['set-cookie']}');
             prefs.setString('expires','${response.headers['set-cookie']}');
+            prefs.setString('employee', '${responseData['message']['employee']}');
+            prefs.setString('customer', '${responseData['message']['customer']}');
 
             // if(mounted){
               // ignore: use_build_context_synchronously
@@ -67,6 +78,9 @@ class _LoginPageState extends State<LoginPage> {
             // }
           }
           else {
+            setState(() {
+              loginStatus = 'Failed! Try Again';
+            });
             Fluttertoast.showToast(
             msg: responseData['message']['message'],
             gravity: ToastGravity.BOTTOM,
@@ -74,6 +88,9 @@ class _LoginPageState extends State<LoginPage> {
           }
         }
       } catch (e) {
+        setState(() {
+          loginStatus = 'Failed! Try Again';
+        });
         print(e);
       }
     }
@@ -184,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 50),
                   MyButton(
-                    name: 'Sign In',
+                    name: loginStatus,
                     onTap: () => signUserIn(context),
                   ),
                   const SizedBox(height: 50),
