@@ -21,13 +21,16 @@ class GDMNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
     if (_isFetching || _hasAllData) return;
     _isFetching = true;
 
-    String fields = '?fields=["name","vehicle_register_no","dispatch_on", "status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit=15';
+    Object body = {
+      "doctype": "GDM",
+      "fields": ["name","vehicle_register_no","dispatch_on", "status"],
+        "order_by": 'modified desc',
+        "limit_start": _limitStart,
+        "limit_page_length": 15
+    };
 
      try {
-      final data = await apiService.getresources(
-        ApiEndpoints.authEndpoints.GDM + fields + paginationQuery,
-      );
+      final data = await apiService.getresource(ApiEndpoints.authEndpoints.getList , body);
 
       if (isRefreshing) {
         state = AsyncValue.data(data);
@@ -46,7 +49,12 @@ class GDMNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
       }
 
     } catch (e) {
-      state = AsyncValue.error(e, StackTrace.empty);
+      if (state.hasValue && isRefreshing == false){
+          return;
+        }
+        else{
+          state = AsyncValue.error(e, StackTrace.empty);
+        }
     }
 
     _isFetching = false;

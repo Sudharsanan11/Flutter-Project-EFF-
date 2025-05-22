@@ -21,9 +21,6 @@ class LRNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
     // if(_hasAllData) return;
     _isFetching = true;
 
-    String fields = '?fields=["name","consignor","creation", "status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit=15';
-
     if(query != ""){
       query = '&filters=[["consignor", "like", "$query%"';
     }

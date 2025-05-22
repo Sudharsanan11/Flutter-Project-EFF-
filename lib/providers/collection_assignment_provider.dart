@@ -1,6 +1,7 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
   final ApiService apiService ;
@@ -19,19 +20,29 @@ class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<Str
 
     _isFetching = true;
 
-    String fields = '?fields=["name","assigned_vehicle","date","status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit_page_length=15';
-    // if(query != ""){
-    //   query = '&filters=[["consignor", "like", "$query%"';
-    // }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String employee = prefs.getString("employee")!;
+
      Object body = {
         "doctype": "Collection Assignment",
-        // "filters": [["consignor", "like", "$query%"]]
         "fields": ['name', 'assigned_vehicle', 'date', 'status'],
         "order_by": 'modified desc',
         "limit_start": _limitStart,
         "limit_page_length": 15
       };
+    // Map<String, dynamic> body = {
+    //   "doctype": "Collection Assignment",
+    //   "fields": ['name', 'assigned_vehicle', 'date', 'status'],
+    //   "order_by": 'modified desc',
+    //   "limit_start": _limitStart,
+    //   "limit_page_length": 15
+    // };
+
+    // if (employee.isNotEmpty) {
+    //   body["filters"] = [
+    //     // ["consignor", "=", customer]
+    //   ];
+    // }
     try {
      
       final data = await apiService.getresource(ApiEndpoints.authEndpoints.getList, body);
@@ -39,7 +50,6 @@ class CollectionAssignmentNotifier extends StateNotifier<AsyncValue<List<Map<Str
         print(i);
       }
 
-      print('$data --------------00000000000000000000000-0-0-00-0-0-0-0-0');
       if (isRefreshing) {
         state = AsyncValue.data(data);
       } else {

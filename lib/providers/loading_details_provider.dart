@@ -21,12 +21,17 @@ class LoadingDetailsNotifier extends StateNotifier<AsyncValue<List<Map<String, S
 
     _isFetching = true;
 
-    String fields = '?fields=["name","vehicle","creation", "status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit=15';
+    Object body = {
+      "doctype": "Loading Details",
+        "fields": ["name","vehicle","creation", "status"],
+        "order_by": 'modified desc',
+        "limit_start": _limitStart,
+        "limit_page_length": 15
+    };
 
     try {
-      final data = await apiService.getresources(
-        ApiEndpoints.authEndpoints.loadingDetails + fields + paginationQuery,
+      final data = await apiService.getresource(
+        ApiEndpoints.authEndpoints.getList, body
       );
 
       print(data);

@@ -1,6 +1,7 @@
 import 'package:erpnext_logistics_mobile/api_endpoints.dart';
 import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectionRequestNotifier extends StateNotifier<AsyncValue<List<Map<String, String>>>> {
   final ApiService apiService;
@@ -20,28 +21,25 @@ class CollectionRequestNotifier extends StateNotifier<AsyncValue<List<Map<String
     _isFetching = true;
     print("fetchdata");
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String employee = prefs.getString("employee")!;
+    String customer = prefs.getString("customer")!;
 
-    String fields = '?fields=["name","consignor","date", "status"]';
-    String paginationQuery = '&order_by=modified desc&limit_start=$_limitStart&amp;limit_page_length=15';
-    if(query != ""){
-      query = '&filters=[["consignor", "like", "$query%"';
+    Map<String, dynamic> body = {
+      "doctype": "Collection Request",
+      "fields": ['name', 'consignor', 'vehicle_required_date', 'status'],
+      "order_by": 'modified desc',
+      "limit_start": _limitStart,
+      "limit_page_length": 15
+    };
+
+    if (customer.isNotEmpty && employee.isEmpty) {
+      body["filters"] = [
+        ["consignor", "=", customer]
+      ];
     }
 
-    Object body = {
-        "doctype": "Collection Request",
-        // "filters": [["consignor", "like", "$query%"]]
-        "fields": ['name', 'consignor', 'vehicle_required_date', 'status'],
-        "order_by": 'modified desc',
-        "limit_start": _limitStart,
-        // "filters": [['']]
-        "limit_page_length": 15
-        // "limit": 15
-      };
-
     try {
-      // final data = await apiService.getresources(
-      //   ApiEndpoints.authEndpoints.CollectionRequest + fields + paginationQuery,
-      // );
       final data = await apiService.getresource(ApiEndpoints.authEndpoints.getList, body);
       for(var i in data){
         print(i);

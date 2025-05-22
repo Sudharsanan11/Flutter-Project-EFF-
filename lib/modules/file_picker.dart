@@ -5,16 +5,12 @@ import 'package:permission_handler/permission_handler.dart';
 
 class FilePickerFormField extends FormField<File?> {
   FilePickerFormField({
-    FormFieldSetter<File?>? onSaved,
-    FormFieldValidator<File?>? validator,
-    File? initialValue,
+    super.onSaved,
+    super.validator,
+    super.initialValue,
     bool autoValidate = false,
-    Key? key,
+    super.key,
   }) : super(
-          key: key,
-          onSaved: onSaved,
-          validator: validator,
-          initialValue: initialValue,
           builder: (FormFieldState<File?> state) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +41,7 @@ class FilePickerFormField extends FormField<File?> {
                     if (status.isDenied || status.isPermanentlyDenied) {
                       if (!permissionStatus.isGranted) {
                         ScaffoldMessenger.of(state.context).showSnackBar(
-                          SnackBar(content: Text('Storage permission is required to pick a file.')),
+                          const SnackBar(content: Text('Storage permission is required to pick a file.')),
                         );
                         return;
                       }
