@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:erpnext_logistics_mobile/Authentication/login.dart';
+import 'package:erpnext_logistics_mobile/api_endpoints.dart';
+import 'package:erpnext_logistics_mobile/api_service.dart';
 import 'package:erpnext_logistics_mobile/doc_list/lr_list.dart';
 import 'package:erpnext_logistics_mobile/home.dart';
 import 'package:erpnext_logistics_mobile/push_notifications.dart';
@@ -8,6 +10,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 
@@ -53,6 +57,10 @@ final RemoteMessage? message =
 //     );
 //   }
 // });
+
+  await Hive.initFlutter();
+  var permissions = await Hive.openBox("permissions");
+
 
   var api = manager.getString("sid");
   var cookies = manager.getString("cookies");

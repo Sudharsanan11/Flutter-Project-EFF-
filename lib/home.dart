@@ -7,6 +7,7 @@ import 'package:erpnext_logistics_mobile/modules/navigation_bar.dart';
 import 'package:erpnext_logistics_mobile/push_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,6 +27,7 @@ class _EFFState extends ConsumerState<EFF> {
     super.initState();
     apiService = ApiService();
     _checkAndInitializeNotifications();
+    _get_permissions();
     // _apicall();
     // _get_session();
   }
@@ -57,6 +59,37 @@ class _EFFState extends ConsumerState<EFF> {
         value = e.toString();
       });
     }
+  }
+
+  Future<void> _get_permissions() async {
+    List<String> doctype_list = [
+    "Customer",
+    "Collection Request",
+    "Collection Assignment",
+    "LR",
+    "GDM",
+    "Loading Details",
+    "Unloading Details",
+    "Vehicle Log",
+  ];
+
+  final Box _permissions = Hive.box("permissions");
+  final ApiService apiService = ApiService();
+  // for (var doctype in doctype_list) {
+    try {
+      Object body = {
+        "doctypes": doctype_list,
+      };
+      final response =  await apiService.checkPermission(ApiEndpoints.authEndpoints.doctype_permissions, body);
+      // _permissions.put(doctype, {"read": response[doctype]["read"], "write": response[doctype]["write"]});
+      _permissions.put("perm", response);
+      print(_permissions.get("perm"));
+    }
+    catch (e, stacktrace) {
+      // debugPrint("Error checking permission for $doctype: $e");
+      debugPrintStack(stackTrace: stacktrace);
+    }
+  // }
   }
 
   Future<void> _logoutUser() async {
